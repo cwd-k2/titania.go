@@ -1,0 +1,9 @@
+{
+  "host": "http://api.paiza.io:80",
+  "api_key": "guest",
+  "source_code_directories": ["./source_code"],
+  "test_case_directories": ["./test_case"],
+  "test_case_input_extension": ".in",
+  "test_case_output_extension": ".ans",
+  "max_processes": 10
+}
