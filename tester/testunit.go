@@ -9,18 +9,16 @@ import (
 )
 
 // TestUnit
-// contains source code, its language, test cases
+// contains source code, its language
 type TestUnit struct {
 	SourceCode string
 	Language   string
-	TestCases  map[string]*TestCase
 }
 
 // returns map[string]*TestUnits
 func MakeTestUnits(
 	baseDirectoryPath string,
-	sourceCodeDirectories []string,
-	testCases map[string]*TestCase) map[string]*TestUnit {
+	sourceCodeDirectories []string) map[string]*TestUnit {
 
 	testUnits := make(map[string]*TestUnit)
 
@@ -55,7 +53,6 @@ func MakeTestUnits(
 			testUnits[unitName] = new(TestUnit)
 			testUnits[unitName].SourceCode = string(byteArray)
 			testUnits[unitName].Language = language
-			testUnits[unitName].TestCases = testCases
 
 		}
 	}

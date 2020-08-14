@@ -30,6 +30,7 @@ type TestRoom struct {
 	Client    *client.Client
 	Config    *Config
 	TestUnits map[string]*TestUnit
+	TestCases map[string]*TestCase
 }
 
 // returns map[string]*TestRoom
@@ -78,13 +79,13 @@ func MakeTestRooms(directories []string) map[string]*TestRoom {
 		// テストユニット
 		testUnits := MakeTestUnits(
 			baseDirectoryPath,
-			config.SourceCodeDirectories,
-			testCases)
+			config.SourceCodeDirectories)
 
 		testRooms[dirname] = new(TestRoom)
 		testRooms[dirname].Client = client
 		testRooms[dirname].Config = config
 		testRooms[dirname].TestUnits = testUnits
+		testRooms[dirname].TestCases = testCases
 
 	}
 
@@ -99,7 +100,7 @@ func (testRoom *TestRoom) Exec() {
 		fmt.Printf("    [LANG] %s\n", strings.ToUpper(testUnit.Language))
 		wg := new(sync.WaitGroup)
 
-		for caseName, testCase := range testUnit.TestCases {
+		for caseName, testCase := range testRoom.TestCases {
 
 			wg.Add(1)
 
