@@ -22,8 +22,8 @@ And the target directories should contain `titania.json`.
 
 ```
 {
-  "host": "http://api.paiza.io:80", // paiza.io host
-  "api_key": "guest",               // paiza.io api_key
+  "host": "http://api.paiza.io:80", // paiza.io API host
+  "api_key": "guest",               // paiza.io API api_key
   "source_code_directories": ["./source_*"], // directories containing source codes
   "test_case_directories": ["./test_case"],  // directories containing input/answer for test
   "test_case_input_extension": ".in",        // input files' extension
