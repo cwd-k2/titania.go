@@ -59,6 +59,8 @@ func (c *Client) api(method string, endpoint string, params map[string]string) [
 		log.Fatal(err)
 	}
 
+	defer response.Body.Close()
+
 	byteArray, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		log.Fatal(err)
