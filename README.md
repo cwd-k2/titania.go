@@ -20,7 +20,7 @@ Make sure `$GOBIN` is included in your `$PATH`.
 
 And the target directories should contain `titania.json`.
 
-```json
+```
 {
   "host": "http://api.paiza.io:80", // paiza.io host
   "api_key": "guest",               // paiza.io api_key
@@ -43,7 +43,7 @@ $ cd example
 # just specify one directory.
 $ titania.go example_01
 # two or more is also okay.
-$ titania.go example_01
+$ titania.go example_01 example_02
 # or you can run with no args, then titania.go will take all subdirectories as targets.
 $ titania.go
 ```
