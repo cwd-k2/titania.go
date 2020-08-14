@@ -107,14 +107,20 @@ func (testRoom *TestRoom) Exec() {
 			exec := func(caseName string, testCase *TestCase) {
 				defer wg.Done()
 
-				runnersCreateResponse :=
+				runnersCreateResponse, err :=
 					testRoom.Client.RunnersCreate(
 						testUnit.SourceCode,
 						testUnit.Language,
 						testCase.Input)
+				if err != nil {
+					return
+				}
 
-				runnersGetDetailsResponse :=
+				runnersGetDetailsResponse, err :=
 					testRoom.Client.RunnersGetDetails(runnersCreateResponse.ID)
+				if err != nil {
+					return
+				}
 
 				if runnersGetDetailsResponse.STDOUT == testCase.Output {
 					fmt.Printf("    [CASE] %s [OK]\n", caseName)

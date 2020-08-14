@@ -38,7 +38,11 @@ type Client struct {
 	Host   string
 }
 
-func (c *Client) api(method string, endpoint string, params map[string]string) []byte {
+func (c *Client) api(
+	method string,
+	endpoint string,
+	params map[string]string) ([]byte, error) {
+
 	httpClient := new(http.Client)
 
 	request, err := http.NewRequest(method, c.Host+endpoint, nil)
@@ -56,21 +60,25 @@ func (c *Client) api(method string, endpoint string, params map[string]string) [
 
 	response, err := httpClient.Do(request)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	defer response.Body.Close()
 
 	byteArray, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return byteArray
+	return byteArray, nil
 
 }
 
-func (c *Client) RunnersCreate(sourceCode string, language string, input string) *RunnersCreateResponse {
+func (c *Client) RunnersCreate(
+	sourceCode string,
+	language string,
+	input string) (*RunnersCreateResponse, error) {
+
 	runnersCreateResponse := new(RunnersCreateResponse)
 
 	args := make(map[string]string)
@@ -80,26 +88,34 @@ func (c *Client) RunnersCreate(sourceCode string, language string, input string)
 	args["longpoll"] = "true"
 	args["longpoll_timeout"] = "100"
 
-	byteArray := c.api("POST", "/runners/create", args)
-
-	if err := json.Unmarshal(byteArray, runnersCreateResponse); err != nil {
-		log.Fatal(err)
+	byteArray, err := c.api("POST", "/runners/create", args)
+	if err != nil {
+		return nil, err
 	}
 
-	return runnersCreateResponse
+	if err := json.Unmarshal(byteArray, runnersCreateResponse); err != nil {
+		return nil, err
+	}
+
+	return runnersCreateResponse, nil
 }
 
-func (c *Client) RunnersGetDetails(id string) *RunnersGetDetailsResponse {
+func (c *Client) RunnersGetDetails(
+	id string) (*RunnersGetDetailsResponse, error) {
+
 	runnersGetDetailsResponse := new(RunnersGetDetailsResponse)
 
 	args := make(map[string]string)
 	args["id"] = id
 
-	byteArray := c.api("GET", "/runners/get_details", args)
-
-	if err := json.Unmarshal(byteArray, runnersGetDetailsResponse); err != nil {
-		log.Fatal(err)
+	byteArray, err := c.api("GET", "/runners/get_details", args)
+	if err != nil {
+		return nil, err
 	}
 
-	return runnersGetDetailsResponse
+	if err := json.Unmarshal(byteArray, runnersGetDetailsResponse); err != nil {
+		return nil, err
+	}
+
+	return runnersGetDetailsResponse, nil
 }
