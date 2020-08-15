@@ -36,9 +36,13 @@ func main() {
 		directories = args
 	}
 
-	testRooms := tester.MakeTestRooms(directories)
-	for roomName, testRoom := range testRooms {
-		fmt.Printf("%s\n", pretty.Bold(pretty.Green(roomName)))
+	for _, dirname := range directories {
+		testRoom := tester.NewTestRoom(dirname)
+		if testRoom == nil {
+			continue
+		}
+
+		fmt.Printf("%s\n", pretty.Bold(pretty.Green(dirname)))
 		testRoom.Exec()
 	}
 

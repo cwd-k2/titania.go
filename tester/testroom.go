@@ -33,72 +33,67 @@ type TestRoom struct {
 	TestCases map[string]*TestCase
 }
 
-// MakeTestRooms
-// returns map[string]*TestRoom
-func MakeTestRooms(directories []string) map[string]*TestRoom {
-	testRooms := make(map[string]*TestRoom)
-	for _, dirname := range directories {
-
-		baseDirectoryPath, err := filepath.Abs(dirname)
-		// ここのエラーは公式のドキュメント見てもわからんのだけど何？
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
-			continue
-		}
-
-		// ディレクトリ直下に titania.json がいるか確認したい
-		configFileName := path.Join(baseDirectoryPath, "titania.json")
-		if match, _ := filepath.Glob(configFileName); len(match) == 0 {
-			continue
-		}
-
-		// ディレクトリ直下の titania.json を読んで設定を作る
-		configRawData, err := ioutil.ReadFile(configFileName)
-
-		// File Read 失敗
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Couldn't read %s.\n", configFileName)
-			continue
-		}
-
-		// ようやく設定の構造体を作れる
-		config := new(Config)
-
-		// JSON パース失敗
-		if err := json.Unmarshal(configRawData, config); err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"Couldn't parse %s.\n%s\n",
-				configFileName, err)
-			continue
-		}
-
-		// paiza.io API クライアント
-		client := new(client.Client)
-		client.Host = config.Host
-		client.APIKey = config.APIKey
-
-		// テストケース
-		testCases := MakeTestCases(
-			baseDirectoryPath,
-			config.TestCaseDirectories,
-			config.TestCaseInputExtension,
-			config.TestCaseOutputExtension)
-
-		// テストユニット
-		testUnits := MakeTestUnits(
-			baseDirectoryPath,
-			config.SourceCodeDirectories)
-
-		testRooms[dirname] = new(TestRoom)
-		testRooms[dirname].Client = client
-		testRooms[dirname].Config = config
-		testRooms[dirname].TestUnits = testUnits
-		testRooms[dirname].TestCases = testCases
-
+// NewTestRoom
+// returns *TestRoom
+func NewTestRoom(dirname string) *TestRoom {
+	baseDirectoryPath, err := filepath.Abs(dirname)
+	// ここのエラーは公式のドキュメント見てもわからんのだけど何？
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		return nil
 	}
 
-	return testRooms
+	// ディレクトリ直下に titania.json がいるか確認したい
+	configFileName := path.Join(baseDirectoryPath, "titania.json")
+	if match, _ := filepath.Glob(configFileName); len(match) == 0 {
+		return nil
+	}
+
+	// ディレクトリ直下の titania.json を読んで設定を作る
+	configRawData, err := ioutil.ReadFile(configFileName)
+
+	// File Read 失敗
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't read %s.\n", configFileName)
+		return nil
+	}
+
+	// ようやく設定の構造体を作れる
+	config := new(Config)
+
+	// JSON パース失敗
+	if err := json.Unmarshal(configRawData, config); err != nil {
+		fmt.Fprintf(
+			os.Stderr,
+			"Couldn't parse %s.\n%s\n",
+			configFileName, err)
+		return nil
+	}
+
+	// paiza.io API クライアント
+	client := new(client.Client)
+	client.Host = config.Host
+	client.APIKey = config.APIKey
+
+	// テストケース
+	testCases := MakeTestCases(
+		baseDirectoryPath,
+		config.TestCaseDirectories,
+		config.TestCaseInputExtension,
+		config.TestCaseOutputExtension)
+
+	// テストユニット
+	testUnits := MakeTestUnits(
+		baseDirectoryPath,
+		config.SourceCodeDirectories)
+
+	testRoom := new(TestRoom)
+	testRoom.Client = client
+	testRoom.Config = config
+	testRoom.TestUnits = testUnits
+	testRoom.TestCases = testCases
+
+	return testRoom
 }
 
 func (testRoom *TestRoom) Exec() {
