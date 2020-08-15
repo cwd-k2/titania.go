@@ -10,11 +10,11 @@ func Down(n int) {
 	fmt.Printf("\033[%dB", n)
 }
 
-func Left(n int) {
+func Right(n int) {
 	fmt.Printf("\033[%dC", n)
 }
 
-func Right(n int) {
+func Left(n int) {
 	fmt.Printf("\033[%dD", n)
 }
 
