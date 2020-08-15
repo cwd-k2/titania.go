@@ -111,7 +111,6 @@ func (testRoom *TestRoom) Exec() []*TestInfo {
 	i := 0
 	j := len(testRoom.TestUnits) * len(testRoom.TestCases)
 
-	// ここをいい感じにしたい
 	for testInfo := range ch {
 		i++
 		view.Refresh(testInfo)
@@ -122,9 +121,6 @@ func (testRoom *TestRoom) Exec() []*TestInfo {
 	}
 
 	return results
-
-	// SUMMARY と DETAIL を出したいね
-
 }
 
 func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
@@ -147,7 +143,7 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 	if err != nil {
 		testInfo.Result = "TEST FAIL"
 		testInfo.Error = err.Error()
-		testInfo.Time = "0"
+		testInfo.Time = ""
 		return testInfo
 	}
 
@@ -157,7 +153,7 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 	if err != nil {
 		testInfo.Result = "TEST FAIL"
 		testInfo.Error = err.Error()
-		testInfo.Time = "0"
+		testInfo.Time = ""
 		return testInfo
 	}
 
@@ -169,7 +165,7 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 				"BUILD %s",
 				strings.ToUpper(runnersGetDetailsResponse.BuildResult))
 		testInfo.Error = runnersGetDetailsResponse.BuildSTDERR
-		testInfo.Time = "0"
+		testInfo.Time = ""
 		return testInfo
 	}
 
@@ -177,7 +173,7 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 	if runnersGetDetailsResponse.Result != "success" {
 		testInfo.Result = strings.ToUpper(runnersGetDetailsResponse.Result)
 		testInfo.Error = runnersGetDetailsResponse.STDERR
-		testInfo.Time = "0"
+		testInfo.Time = ""
 		return testInfo
 	}
 
