@@ -22,6 +22,10 @@ func Erase() {
 	fmt.Printf("\033[2K\033[G")
 }
 
+func Beginning() {
+	fmt.Printf("\033[G")
+}
+
 func Bold(str string) string {
 	return fmt.Sprintf("\033[1m%s\033[0m", str)
 }
