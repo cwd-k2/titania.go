@@ -57,22 +57,22 @@ func (testView *TestView) Refresh(testInfo *TestInfo) {
 	testView.Counters[unitName]++
 
 	pretty.Up((testView.Units - position))
-
 	pretty.Erase()
 	if testView.Counters[unitName] == testView.Cases {
 		fmt.Printf(
-			"[%s] %02d/%02d %s\n",
+			"[%s] %02d/%02d %s",
 			pretty.Green("DONE"),
 			testView.Counters[unitName],
 			testView.Cases,
 			pretty.Blue(unitName))
 	} else {
 		fmt.Printf(
-			"[%s] %02d/%02d %s\n",
+			"[%s] %02d/%02d %s",
 			pretty.Yellow("WAIT"),
 			testView.Counters[unitName],
 			testView.Cases,
 			pretty.Blue(unitName))
 	}
-	pretty.Down(testView.Units - position - 1)
+	pretty.Down(testView.Units - position)
+	pretty.Beginning()
 }

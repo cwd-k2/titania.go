@@ -117,8 +117,6 @@ func (testRoom *TestRoom) Exec() {
 	j := len(testRoom.TestUnits) * len(testRoom.TestCases)
 
 	// ここをいい感じにしたい
-	// 今はとりあえず結果だけを出してるけど
-	// SUMMARY と DETAIL を出したいね
 	for testInfo := range ch {
 		i++
 		view.Refresh(testInfo)
@@ -128,9 +126,10 @@ func (testRoom *TestRoom) Exec() {
 		}
 	}
 
+	// SUMMARY と DETAIL を出したいね
+
 }
 
-// ここも構造体を返すようにしたい
 func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 	client := testRoom.Client
 	testUnit := testRoom.TestUnits[unitName]
