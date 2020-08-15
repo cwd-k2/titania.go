@@ -37,9 +37,7 @@ type TestRoom struct {
 // returns map[string]*TestRoom
 func MakeTestRooms(directories []string) map[string]*TestRoom {
 	testRooms := make(map[string]*TestRoom)
-	// この前にディレクトリ直下に titania.json がいるか確認したい
 	for _, dirname := range directories {
-		// ディレクトリ直下の titania.json を読んで設定を作る
 
 		baseDirectoryPath, err := filepath.Abs(dirname)
 		// ここのエラーは公式のドキュメント見てもわからんのだけど何？
@@ -48,8 +46,15 @@ func MakeTestRooms(directories []string) map[string]*TestRoom {
 			continue
 		}
 
+		// ディレクトリ直下に titania.json がいるか確認したい
 		configFileName := path.Join(baseDirectoryPath, "titania.json")
+		if match, _ := filepath.Glob(configFileName); len(match) == 0 {
+			continue
+		}
+
+		// ディレクトリ直下の titania.json を読んで設定を作る
 		configRawData, err := ioutil.ReadFile(configFileName)
+
 		// File Read 失敗
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Couldn't read %s.\n", configFileName)
