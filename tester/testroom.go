@@ -100,6 +100,7 @@ func (testRoom *TestRoom) Exec() {
 		testCase := testRoom.TestCases[caseName]
 
 		// 実際に paiza.io の API を利用して実行結果をもらう
+		// この辺も分割したい
 		runnersCreateResponse, err :=
 			client.RunnersCreate(
 				testUnit.SourceCode,
@@ -107,7 +108,7 @@ func (testRoom *TestRoom) Exec() {
 				testCase.Input)
 
 		if err != nil {
-			ch <- []string{unitName, caseName, "FAIL", err.Error()}
+			ch <- []string{unitName, caseName, "TEST FAIL", err.Error()}
 			return
 		}
 
@@ -115,9 +116,12 @@ func (testRoom *TestRoom) Exec() {
 			client.RunnersGetDetails(runnersCreateResponse.ID)
 
 		if err != nil {
-			ch <- []string{unitName, caseName, "FAIL", err.Error()}
+			ch <- []string{unitName, caseName, "TEST FAIL", err.Error()}
 			return
 		}
+
+		// この辺も分割したい
+		// 返ってきた結果をまとめる
 
 		// ビルドエラー
 		if !(runnersGetDetailsResponse.BuildResult == "success" ||
@@ -125,7 +129,7 @@ func (testRoom *TestRoom) Exec() {
 			ch <- []string{
 				unitName,
 				caseName,
-				strings.ToUpper(runnersGetDetailsResponse.BuildResult),
+				"BUILD " + strings.ToUpper(runnersGetDetailsResponse.BuildResult),
 				runnersGetDetailsResponse.BuildSTDERR,
 			}
 			return
@@ -146,21 +150,48 @@ func (testRoom *TestRoom) Exec() {
 		if runnersGetDetailsResponse.STDOUT == testCase.Output {
 			ch <- []string{unitName, caseName, "PASS"}
 		} else {
-			ch <- []string{unitName, caseName, "WA"}
+			ch <- []string{unitName, caseName, "WRONG ANSWER"}
 		}
 
 	}
 
 	testRoom.goEach(exec)
 
+	// 出力する
+	// ここをいい感じにしたい
+	// 今はとりあえず結果だけを出してるけど
+	// SUMMARY と DETAIL を出したいね
+	// あと色
+
 	i := 0
 	j := len(testRoom.TestCases) * len(testRoom.TestUnits)
+	k := len(testRoom.TestUnits)
+
+	testShow := make(map[string][]string)
+	var keys []string
+
+	for unitName := range testRoom.TestUnits {
+		testShow[unitName] = []string{
+			"initializing",
+			"WAIT",
+		}
+		keys = append(keys, unitName)
+	}
+	for _, key := range keys {
+		fmt.Printf("  [UNIT] %s\n", key)
+		fmt.Printf("    [CASE] %s\n", testShow[key][0])
+		fmt.Printf("    [STAT] %s\n", testShow[key][1])
+	}
 
 	for msg := range ch {
 		i++
-		fmt.Printf("  [UNIT] %s\n", msg[0])
-		fmt.Printf("    [CASE] %s\n", msg[1])
-		fmt.Printf("    [STAT] %s\n", msg[2])
+		testShow[msg[0]] = msg[1:]
+		fmt.Printf("\033[%dA", 3*k)
+		for _, key := range keys {
+			fmt.Printf("\033[2K\033[G  [UNIT] %s\n", key)
+			fmt.Printf("\033[2K\033[G    [CASE] %s\n", testShow[key][0])
+			fmt.Printf("\033[2K\033[G    [STAT] %s\n", testShow[key][1])
+		}
 		if i == j {
 			close(ch)
 		}
