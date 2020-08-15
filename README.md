@@ -32,11 +32,11 @@ And the target directories should contain `titania.json`.
 }
 ```
 
-`titania.json`'s example is [here](./example/example_01/titania.json) or [there](./example/example_02/titania.json)
+`titania.json`'s example is [here](https://github.com/cwd-k2/titania.example/tree/master/example_01/titania.json) or [there](https://github.com/cwd-k2/titania.example/tree/master/example_02/titania.json)
 
 ### Example
 
-Examples are in [here](./example).
+Examples are in [here](https://github.com/cwd-k2/titania.example).
 
 ```sh
 $ cd example
