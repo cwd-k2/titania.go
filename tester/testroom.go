@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/cwd-k2/titania.go/client"
+	"github.com/cwd-k2/titania.go/pretty"
 )
 
 // Config
@@ -174,24 +175,23 @@ func (testRoom *TestRoom) Exec() {
 	for unitName := range testRoom.TestUnits {
 		testShow[unitName] = []string{
 			"initializing",
-			"WAIT",
 		}
 		keys = append(keys, unitName)
 	}
 	for _, key := range keys {
 		fmt.Printf("  [UNIT] %s\n", key)
-		fmt.Printf("    [CASE] %s\n", testShow[key][0])
-		fmt.Printf("    [STAT] %s\n", testShow[key][1])
+		fmt.Printf("    [WAIT] %s\n", testShow[key][0])
 	}
 
 	for msg := range ch {
 		i++
 		testShow[msg[0]] = msg[1:]
-		fmt.Printf("\033[%dA", 3*k)
+		pretty.Up(2 * k)
 		for _, key := range keys {
-			fmt.Printf("\033[2K\033[G  [UNIT] %s\n", key)
-			fmt.Printf("\033[2K\033[G    [CASE] %s\n", testShow[key][0])
-			fmt.Printf("\033[2K\033[G    [STAT] %s\n", testShow[key][1])
+			pretty.Erase()
+			fmt.Printf("  [UNIT] %s\n", key)
+			pretty.Erase()
+			fmt.Printf("    [WAIT] %s\n", testShow[key][0])
 		}
 		if i == j {
 			close(ch)
