@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/cwd-k2/titania.go/client"
-	"github.com/cwd-k2/titania.go/pretty"
 )
 
 // Config
@@ -34,6 +33,7 @@ type TestRoom struct {
 	TestCases map[string]*TestCase
 }
 
+// MakeTestRooms
 // returns map[string]*TestRoom
 func MakeTestRooms(directories []string) map[string]*TestRoom {
 	testRooms := make(map[string]*TestRoom)
@@ -94,70 +94,12 @@ func MakeTestRooms(directories []string) map[string]*TestRoom {
 }
 
 func (testRoom *TestRoom) Exec() {
-	ch := make(chan []string)
+	ch := make(chan *TestInfo)
+	view := InitTestView(testRoom.TestUnits, testRoom.TestCases)
 
-	exec := func(unitName string, caseName string) {
-		client := testRoom.Client
-		testUnit := testRoom.TestUnits[unitName]
-		testCase := testRoom.TestCases[caseName]
-
-		// 実際に paiza.io の API を利用して実行結果をもらう
-		// この辺も分割したい
-		runnersCreateResponse, err :=
-			client.RunnersCreate(
-				testUnit.SourceCode,
-				testUnit.Language,
-				testCase.Input)
-
-		if err != nil {
-			ch <- []string{unitName, caseName, "TEST FAIL", err.Error()}
-			return
-		}
-
-		runnersGetDetailsResponse, err :=
-			client.RunnersGetDetails(runnersCreateResponse.ID)
-
-		if err != nil {
-			ch <- []string{unitName, caseName, "TEST FAIL", err.Error()}
-			return
-		}
-
-		// この辺も分割したい
-		// 返ってきた結果をまとめる
-
-		// ビルドエラー
-		if !(runnersGetDetailsResponse.BuildResult == "success" ||
-			runnersGetDetailsResponse.BuildResult == "") {
-			ch <- []string{
-				unitName,
-				caseName,
-				"BUILD " + strings.ToUpper(runnersGetDetailsResponse.BuildResult),
-				runnersGetDetailsResponse.BuildSTDERR,
-			}
-			return
-		}
-
-		// 実行時エラー
-		if runnersGetDetailsResponse.Result != "success" {
-			ch <- []string{
-				unitName,
-				caseName,
-				strings.ToUpper(runnersGetDetailsResponse.Result),
-				runnersGetDetailsResponse.STDERR,
-			}
-			return
-		}
-
-		// 出力が正しいかどうか
-		if runnersGetDetailsResponse.STDOUT == testCase.Output {
-			ch <- []string{unitName, caseName, "PASS"}
-		} else {
-			ch <- []string{unitName, caseName, "WRONG ANSWER"}
-		}
-
-	}
-
-	testRoom.goEach(exec)
+	testRoom.goEach(func(unitName string, caseName string) {
+		ch <- testRoom.execTest(unitName, caseName)
+	})
 
 	// 出力する
 	// ここをいい感じにしたい
@@ -165,37 +107,83 @@ func (testRoom *TestRoom) Exec() {
 	// SUMMARY と DETAIL を出したいね
 	// あと色
 
+	view.Start()
+
 	i := 0
-	j := len(testRoom.TestCases) * len(testRoom.TestUnits)
-	k := len(testRoom.TestUnits)
 
-	testShow := make(map[string][]string)
-	var keys []string
-
-	for unitName := range testRoom.TestUnits {
-		testShow[unitName] = []string{
-			"initializing",
-		}
-		keys = append(keys, unitName)
-	}
-	for _, key := range keys {
-		fmt.Printf("  [UNIT] %s\n", key)
-		fmt.Printf("    [WAIT] %s\n", testShow[key][0])
-	}
-
-	for msg := range ch {
+	for testInfo := range ch {
 		i++
-		testShow[msg[0]] = msg[1:]
-		pretty.Up(2 * k)
-		for _, key := range keys {
-			pretty.Erase()
-			fmt.Printf("  [UNIT] %s\n", key)
-			pretty.Erase()
-			fmt.Printf("    [WAIT] %s\n", testShow[key][0])
-		}
-		if i == j {
+		view.Refresh(testInfo)
+		if i == view.Total {
 			close(ch)
 		}
+	}
+
+}
+
+// ここも構造体を返すようにしたい
+func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
+	client := testRoom.Client
+	testUnit := testRoom.TestUnits[unitName]
+	testCase := testRoom.TestCases[caseName]
+	testInfo := new(TestInfo)
+	testInfo.UnitName = unitName
+	testInfo.CaseName = caseName
+
+	// 実際に paiza.io の API を利用して実行結果をもらう
+	// この辺も分割したい
+	runnersCreateResponse, err :=
+		client.RunnersCreate(
+			testUnit.SourceCode,
+			testUnit.Language,
+			testCase.Input)
+
+	if err != nil {
+		testInfo.Result = "TEST FAIL"
+		testInfo.Error = err.Error()
+		testInfo.Time = "0"
+		return testInfo
+	}
+
+	runnersGetDetailsResponse, err :=
+		client.RunnersGetDetails(runnersCreateResponse.ID)
+
+	if err != nil {
+		testInfo.Result = "TEST FAIL"
+		testInfo.Error = err.Error()
+		testInfo.Time = "0"
+		return testInfo
+	}
+
+	// ビルドエラー
+	if !(runnersGetDetailsResponse.BuildResult == "success" ||
+		runnersGetDetailsResponse.BuildResult == "") {
+		testInfo.Result =
+			fmt.Sprintf(
+				"BUILD %s",
+				strings.ToUpper(runnersGetDetailsResponse.Result))
+		testInfo.Error = runnersGetDetailsResponse.BuildSTDERR
+		testInfo.Time = "0"
+		return testInfo
+	}
+
+	// 実行時エラー
+	if runnersGetDetailsResponse.Result != "success" {
+		testInfo.Result = strings.ToUpper(runnersGetDetailsResponse.Result)
+		testInfo.Error = runnersGetDetailsResponse.STDERR
+		testInfo.Time = "0"
+		return testInfo
+	}
+
+	// 出力が正しいかどうか
+	if runnersGetDetailsResponse.STDOUT == testCase.Output {
+		testInfo.Result = "PASS"
+		testInfo.Time = runnersGetDetailsResponse.Time
+		return testInfo
+	} else {
+		testInfo.Result = "WRONG ANSWER"
+		testInfo.Time = runnersGetDetailsResponse.Time
+		return testInfo
 	}
 
 }
