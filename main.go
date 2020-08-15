@@ -35,6 +35,7 @@ func main() {
 	} else {
 		directories = args
 	}
+	i := 0
 
 	for _, dirname := range directories {
 		testRoom := tester.NewTestRoom(dirname)
@@ -43,7 +44,13 @@ func main() {
 		}
 
 		fmt.Printf("%s\n", pretty.Bold(pretty.Green(dirname)))
-		testRoom.Exec()
+		i++
+		results := testRoom.Exec()
+		defer tester.WrapUp(results)
+	}
+
+	if i == 0 {
+		fmt.Fprintf(os.Stderr, "Uh, OK, there's no test.\n")
 	}
 
 }
