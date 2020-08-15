@@ -96,10 +96,10 @@ func NewTestRoom(dirname string) *TestRoom {
 	return testRoom
 }
 
-func (testRoom *TestRoom) Exec() {
+func (testRoom *TestRoom) Exec() []*TestInfo {
 	ch := make(chan *TestInfo)
 	view := InitTestView(testRoom.TestUnits, testRoom.TestCases)
-	var details []*TestInfo
+	var results []*TestInfo
 
 	testRoom.goEach(func(unitName string, caseName string) {
 		ch <- testRoom.execTest(unitName, caseName)
@@ -115,11 +115,13 @@ func (testRoom *TestRoom) Exec() {
 	for testInfo := range ch {
 		i++
 		view.Refresh(testInfo)
-		details = append(details, testInfo)
+		results = append(results, testInfo)
 		if i == j {
 			close(ch)
 		}
 	}
+
+	return results
 
 	// SUMMARY と DETAIL を出したいね
 
@@ -165,7 +167,7 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 		testInfo.Result =
 			fmt.Sprintf(
 				"BUILD %s",
-				strings.ToUpper(runnersGetDetailsResponse.Result))
+				strings.ToUpper(runnersGetDetailsResponse.BuildResult))
 		testInfo.Error = runnersGetDetailsResponse.BuildSTDERR
 		testInfo.Time = "0"
 		return testInfo
