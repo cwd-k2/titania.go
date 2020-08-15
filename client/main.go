@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -47,7 +46,7 @@ func (c *Client) api(
 
 	request, err := http.NewRequest(method, c.Host+endpoint, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	query := request.URL.Query()

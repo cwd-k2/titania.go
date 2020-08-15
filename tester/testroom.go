@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -42,7 +43,7 @@ func MakeTestRooms(directories []string) map[string]*TestRoom {
 		baseDirectoryPath, err := filepath.Abs(dirname)
 		// ここのエラーは公式のドキュメント見てもわからんのだけど何？
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "%s\n", err)
 			continue
 		}
 
@@ -50,7 +51,7 @@ func MakeTestRooms(directories []string) map[string]*TestRoom {
 		configRawData, err := ioutil.ReadFile(configFileName)
 		// File Read 失敗
 		if err != nil {
-			fmt.Printf("[SKIP] Couldn't read %s.\n", configFileName)
+			fmt.Fprintf(os.Stderr, "[SKIP] Couldn't read %s.\n", configFileName)
 			continue
 		}
 
@@ -59,7 +60,7 @@ func MakeTestRooms(directories []string) map[string]*TestRoom {
 
 		// JSON パース失敗
 		if err := json.Unmarshal(configRawData, config); err != nil {
-			fmt.Printf("[SKIP] Couldn't parse %s.\n%s\n", configFileName, err)
+			fmt.Fprintf(os.Stderr, "[SKIP] Couldn't parse %s.\n%s\n", configFileName, err)
 			continue
 		}
 
