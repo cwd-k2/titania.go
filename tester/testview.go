@@ -9,7 +9,6 @@ import (
 type TestView struct {
 	Units     int
 	Cases     int
-	Total     int
 	Positions map[string]int
 	Counters  map[string]int
 	Indexes   []string
@@ -22,7 +21,6 @@ func InitTestView(
 	testView := new(TestView)
 	testView.Units = len(testUnits)
 	testView.Cases = len(testCases)
-	testView.Total = len(testUnits) * len(testCases)
 
 	testView.Positions = make(map[string]int)
 	testView.Counters = make(map[string]int)
@@ -44,25 +42,37 @@ func InitTestView(
 
 func (testView *TestView) Start() {
 	for _, index := range testView.Indexes {
-		fmt.Printf("  [%s] %s\n", pretty.Blue("UNIT"), index)
-		fmt.Printf("    [%s] %s\n", pretty.Yellow("WAIT"), "initializing...")
+		fmt.Printf(
+			"[%s] %s %s\n",
+			pretty.Yellow("WAIT"),
+			"START",
+			pretty.Blue(index))
 	}
 }
 
 func (testView *TestView) Refresh(testInfo *TestInfo) {
 	unitName := testInfo.UnitName
-	caseName := testInfo.CaseName
 	position := testView.Positions[unitName]
 
 	testView.Counters[unitName]++
 
-	pretty.Up(2 * (testView.Units - position))
-	pretty.Down(1)
+	pretty.Up((testView.Units - position))
+
 	pretty.Erase()
 	if testView.Counters[unitName] == testView.Cases {
-		fmt.Printf("    [%s] %s\n", pretty.Green("DONE"), caseName)
+		fmt.Printf(
+			"[%s] %02d/%02d %s\n",
+			pretty.Green("DONE"),
+			testView.Counters[unitName],
+			testView.Cases,
+			pretty.Blue(unitName))
 	} else {
-		fmt.Printf("    [%s] %s\n", pretty.Yellow("WAIT"), caseName)
+		fmt.Printf(
+			"[%s] %02d/%02d %s\n",
+			pretty.Yellow("WAIT"),
+			testView.Counters[unitName],
+			testView.Cases,
+			pretty.Blue(unitName))
 	}
-	pretty.Down(2 * (testView.Units - position - 1))
+	pretty.Down(testView.Units - position - 1)
 }

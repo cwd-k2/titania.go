@@ -52,7 +52,7 @@ func MakeTestRooms(directories []string) map[string]*TestRoom {
 		configRawData, err := ioutil.ReadFile(configFileName)
 		// File Read 失敗
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "[SKIP] Couldn't read %s.\n", configFileName)
+			fmt.Fprintf(os.Stderr, "Couldn't read %s.\n", configFileName)
 			continue
 		}
 
@@ -61,7 +61,10 @@ func MakeTestRooms(directories []string) map[string]*TestRoom {
 
 		// JSON パース失敗
 		if err := json.Unmarshal(configRawData, config); err != nil {
-			fmt.Fprintf(os.Stderr, "[SKIP] Couldn't parse %s.\n%s\n", configFileName, err)
+			fmt.Fprintf(
+				os.Stderr,
+				"Couldn't parse %s.\n%s\n",
+				configFileName, err)
 			continue
 		}
 
@@ -96,25 +99,26 @@ func MakeTestRooms(directories []string) map[string]*TestRoom {
 func (testRoom *TestRoom) Exec() {
 	ch := make(chan *TestInfo)
 	view := InitTestView(testRoom.TestUnits, testRoom.TestCases)
+	var details []*TestInfo
 
 	testRoom.goEach(func(unitName string, caseName string) {
 		ch <- testRoom.execTest(unitName, caseName)
 	})
 
 	// 出力する
-	// ここをいい感じにしたい
-	// 今はとりあえず結果だけを出してるけど
-	// SUMMARY と DETAIL を出したいね
-	// あと色
-
 	view.Start()
 
 	i := 0
+	j := len(testRoom.TestUnits) * len(testRoom.TestCases)
 
+	// ここをいい感じにしたい
+	// 今はとりあえず結果だけを出してるけど
+	// SUMMARY と DETAIL を出したいね
 	for testInfo := range ch {
 		i++
 		view.Refresh(testInfo)
-		if i == view.Total {
+		details = append(details, testInfo)
+		if i == j {
 			close(ch)
 		}
 	}
@@ -129,6 +133,7 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 	testInfo := new(TestInfo)
 	testInfo.UnitName = unitName
 	testInfo.CaseName = caseName
+	testInfo.Language = strings.ToUpper(testUnit.Language)
 
 	// 実際に paiza.io の API を利用して実行結果をもらう
 	// この辺も分割したい

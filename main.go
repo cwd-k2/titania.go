@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/cwd-k2/titania.go/pretty"
 	"github.com/cwd-k2/titania.go/tester"
 )
 
@@ -37,7 +38,7 @@ func main() {
 
 	testRooms := tester.MakeTestRooms(directories)
 	for roomName, testRoom := range testRooms {
-		fmt.Printf("[ROOM] %s\n", roomName)
+		fmt.Printf("%s\n", pretty.Bold(pretty.Green(roomName)))
 		testRoom.Exec()
 	}
 
