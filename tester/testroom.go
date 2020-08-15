@@ -7,7 +7,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/cwd-k2/titania.go/client"
 )
@@ -25,7 +24,7 @@ type Config struct {
 }
 
 // TestRoom
-// contains paiza.io API client, config, and map of TestUnits
+// contains paiza.io API client, config, and map of TestUnits, map of TestCases
 type TestRoom struct {
 	Client    *client.Client
 	Config    *Config
@@ -92,47 +91,87 @@ func MakeTestRooms(directories []string) map[string]*TestRoom {
 	return testRooms
 }
 
-// 実際に paiza.io の API を利用して実行結果をもらう
 func (testRoom *TestRoom) Exec() {
+	ch := make(chan []string)
 
-	for unitName, testUnit := range testRoom.TestUnits {
-		fmt.Printf("  [UNIT] %s\n", unitName)
-		fmt.Printf("    [LANG] %s\n", strings.ToUpper(testUnit.Language))
-		wg := new(sync.WaitGroup)
+	exec := func(unitName string, caseName string) {
+		client := testRoom.Client
+		testUnit := testRoom.TestUnits[unitName]
+		testCase := testRoom.TestCases[caseName]
 
-		for caseName, testCase := range testRoom.TestCases {
+		// 実際に paiza.io の API を利用して実行結果をもらう
+		runnersCreateResponse, err :=
+			client.RunnersCreate(
+				testUnit.SourceCode,
+				testUnit.Language,
+				testCase.Input)
 
-			wg.Add(1)
-
-			exec := func(caseName string, testCase *TestCase) {
-				defer wg.Done()
-
-				runnersCreateResponse, err :=
-					testRoom.Client.RunnersCreate(
-						testUnit.SourceCode,
-						testUnit.Language,
-						testCase.Input)
-				if err != nil {
-					return
-				}
-
-				runnersGetDetailsResponse, err :=
-					testRoom.Client.RunnersGetDetails(runnersCreateResponse.ID)
-				if err != nil {
-					return
-				}
-
-				if runnersGetDetailsResponse.STDOUT == testCase.Output {
-					fmt.Printf("    [CASE] %s [OK]\n", caseName)
-				} else {
-					fmt.Printf("    [CASE] %s [NG]\n", caseName)
-				}
-
-			}
-
-			go exec(caseName, testCase)
-
+		if err != nil {
+			ch <- []string{unitName, caseName, "FAIL", err.Error()}
+			return
 		}
-		wg.Wait()
+
+		runnersGetDetailsResponse, err :=
+			client.RunnersGetDetails(runnersCreateResponse.ID)
+
+		if err != nil {
+			ch <- []string{unitName, caseName, "FAIL", err.Error()}
+			return
+		}
+
+		// ビルドエラー
+		if !(runnersGetDetailsResponse.BuildResult == "success" ||
+			runnersGetDetailsResponse.BuildResult == "") {
+			ch <- []string{
+				unitName,
+				caseName,
+				strings.ToUpper(runnersGetDetailsResponse.BuildResult),
+				runnersGetDetailsResponse.BuildSTDERR,
+			}
+			return
+		}
+
+		// 実行時エラー
+		if runnersGetDetailsResponse.Result != "success" {
+			ch <- []string{
+				unitName,
+				caseName,
+				strings.ToUpper(runnersGetDetailsResponse.Result),
+				runnersGetDetailsResponse.STDERR,
+			}
+			return
+		}
+
+		// 出力が正しいかどうか
+		if runnersGetDetailsResponse.STDOUT == testCase.Output {
+			ch <- []string{unitName, caseName, "PASS"}
+		} else {
+			ch <- []string{unitName, caseName, "WA"}
+		}
+
+	}
+
+	testRoom.goEach(exec)
+
+	i := 0
+	j := len(testRoom.TestCases) * len(testRoom.TestUnits)
+
+	for msg := range ch {
+		i++
+		fmt.Printf("  [UNIT] %s\n", msg[0])
+		fmt.Printf("    [CASE] %s\n", msg[1])
+		fmt.Printf("    [STAT] %s\n", msg[2])
+		if i == j {
+			close(ch)
+		}
+	}
+
+}
+
+func (testRoom *TestRoom) goEach(delegateFunc func(string, string)) {
+	for unitName := range testRoom.TestUnits {
+		for caseName := range testRoom.TestCases {
+			go delegateFunc(unitName, caseName)
+		}
 	}
 }
