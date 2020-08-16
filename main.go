@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/cwd-k2/titania.go/option"
 	"github.com/cwd-k2/titania.go/pretty"
@@ -47,11 +49,19 @@ func main() {
 			}
 		}
 
-		output, err := json.MarshalIndent(details, "", "  ")
+		// JSON 形式に変換
+		rawout, err := json.MarshalIndent(details, "", "  ")
 		// JSON パース失敗
 		if err != nil {
 			panic(err)
 		}
+		// エスケープされた文字を戻す
+		output, err := strconv.Unquote(strings.Replace(strconv.Quote(string(rawout)), `\\u`, `\u`, -1))
+		// 変換失敗
+		if err != nil {
+			panic(err)
+		}
+
 		// 実行結果を JSON 形式で出力
 		defer fmt.Println(string(output))
 	}
