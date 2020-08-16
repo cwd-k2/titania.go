@@ -4,14 +4,14 @@ Just a testing tool, for single-file-programs using paiza.io API.
 
 ## Installation
 
-```sh
+```bash
 $ go get -u github.com/cwd-k2/titania.go
 ```
 
 ## Run
 
-```sh
-$ titania.go [directories]
+```bash
+$ titania.go [options] [directories]
 ```
 
 ### Prerequisite
@@ -47,6 +47,9 @@ $ titania.go example_01 example_02
 
 # or you can run with no args, then titania.go will take all subdirectories as targets.
 $ titania.go
+
+# you can specify languages to test on, with -lang flags
+$ titania.go --lang=ruby,haskell
 ```
 
 ## **IMPORTANT**
