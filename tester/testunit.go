@@ -17,6 +17,7 @@ type TestUnit struct {
 // returns map[string]*TestUnits
 func MakeTestUnits(
 	baseDirectoryPath string,
+	languageList []string,
 	sourceCodeDirectories []string) map[string]*TestUnit {
 
 	testUnits := make(map[string]*TestUnit)
@@ -40,7 +41,7 @@ func MakeTestUnits(
 			}
 
 			language := LanguageType(sourceFileName)
-			if language == "plain" {
+			if language == "plain" || !accepted(languageList, language) {
 				continue
 			}
 
@@ -57,4 +58,18 @@ func MakeTestUnits(
 	}
 
 	return testUnits
+}
+
+func accepted(array []string, element string) bool {
+	if len(array) == 0 {
+		return true
+	}
+
+	for _, e := range array {
+		if e == element {
+			return true
+		}
+	}
+
+	return false
 }

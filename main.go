@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/cwd-k2/titania.go/pretty"
 	"github.com/cwd-k2/titania.go/tester"
@@ -13,9 +15,17 @@ import (
 const VERSION = "0.0.0-alpha"
 
 func main() {
-	args := os.Args[1:]
+
+	// オプション解析
+	// テストする言語を指定する
+	var flagLanguages string
+	flag.StringVar(&flagLanguages, "lang", "", "languages to test (ex. --lang=ruby,python3,java)")
+
+	flag.Parse()
+	lang := strings.Split(flagLanguages, ",")
+	args := flag.Args()
+
 	var directories []string
-	// TODO: オプション解析したいね
 	if len(args) == 0 {
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -41,7 +51,7 @@ func main() {
 	details := make(map[string]interface{})
 
 	for _, dirname := range directories {
-		testRoom := tester.NewTestRoom(dirname)
+		testRoom := tester.NewTestRoom(dirname, lang)
 		// 実行するテストがない
 		if testRoom == nil {
 			continue
@@ -56,6 +66,7 @@ func main() {
 	}
 
 	if i == 0 {
+		// 何もテストが実行されなかった場合
 		println("Uh, OK, there's no test.")
 	} else {
 		output, err := json.MarshalIndent(details, "", "  ")

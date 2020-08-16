@@ -36,7 +36,7 @@ type TestRoom struct {
 
 // NewTestRoom
 // returns *TestRoom
-func NewTestRoom(dirname string) *TestRoom {
+func NewTestRoom(dirname string, languages []string) *TestRoom {
 	baseDirectoryPath, err := filepath.Abs(dirname)
 	// ここのエラーは公式のドキュメント見てもわからんのだけど何？
 	if err != nil {
@@ -79,6 +79,7 @@ func NewTestRoom(dirname string) *TestRoom {
 	// テストユニット
 	testUnits := MakeTestUnits(
 		baseDirectoryPath,
+		languages,
 		config.SourceCodeDirectories)
 
 	// テストユニットがなければ実行しない
