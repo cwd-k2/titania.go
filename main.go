@@ -18,7 +18,7 @@ func main() {
 
 	// 実行されたターゲットの数
 	i := 0
-	details := make(map[string]interface{})
+	details := make(map[string][]*tester.TestInfo)
 
 	for _, dirname := range directories {
 		testRoom := tester.NewTestRoom(dirname, languages)
@@ -28,11 +28,9 @@ func main() {
 		}
 
 		i++
-		fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Green(dirname)))
+		fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(dirname)))
 		results := testRoom.Exec()
 
-		// 要約 遅延実行でもええ
-		defer tester.WrapUp(dirname, results)
 		details[dirname] = results
 	}
 
@@ -40,12 +38,22 @@ func main() {
 		// 何もテストが実行されなかった場合
 		println("Uh, OK, there's no test.")
 	} else {
+		fmt.Fprintf(os.Stderr, "\n%s\n\n", pretty.Bold("ALL DONE"))
+
+		for _, dirname := range directories {
+			// 要約
+			if details[dirname] != nil {
+				tester.WrapUp(dirname, details[dirname])
+			}
+		}
+
 		output, err := json.MarshalIndent(details, "", "  ")
+		// JSON パース失敗
 		if err != nil {
 			panic(err)
 		}
 		// 実行結果を JSON 形式で出力
-		fmt.Println(string(output))
+		defer fmt.Println(string(output))
 	}
 
 }

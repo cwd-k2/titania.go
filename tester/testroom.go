@@ -160,7 +160,7 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 			testCase.Input)
 
 	if err != nil {
-		testInfo.Result = "TEST FAIL"
+		testInfo.Result = "CLIENT ERROR"
 		testInfo.Error = err.Error()
 		testInfo.Time = ""
 		return testInfo
@@ -170,7 +170,7 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 		client.RunnersGetDetails(runnersCreateResponse.ID)
 
 	if err != nil {
-		testInfo.Result = "TEST FAIL"
+		testInfo.Result = "CLIENT ERROR"
 		testInfo.Error = err.Error()
 		testInfo.Time = ""
 		return testInfo
