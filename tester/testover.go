@@ -16,7 +16,7 @@ func WrapUp(dirname string, results []*TestInfo) {
 	for _, info := range results {
 		if info.UnitName != before {
 			before = info.UnitName
-			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Bold(pretty.Cyan(info.Language)), pretty.Bold(pretty.Blue(info.UnitName)))
+			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Bold(pretty.Green(info.Language)), pretty.Bold(pretty.Blue(info.UnitName)))
 		}
 		switch info.Result {
 		case "PASS":
