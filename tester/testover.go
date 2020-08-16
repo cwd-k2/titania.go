@@ -21,7 +21,7 @@ func WrapUp(dirname string, results []*TestInfo) {
 		switch info.Result {
 		case "PASS":
 			fmt.Fprintf(os.Stderr, "%s: %s %ss\n", pretty.Green(info.CaseName), pretty.Green(info.Result), info.Time)
-		case "WRONG ANSWER":
+		case "FAIL":
 			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Yellow(info.CaseName), pretty.Yellow(info.Result))
 		case "CLIENT ERROR":
 			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Magenta(info.CaseName), pretty.Magenta(info.Result))

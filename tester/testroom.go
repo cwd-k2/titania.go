@@ -190,7 +190,10 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 
 	// 実行時エラー
 	if runnersGetDetailsResponse.Result != "success" {
-		testInfo.Result = strings.ToUpper(runnersGetDetailsResponse.Result)
+		testInfo.Result =
+			fmt.Sprintf(
+				"EXECUTION %s",
+				strings.ToUpper(runnersGetDetailsResponse.Result))
 		testInfo.Error = runnersGetDetailsResponse.STDERR
 		testInfo.Time = ""
 		return testInfo
@@ -202,7 +205,7 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 		testInfo.Time = runnersGetDetailsResponse.Time
 		return testInfo
 	} else {
-		testInfo.Result = "WRONG ANSWER"
+		testInfo.Result = "FAIL"
 		testInfo.Time = runnersGetDetailsResponse.Time
 		return testInfo
 	}
