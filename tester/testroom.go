@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/cwd-k2/titania.go/client"
@@ -130,6 +131,13 @@ func (testRoom *TestRoom) Exec() []*TestInfo {
 		}
 	}
 
+	sort.Slice(results, func(i, j int) bool {
+		if results[i].UnitName == results[j].UnitName {
+			return results[i].CaseName < results[j].CaseName
+		} else {
+			return results[i].UnitName < results[j].UnitName
+		}
+	})
 	return results
 }
 
