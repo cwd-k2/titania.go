@@ -71,6 +71,10 @@ func (c *Client) api(
 		return nil, err
 	}
 
+	if response.StatusCode >= 400 {
+		return nil, errors.New(string(byteArray))
+	}
+
 	return byteArray, nil
 
 }
