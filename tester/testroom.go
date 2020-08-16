@@ -159,12 +159,11 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 			testCase.Input)
 
 	if err != nil {
-		switch err.(type) {
-		case client.ClientError:
-			testInfo.Result = "CLIENT ERROR"
-		case client.ServerError:
+		if err.Code >= 500 {
 			testInfo.Result = "SERVER ERROR"
-		default:
+		} else if err.Code >= 400 {
+			testInfo.Result = "CLIENT ERROR"
+		} else {
 			testInfo.Result = "TESTER ERROR"
 		}
 		testInfo.Error = err.Error()
@@ -176,12 +175,11 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 		testRoom.Client.RunnersGetDetails(runnersCreateResponse.ID)
 
 	if err != nil {
-		switch err.(type) {
-		case client.ClientError:
-			testInfo.Result = "CLIENT ERROR"
-		case client.ServerError:
+		if err.Code >= 500 {
 			testInfo.Result = "SERVER ERROR"
-		default:
+		} else if err.Code >= 400 {
+			testInfo.Result = "CLIENT ERROR"
+		} else {
 			testInfo.Result = "TESTER ERROR"
 		}
 		testInfo.Error = err.Error()

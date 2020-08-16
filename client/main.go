@@ -39,32 +39,16 @@ type Client struct {
 	Host   string
 }
 
-type ClientError struct {
-	Err error
-}
-
-type ServerError struct {
-	Err error
-}
-
-func (e ClientError) Error() string {
-	return e.Err.Error()
-}
-
-func (e ServerError) Error() string {
-	return e.Err.Error()
-}
-
 func (c *Client) api(
 	method string,
 	endpoint string,
-	params map[string]string) ([]byte, error) {
+	params map[string]string) ([]byte, *TitaniaClientError) {
 
 	httpClient := new(http.Client)
 
 	request, err := http.NewRequest(method, c.Host+endpoint, nil)
 	if err != nil {
-		return nil, err
+		return nil, &TitaniaClientError{-1, err}
 	}
 
 	query := request.URL.Query()
@@ -77,22 +61,21 @@ func (c *Client) api(
 
 	response, err := httpClient.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, &TitaniaClientError{-1, err}
 	}
 
 	defer response.Body.Close()
 
 	byteArray, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, err
-	}
-
-	if response.StatusCode >= 500 {
-		return nil, ServerError{errors.New(string(byteArray))}
+		return nil, &TitaniaClientError{-1, err}
 	}
 
 	if response.StatusCode >= 400 {
-		return nil, ClientError{errors.New(string(byteArray))}
+		return nil, &TitaniaClientError{
+			response.StatusCode,
+			errors.New(string(byteArray)),
+		}
 	}
 
 	return byteArray, nil
@@ -102,7 +85,7 @@ func (c *Client) api(
 func (c *Client) RunnersCreate(
 	sourceCode string,
 	language string,
-	input string) (*RunnersCreateResponse, error) {
+	input string) (*RunnersCreateResponse, *TitaniaClientError) {
 
 	runnersCreateResponse := new(RunnersCreateResponse)
 
@@ -118,15 +101,19 @@ func (c *Client) RunnersCreate(
 		return nil, err
 	}
 
-	if err := json.Unmarshal(byteArray, runnersCreateResponse); err != nil {
-		return nil, errors.New(fmt.Sprintf("%s\n%s", err.Error(), string(byteArray)))
+	if err := json.Unmarshal(
+		byteArray, runnersCreateResponse); err != nil {
+		return nil, &TitaniaClientError{
+			-1,
+			errors.New(fmt.Sprintf("%s\n%s", err.Error(), string(byteArray))),
+		}
 	}
 
 	return runnersCreateResponse, nil
 }
 
 func (c *Client) RunnersGetDetails(
-	id string) (*RunnersGetDetailsResponse, error) {
+	id string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
 
 	runnersGetDetailsResponse := new(RunnersGetDetailsResponse)
 
@@ -138,8 +125,12 @@ func (c *Client) RunnersGetDetails(
 		return nil, err
 	}
 
-	if err := json.Unmarshal(byteArray, runnersGetDetailsResponse); err != nil {
-		return nil, errors.New(fmt.Sprintf("%s\n%s", err.Error(), string(byteArray)))
+	if err := json.Unmarshal(
+		byteArray, runnersGetDetailsResponse); err != nil {
+		return nil, &TitaniaClientError{
+			-1,
+			errors.New(fmt.Sprintf("%s\n%s", err.Error(), string(byteArray))),
+		}
 	}
 
 	return runnersGetDetailsResponse, nil
