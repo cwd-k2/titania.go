@@ -2,6 +2,8 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -93,7 +95,7 @@ func (c *Client) RunnersCreate(
 	}
 
 	if err := json.Unmarshal(byteArray, runnersCreateResponse); err != nil {
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("%s\n%s", err.Error(), string(byteArray)))
 	}
 
 	return runnersCreateResponse, nil
@@ -113,7 +115,7 @@ func (c *Client) RunnersGetDetails(
 	}
 
 	if err := json.Unmarshal(byteArray, runnersGetDetailsResponse); err != nil {
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("%s\n%s", err.Error(), string(byteArray)))
 	}
 
 	return runnersGetDetailsResponse, nil
