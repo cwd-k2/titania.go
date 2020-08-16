@@ -143,7 +143,6 @@ func (testRoom *TestRoom) Exec() []*TestInfo {
 }
 
 func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
-	client := testRoom.Client
 	testUnit := testRoom.TestUnits[unitName]
 	testCase := testRoom.TestCases[caseName]
 	testInfo := new(TestInfo)
@@ -154,23 +153,37 @@ func (testRoom *TestRoom) execTest(unitName string, caseName string) *TestInfo {
 	// 実際に paiza.io の API を利用して実行結果をもらう
 	// この辺も分割したい
 	runnersCreateResponse, err :=
-		client.RunnersCreate(
+		testRoom.Client.RunnersCreate(
 			testUnit.SourceCode,
 			testUnit.Language,
 			testCase.Input)
 
 	if err != nil {
-		testInfo.Result = "CLIENT ERROR"
+		switch err.(type) {
+		case client.ClientError:
+			testInfo.Result = "CLIENT ERROR"
+		case client.ServerError:
+			testInfo.Result = "SERVER ERROR"
+		default:
+			testInfo.Result = "TESTER ERROR"
+		}
 		testInfo.Error = err.Error()
 		testInfo.Time = ""
 		return testInfo
 	}
 
 	runnersGetDetailsResponse, err :=
-		client.RunnersGetDetails(runnersCreateResponse.ID)
+		testRoom.Client.RunnersGetDetails(runnersCreateResponse.ID)
 
 	if err != nil {
-		testInfo.Result = "CLIENT ERROR"
+		switch err.(type) {
+		case client.ClientError:
+			testInfo.Result = "CLIENT ERROR"
+		case client.ServerError:
+			testInfo.Result = "SERVER ERROR"
+		default:
+			testInfo.Result = "TESTER ERROR"
+		}
 		testInfo.Error = err.Error()
 		testInfo.Time = ""
 		return testInfo

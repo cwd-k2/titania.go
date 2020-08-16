@@ -40,7 +40,7 @@ func main() {
 		// 何もテストが実行されなかった場合
 		println("Uh, OK, there's no test.")
 	} else {
-		fmt.Fprintf(os.Stderr, "\n%s\n\n", pretty.Bold("ALL DONE"))
+		fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold("ALL DONE"))
 
 		for _, dirname := range directories {
 			// 要約

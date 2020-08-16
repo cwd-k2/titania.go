@@ -39,6 +39,22 @@ type Client struct {
 	Host   string
 }
 
+type ClientError struct {
+	Err error
+}
+
+type ServerError struct {
+	Err error
+}
+
+func (e ClientError) Error() string {
+	return e.Err.Error()
+}
+
+func (e ServerError) Error() string {
+	return e.Err.Error()
+}
+
 func (c *Client) api(
 	method string,
 	endpoint string,
@@ -71,8 +87,12 @@ func (c *Client) api(
 		return nil, err
 	}
 
+	if response.StatusCode >= 500 {
+		return nil, ServerError{errors.New(string(byteArray))}
+	}
+
 	if response.StatusCode >= 400 {
-		return nil, errors.New(string(byteArray))
+		return nil, ClientError{errors.New(string(byteArray))}
 	}
 
 	return byteArray, nil

@@ -11,7 +11,7 @@ import (
 func WrapUp(dirname string, results []*TestInfo) {
 	var before string
 
-	fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(dirname)))
+	fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold(pretty.Cyan(dirname)))
 	// results はもうこの時点でソートされてる
 	for _, info := range results {
 		if info.UnitName != before {
@@ -25,6 +25,10 @@ func WrapUp(dirname string, results []*TestInfo) {
 			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Yellow(info.CaseName), pretty.Yellow(info.Result))
 		case "CLIENT ERROR":
 			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Magenta(info.CaseName), pretty.Magenta(info.Result))
+		case "SERVER ERROR":
+			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Blue(info.CaseName), pretty.Blue(info.Result))
+		case "TESTER ERROR":
+			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Bold(pretty.Red(info.CaseName)), pretty.Bold(pretty.Red(info.Result)))
 		default:
 			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Red(info.CaseName), pretty.Red(info.Result))
 		}
