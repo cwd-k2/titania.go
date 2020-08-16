@@ -39,7 +39,7 @@ func NewTestRoom(dirname string) *TestRoom {
 	baseDirectoryPath, err := filepath.Abs(dirname)
 	// ここのエラーは公式のドキュメント見てもわからんのだけど何？
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
+		println(err)
 		return nil
 	}
 

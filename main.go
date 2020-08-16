@@ -43,14 +43,14 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("%s\n", pretty.Bold(pretty.Green(dirname)))
+		fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Green(dirname)))
 		i++
 		results := testRoom.Exec()
 		defer tester.WrapUp(results)
 	}
 
 	if i == 0 {
-		fmt.Fprintf(os.Stderr, "Uh, OK, there's no test.\n")
+		println("Uh, OK, there's no test.")
 	}
 
 }

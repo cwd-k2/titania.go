@@ -2,6 +2,7 @@ package tester
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/cwd-k2/titania.go/pretty"
 )
@@ -42,7 +43,8 @@ func InitTestView(
 
 func (testView *TestView) Start() {
 	for _, index := range testView.Indexes {
-		fmt.Printf(
+		fmt.Fprintf(
+			os.Stderr,
 			"[%s] %s %s\n",
 			pretty.Yellow("WAIT"),
 			"START",
@@ -59,14 +61,16 @@ func (testView *TestView) Refresh(testInfo *TestInfo) {
 	pretty.Up((testView.Units - position))
 	pretty.Erase()
 	if testView.Counters[unitName] == testView.Cases {
-		fmt.Printf(
+		fmt.Fprintf(
+			os.Stderr,
 			"[%s] %02d/%02d %s",
 			pretty.Green("DONE"),
 			testView.Counters[unitName],
 			testView.Cases,
 			pretty.Blue(unitName))
 	} else {
-		fmt.Printf(
+		fmt.Fprintf(
+			os.Stderr,
 			"[%s] %02d/%02d %s",
 			pretty.Yellow("WAIT"),
 			testView.Counters[unitName],

@@ -1,9 +1,7 @@
 package tester
 
 import (
-	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -31,7 +29,7 @@ func MakeTestCases(
 		outFileNames, err := filepath.Glob(outFileNamePattern)
 		// ここのエラーは bad pattern
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			println(err)
 			continue
 		}
 
@@ -40,7 +38,7 @@ func MakeTestCases(
 		inFileNames, err := filepath.Glob(inFileNamePattern)
 		// ここのエラーは bad pattern
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			println(err)
 			continue
 		}
 
@@ -51,7 +49,7 @@ func MakeTestCases(
 			byteArray, err := ioutil.ReadFile(outFileName)
 			// ファイル読み取り失敗
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				println(err)
 				testCases[caseName] = nil
 				continue
 			}
@@ -67,7 +65,7 @@ func MakeTestCases(
 			byteArray, err := ioutil.ReadFile(inFileName)
 			// ファイル読み取り失敗
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				println(err)
 				testCases[caseName] = nil
 				continue
 			}

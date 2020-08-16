@@ -1,29 +1,32 @@
 package pretty
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 func Up(n int) {
-	fmt.Printf("\033[%dA", n)
+	fmt.Fprintf(os.Stderr, "\033[%dA", n)
 }
 
 func Down(n int) {
-	fmt.Printf("\033[%dB", n)
+	fmt.Fprintf(os.Stderr, "\033[%dB", n)
 }
 
 func Right(n int) {
-	fmt.Printf("\033[%dC", n)
+	fmt.Fprintf(os.Stderr, "\033[%dC", n)
 }
 
 func Left(n int) {
-	fmt.Printf("\033[%dD", n)
+	fmt.Fprintf(os.Stderr, "\033[%dD", n)
 }
 
 func Erase() {
-	fmt.Printf("\033[2K\033[G")
+	fmt.Fprintf(os.Stderr, "\033[2K\033[G")
 }
 
 func Beginning() {
-	fmt.Printf("\033[G")
+	fmt.Fprintf(os.Stderr, "\033[G")
 }
 
 func Bold(str string) string {

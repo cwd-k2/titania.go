@@ -1,9 +1,7 @@
 package tester
 
 import (
-	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -29,7 +27,7 @@ func MakeTestUnits(
 		sourceFileNames, err := filepath.Glob(sourceFileNamePattern)
 		// ここのエラーは bad pattern
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			println(err)
 			continue
 		}
 
@@ -37,7 +35,7 @@ func MakeTestUnits(
 			byteArray, err := ioutil.ReadFile(sourceFileName)
 			// ファイル読み取り失敗
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				println(err)
 				continue
 			}
 
