@@ -16,9 +16,9 @@ $ titania.go [directories]
 
 ### Prerequisite
 
-Make sure `$GOBIN` is included in your `$PATH`.
+Make sure `titania.go` is in your `$PATH`.
 
-And the target directories should contain `titania.json`.
+And the target directories should contain `titania.json`, that is like below.
 
 ```
 {
@@ -28,22 +28,41 @@ And the target directories should contain `titania.json`.
   "test_case_directories": ["./test_case"],  // directories containing input/answer for test
   "test_case_input_extension": ".in",        // input files' extension
   "test_case_output_extension": ".out",      // answer files' extension
-  "max_processes": 10               // meh I haven't implemented yet
+  "max_processes": 10               // I haven't implemented yet
 }
 ```
-
-`titania.json`'s example is [here](https://github.com/cwd-k2/titania.example/tree/master/example_01/titania.json) or [there](https://github.com/cwd-k2/titania.example/tree/master/example_02/titania.json)
 
 ### Example
 
 Examples are in [here](https://github.com/cwd-k2/titania.example).
 
-```sh
+```bash
 $ cd example
+
 # just specify one directory.
 $ titania.go example_01
+
 # two or more is also okay.
 $ titania.go example_01 example_02
+
 # or you can run with no args, then titania.go will take all subdirectories as targets.
 $ titania.go
+```
+
+## **IMPORTANT**
+
+All _INTERESTING_ (but not so important) information that pop up at runtime, will write out to **STDERR**.
+
+And the **test results' details** will be written to **STDOUT**, in JSON format.
+
+So, if you want to record the results, below is the usage.
+
+```bash
+$ titania.go [directories] > <filename>
+```
+
+Or, if you just want to know runtime information (includes summary), just go like below.
+
+```bash
+$ titania.go [directories] > /dev/null
 ```
