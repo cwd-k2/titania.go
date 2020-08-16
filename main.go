@@ -20,7 +20,7 @@ func main() {
 
 	// 実行されたターゲットの数
 	i := 0
-	details := make(map[string][]*tester.TestInfo)
+	details := make(map[string][]*tester.TestOver)
 
 	for _, dirname := range directories {
 		testRoom := tester.NewTestRoom(dirname, languages)
@@ -55,8 +55,10 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
 		// エスケープされた文字を戻す
-		output, err := strconv.Unquote(strings.Replace(strconv.Quote(string(rawout)), `\\u`, `\u`, -1))
+		output, err := strconv.Unquote(
+			strings.Replace(strconv.Quote(string(rawout)), `\\u`, `\u`, -1))
 		// 変換失敗
 		if err != nil {
 			panic(err)

@@ -52,8 +52,7 @@ func (testView *TestView) Start() {
 	}
 }
 
-func (testView *TestView) Refresh(testInfo *TestInfo) {
-	unitName := testInfo.UnitName
+func (testView *TestView) Refresh(unitName string) {
 	position := testView.Positions[unitName]
 
 	testView.Counters[unitName]++
