@@ -31,7 +31,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Green(dirname)))
 		results := testRoom.Exec()
 
-		defer tester.WrapUp(results)
+		// 要約 遅延実行でもええ
+		defer tester.WrapUp(dirname, results)
 		details[dirname] = results
 	}
 
@@ -41,7 +42,7 @@ func main() {
 	} else {
 		output, err := json.MarshalIndent(details, "", "  ")
 		if err != nil {
-			println(err)
+			panic(err)
 		}
 		// 実行結果を JSON 形式で出力
 		fmt.Println(string(output))

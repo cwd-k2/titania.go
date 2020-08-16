@@ -19,6 +19,7 @@ func Parse() ([]string, []string) {
 	args := flag.Args()
 
 	var directories []string
+
 	if len(args) == 0 {
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -40,5 +41,11 @@ func Parse() ([]string, []string) {
 		directories = args
 	}
 
-	return directories, strings.Split(flagLanguages, ",")
+	var languages []string
+
+	if flagLanguages != "" {
+		languages = strings.Split(flagLanguages, ",")
+	}
+
+	return directories, languages
 }
