@@ -75,6 +75,16 @@ func NewTestRoom(dirname string) *TestRoom {
 	client.Host = config.Host
 	client.APIKey = config.APIKey
 
+	// テストユニット
+	testUnits := MakeTestUnits(
+		baseDirectoryPath,
+		config.SourceCodeDirectories)
+
+	// テストユニットがなければ実行しない
+	if len(testUnits) == 0 {
+		return nil
+	}
+
 	// テストケース
 	testCases := MakeTestCases(
 		baseDirectoryPath,
@@ -82,10 +92,10 @@ func NewTestRoom(dirname string) *TestRoom {
 		config.TestCaseInputExtension,
 		config.TestCaseOutputExtension)
 
-	// テストユニット
-	testUnits := MakeTestUnits(
-		baseDirectoryPath,
-		config.SourceCodeDirectories)
+	// テストケースがなければ実行しない
+	if len(testCases) == 0 {
+		return nil
+	}
 
 	testRoom := new(TestRoom)
 	testRoom.Client = client
