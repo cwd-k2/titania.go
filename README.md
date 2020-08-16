@@ -14,6 +14,8 @@ $ go get -u github.com/cwd-k2/titania.go
 $ titania.go [options] [directories]
 ```
 
+The options should be before other arguments.
+
 ### Prerequisite
 
 Make sure `titania.go` is in your `$PATH`.
@@ -48,7 +50,7 @@ $ titania.go example_01 example_02
 # or you can run with no args, then titania.go will take all subdirectories as targets.
 $ titania.go
 
-# you can specify languages to test on, with -lang flags
+# you can specify languages to test on, with -lang flag
 $ titania.go --lang=ruby,haskell
 ```
 
@@ -61,7 +63,7 @@ And the **test results' details** will be written to **STDOUT**, in JSON format.
 So, if you want to record the results, below is the usage.
 
 ```bash
-$ titania.go [directories] > <filename>
+$ titania.go [directories] > filename.json
 ```
 
 Or, if you just want to know runtime information (includes summary), just go like below.
