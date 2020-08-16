@@ -48,7 +48,7 @@ func (testView *TestView) Start() {
 			"[%s] %s %s\n",
 			pretty.Yellow("WAIT"),
 			"START",
-			pretty.Blue(index))
+			pretty.Bold(pretty.Blue(index)))
 	}
 }
 
@@ -67,7 +67,7 @@ func (testView *TestView) Refresh(testInfo *TestInfo) {
 			pretty.Green("DONE"),
 			testView.Counters[unitName],
 			testView.Cases,
-			pretty.Blue(unitName))
+			pretty.Bold(pretty.Blue(unitName)))
 	} else {
 		fmt.Fprintf(
 			os.Stderr,
@@ -75,7 +75,7 @@ func (testView *TestView) Refresh(testInfo *TestInfo) {
 			pretty.Yellow("WAIT"),
 			testView.Counters[unitName],
 			testView.Cases,
-			pretty.Blue(unitName))
+			pretty.Bold(pretty.Blue(unitName)))
 	}
 	pretty.Down(testView.Units - position)
 	pretty.Beginning()
