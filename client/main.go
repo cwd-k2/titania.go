@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -43,21 +44,22 @@ func (c *Client) api(
 	method, endpoint string,
 	params map[string]string) ([]byte, *TitaniaClientError) {
 
-	httpClient := new(http.Client)
+	params["api_key"] = c.APIKey
 
-	request, err := http.NewRequest(method, c.Host+endpoint, nil)
+	body, err := json.Marshal(params)
 	if err != nil {
 		return nil, &TitaniaClientError{-1, err}
 	}
 
-	query := request.URL.Query()
-	query.Add("api_key", c.APIKey)
-	for k, v := range params {
-		query.Add(k, v)
+	request, err := http.NewRequest(
+		method, c.Host+endpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, &TitaniaClientError{-1, err}
 	}
 
-	request.URL.RawQuery = query.Encode()
+	request.Header.Set("Content-Type", "application/json")
 
+	httpClient := new(http.Client)
 	response, err := httpClient.Do(request)
 	if err != nil {
 		return nil, &TitaniaClientError{-1, err}
@@ -103,6 +105,12 @@ func (c *Client) RunnersCreate(
 		return nil, &TitaniaClientError{
 			-1,
 			errors.New(fmt.Sprintf("%s\n%s", err.Error(), string(byteArray))),
+		}
+	}
+
+	if runnersCreateResponse.ID == "" {
+		return nil, &TitaniaClientError{
+			-1, errors.New(fmt.Sprintf("%s\n%s", "error?", string(byteArray))),
 		}
 	}
 
