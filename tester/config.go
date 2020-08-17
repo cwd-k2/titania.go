@@ -18,7 +18,6 @@ type Config struct {
 	TestCaseDirectories     []string `json:"test_case_directories"`
 	TestCaseInputExtension  string   `json:"test_case_input_extension"`
 	TestCaseOutputExtension string   `json:"test_case_output_extension"`
-	MaxProcesses            uint     `json:"max_processes"`
 }
 
 func NewConfig(baseDirectoryPath string) *Config {
@@ -42,10 +41,7 @@ func NewConfig(baseDirectoryPath string) *Config {
 
 	// JSON パース失敗
 	if err := json.Unmarshal(configRawData, config); err != nil {
-		fmt.Fprintf(
-			os.Stderr,
-			"Couldn't parse %s.\n%s\n",
-			configFileName, err)
+		fmt.Fprintf(os.Stderr, "Couldn't parse %s.\n%s\n", configFileName, err)
 		return nil
 	}
 
