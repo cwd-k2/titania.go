@@ -57,7 +57,7 @@ func (testView *TestView) Refresh(unitName string) {
 
 	testView.Counters[unitName]++
 
-	pretty.Up((testView.Units - position))
+	pretty.Up(testView.Units - position)
 	pretty.Erase()
 	if testView.Counters[unitName] == testView.Cases {
 		fmt.Fprintf(
