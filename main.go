@@ -17,7 +17,7 @@ func main() {
 	// ターゲットのディレクトリと言語
 	directories, languages := OptParse()
 
-	var outgoes []*tester.ShowRoom
+	var outcomes []*tester.ShowRoom
 
 	for _, dirname := range directories {
 		testRoom := tester.NewTestRoom(dirname, languages)
@@ -29,24 +29,24 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(dirname)))
 		fruits := testRoom.Exec()
 
-		outgo := new(tester.ShowRoom)
-		outgo.RoomName = dirname
-		outgo.Fruits = fruits
-		outgoes = append(outgoes, outgo)
+		outcome := new(tester.ShowRoom)
+		outcome.RoomName = dirname
+		outcome.Fruits = fruits
+		outcomes = append(outcomes, outcome)
 	}
 
-	if outgoes == nil {
+	if outcomes == nil {
 		// 何もテストが実行されなかった場合
 		println("Uh, OK, there's no test.")
 	} else {
 		fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold("ALL DONE"))
 
-		for _, outgo := range outgoes {
-			tester.WrapUp(outgo)
+		for _, outcome := range outcomes {
+			tester.WrapUp(outcome)
 		}
 
 		// JSON 形式に変換
-		rawout, err := json.MarshalIndent(outgoes, "", "  ")
+		rawout, err := json.MarshalIndent(outcomes, "", "  ")
 		// JSON パース失敗
 		if err != nil {
 			panic(err)

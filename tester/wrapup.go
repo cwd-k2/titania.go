@@ -27,9 +27,9 @@ type ShowCase struct {
 }
 
 // 流石に雑すぎる ちゃんと要約して
-func WrapUp(outgo *ShowRoom) {
-	fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold(pretty.Cyan(outgo.RoomName)))
-	for _, fruit := range outgo.Fruits {
+func WrapUp(outcome *ShowRoom) {
+	fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold(pretty.Cyan(outcome.RoomName)))
+	for _, fruit := range outcome.Fruits {
 
 		fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.UnitName)))
 
