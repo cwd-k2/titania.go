@@ -19,7 +19,7 @@ func cleanerPath(pwd, directory string) (string, error) {
 	} else {
 		dirname, err := filepath.Rel(pwd, filepath.Join(pwd, directory))
 		if err != nil {
-			return dirname, err
+			return "", err
 		}
 		return dirname, nil
 	}
