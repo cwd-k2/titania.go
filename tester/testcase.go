@@ -10,6 +10,7 @@ import (
 // TestCase
 // contains input and output texts
 type TestCase struct {
+	Name   string
 	Input  string
 	Output string
 }
@@ -54,6 +55,7 @@ func MakeTestCases(
 			}
 
 			testCases[caseName] = new(TestCase)
+			testCases[caseName].Name = caseName
 			testCases[caseName].Output = string(byteArray)
 		}
 

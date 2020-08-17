@@ -12,6 +12,7 @@ import (
 // TestRoom
 // contains paiza.io API client, config, and map of TestUnits, map of TestCases
 type TestRoom struct {
+	Name      string
 	Client    *client.Client
 	Config    *Config
 	TestUnits map[string]*TestUnit
@@ -68,6 +69,7 @@ func NewTestRoom(dirname string, languages []string) *TestRoom {
 	}
 
 	testRoom := new(TestRoom)
+	testRoom.Name = dirname
 	testRoom.Client = client
 	testRoom.Config = config
 	testRoom.TestUnits = testUnits
@@ -88,8 +90,8 @@ func (testRoom *TestRoom) Exec() []*TestOver {
 		over[unitName] = testOver
 	}
 
-	testRoom.goEach(func(unitName, caseName string) {
-		ch <- testRoom.execTest(unitName, caseName)
+	testRoom.goEach(func(testUnit *TestUnit, testCase *TestCase) {
+		ch <- testRoom.execTest(testUnit, testCase)
 	})
 
 	// 出力する
@@ -126,10 +128,12 @@ func (testRoom *TestRoom) Exec() []*TestOver {
 	return results
 }
 
-func (testRoom *TestRoom) execTest(unitName, caseName string) execinfo {
+func (testRoom *TestRoom) execTest(
+	testUnit *TestUnit, testCase *TestCase) execinfo {
 
-	testUnit := testRoom.TestUnits[unitName]
-	testCase := testRoom.TestCases[caseName]
+	unitName := testUnit.Name
+	caseName := testCase.Name
+
 	testInfo := new(TestInfo)
 	testInfo.CaseName = caseName
 
@@ -178,10 +182,10 @@ func (testRoom *TestRoom) execTest(unitName, caseName string) execinfo {
 
 }
 
-func (testRoom *TestRoom) goEach(delegateFunc func(string, string)) {
-	for unitName := range testRoom.TestUnits {
-		for caseName := range testRoom.TestCases {
-			go delegateFunc(unitName, caseName)
+func (testRoom *TestRoom) goEach(delegateFunc func(*TestUnit, *TestCase)) {
+	for _, testUnit := range testRoom.TestUnits {
+		for _, testCase := range testRoom.TestCases {
+			go delegateFunc(testUnit, testCase)
 		}
 	}
 }

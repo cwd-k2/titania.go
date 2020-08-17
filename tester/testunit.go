@@ -10,6 +10,7 @@ import (
 // TestUnit
 // contains source code, its language
 type TestUnit struct {
+	Name       string
 	SourceCode string
 	Language   string
 }
@@ -51,6 +52,7 @@ func MakeTestUnits(
 					strings.Replace(sourceFileName, baseDirectoryPath, "", 1))
 
 			testUnit := new(TestUnit)
+			testUnit.Name = unitName
 			testUnit.SourceCode = string(byteArray)
 			testUnit.Language = language
 			testUnits[unitName] = testUnit
