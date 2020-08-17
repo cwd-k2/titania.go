@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cwd-k2/titania.go/option"
 	"github.com/cwd-k2/titania.go/pretty"
 	"github.com/cwd-k2/titania.go/tester"
 )
@@ -16,7 +15,7 @@ const VERSION = "0.0.0-alpha"
 
 func main() {
 	// ターゲットのディレクトリと言語
-	directories, languages := option.Parse()
+	directories, languages := OptParse()
 
 	// 実行されたターゲットの数
 	i := 0

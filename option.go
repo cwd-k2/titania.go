@@ -1,4 +1,4 @@
-package option
+package main
 
 import (
 	"flag"
@@ -8,7 +8,7 @@ import (
 )
 
 // オプション解析
-func Parse() ([]string, []string) {
+func OptParse() ([]string, []string) {
 	// テストする言語を指定する
 	var flagLanguages string
 	flag.StringVar(
