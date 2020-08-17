@@ -94,7 +94,7 @@ func (testRoom *TestRoom) Exec() []*ShowUnit {
 
 	testRoom.goEach(func(testUnit *TestUnit, testCase *TestCase) {
 		info := testRoom.execTest(testUnit, testCase)
-		view.Update(info.UnitName)
+		go view.Update(info.UnitName)
 		ch <- info
 	})
 
