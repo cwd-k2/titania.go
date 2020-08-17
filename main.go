@@ -17,7 +17,7 @@ func main() {
 	// ターゲットのディレクトリと言語
 	directories, languages := OptParse()
 
-	var outcomes []*tester.ShowRoom
+	var outcomes []*tester.ShowUnit
 
 	for _, dirname := range directories {
 		testRoom := tester.NewTestRoom(dirname, languages)
@@ -29,8 +29,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(dirname)))
 		fruits := testRoom.Exec()
 
-		outcome := new(tester.ShowRoom)
-		outcome.RoomName = dirname
+		outcome := new(tester.ShowUnit)
+		outcome.Name = dirname
 		outcome.Fruits = fruits
 		outcomes = append(outcomes, outcome)
 	}

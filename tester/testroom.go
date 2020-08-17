@@ -72,17 +72,17 @@ func NewTestRoom(dirname string, languages []string) *TestRoom {
 	return testRoom
 }
 
-func (testRoom *TestRoom) Exec() []*ShowUnit {
+func (testRoom *TestRoom) Exec() []*ShowCode {
 	ch := make(chan string)
 
 	view := InitView(testRoom.TestUnits, testRoom.TestCases)
 	view.Draw()
 
-	overs := make(map[string]*ShowUnit)
+	overs := make(map[string]*ShowCode)
 
 	for unitName, testUnit := range testRoom.TestUnits {
-		over := new(ShowUnit)
-		over.UnitName = unitName
+		over := new(ShowCode)
+		over.Name = unitName
 		over.Language = testUnit.Language
 		overs[unitName] = over
 	}
@@ -106,17 +106,17 @@ func (testRoom *TestRoom) Exec() []*ShowUnit {
 		}
 	}
 
-	var fruits []*ShowUnit
+	var fruits []*ShowCode
 
 	for _, over := range overs {
 		sort.Slice(over.Details, func(i, j int) bool {
-			return over.Details[i].CaseName < over.Details[j].CaseName
+			return over.Details[i].Name < over.Details[j].Name
 		})
 		fruits = append(fruits, over)
 	}
 
 	sort.Slice(fruits, func(i, j int) bool {
-		return fruits[i].UnitName < fruits[j].UnitName
+		return fruits[i].Name < fruits[j].Name
 	})
 
 	return fruits
@@ -129,7 +129,7 @@ func (testRoom *TestRoom) execTest(
 	caseName := testCase.Name
 
 	ShowCase := new(ShowCase)
-	ShowCase.CaseName = caseName
+	ShowCase.Name = caseName
 
 	// 実際に paiza.io の API を利用して実行結果をもらう
 	resp, err := testRoom.Client.Do(testUnit.SourceCode, testUnit.Language, testCase.Input)
