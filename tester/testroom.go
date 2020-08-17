@@ -99,7 +99,7 @@ func (testRoom *TestRoom) Exec() []*ShowUnit {
 
 	for unitName := range ch {
 		curr++
-		go view.Update(unitName)
+		view.Update(unitName)
 
 		if curr == stop {
 			close(ch)
