@@ -8,18 +8,18 @@ import (
 )
 
 type ShowUnit struct {
-	Name   string      `json:"unit"`
+	Name   string      `json:"target"`
 	Fruits []*ShowCode `json:"fruits"`
 }
 
 type ShowCode struct {
-	Name     string      `json:"code"`
+	Name     string      `json:"source_code"`
 	Language string      `json:"language"`
 	Details  []*ShowCase `json:"details"`
 }
 
 type ShowCase struct {
-	Name   string `json:"case"`
+	Name   string `json:"test_case"`
 	Result string `json:"result"`
 	Time   string `json:"time"`
 	OutPut string `json:"output"`
