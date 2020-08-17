@@ -87,24 +87,24 @@ func (testRoom *TestRoom) Exec() []*TestOver {
 		over[unitName].Language = testUnit.Language
 	}
 
-	testRoom.goEach(func(unitName string, caseName string) {
+	testRoom.goEach(func(unitName, caseName string) {
 		ch <- testRoom.execTest(unitName, caseName)
 	})
 
 	// 出力する
 	view.Start()
 
-	i := 0
-	j := len(testRoom.TestUnits) * len(testRoom.TestCases)
+	curr := 0
+	stop := len(testRoom.TestUnits) * len(testRoom.TestCases)
 
-	for exei := range ch {
-		i++
-		view.Refresh(exei.UnitName)
+	for exec := range ch {
+		curr++
+		view.Refresh(exec.UnitName)
 
-		over[exei.UnitName].Details =
-			append(over[exei.UnitName].Details, exei.Info)
+		over[exec.UnitName].Details =
+			append(over[exec.UnitName].Details, exec.Info)
 
-		if i == j {
+		if curr == stop {
 			close(ch)
 		}
 	}
@@ -125,8 +125,7 @@ func (testRoom *TestRoom) Exec() []*TestOver {
 	return results
 }
 
-func (testRoom *TestRoom) execTest(
-	unitName string, caseName string) execinfo {
+func (testRoom *TestRoom) execTest(unitName, caseName string) execinfo {
 
 	testUnit := testRoom.TestUnits[unitName]
 	testCase := testRoom.TestCases[caseName]
@@ -134,28 +133,7 @@ func (testRoom *TestRoom) execTest(
 	testInfo.CaseName = caseName
 
 	// 実際に paiza.io の API を利用して実行結果をもらう
-	// この辺も分割したい
-	runnersCreateResponse, err :=
-		testRoom.Client.RunnersCreate(
-			testUnit.SourceCode,
-			testUnit.Language,
-			testCase.Input)
-
-	if err != nil {
-		if err.Code >= 500 {
-			testInfo.Result = "SERVER ERROR"
-		} else if err.Code >= 400 {
-			testInfo.Result = "CLIENT ERROR"
-		} else {
-			testInfo.Result = "TESTER ERROR"
-		}
-		testInfo.Error = err.Error()
-		testInfo.Time = ""
-		return execinfo{unitName, testInfo}
-	}
-
-	runnersGetDetailsResponse, err :=
-		testRoom.Client.RunnersGetDetails(runnersCreateResponse.ID)
+	resp, err := testRoom.Client.Do(testUnit.SourceCode, testUnit.Language, testCase.Input)
 
 	if err != nil {
 		if err.Code >= 500 {
@@ -171,36 +149,30 @@ func (testRoom *TestRoom) execTest(
 	}
 
 	// ビルドエラー
-	if !(runnersGetDetailsResponse.BuildResult == "success" ||
-		runnersGetDetailsResponse.BuildResult == "") {
-		testInfo.Result =
-			fmt.Sprintf(
-				"BUILD %s",
-				strings.ToUpper(runnersGetDetailsResponse.BuildResult))
-		testInfo.Error = runnersGetDetailsResponse.BuildSTDERR
+	if !(resp.BuildResult == "success" ||
+		resp.BuildResult == "") {
+		testInfo.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
+		testInfo.Error = resp.BuildSTDERR
 		testInfo.Time = ""
 		return execinfo{unitName, testInfo}
 	}
 
 	// 実行時エラー
-	if runnersGetDetailsResponse.Result != "success" {
-		testInfo.Result =
-			fmt.Sprintf(
-				"EXECUTION %s",
-				strings.ToUpper(runnersGetDetailsResponse.Result))
-		testInfo.Error = runnersGetDetailsResponse.STDERR
+	if resp.Result != "success" {
+		testInfo.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
+		testInfo.Error = resp.STDERR
 		testInfo.Time = ""
 		return execinfo{unitName, testInfo}
 	}
 
 	// 出力が正しいかどうか
-	if runnersGetDetailsResponse.STDOUT == testCase.Output {
+	if resp.STDOUT == testCase.Output {
 		testInfo.Result = "PASS"
 	} else {
 		testInfo.Result = "FAIL"
 	}
 
-	testInfo.Time = runnersGetDetailsResponse.Time
+	testInfo.Time = resp.Time
 	return execinfo{unitName, testInfo}
 
 }

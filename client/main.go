@@ -40,8 +40,7 @@ type Client struct {
 }
 
 func (c *Client) api(
-	method string,
-	endpoint string,
+	method, endpoint string,
 	params map[string]string) ([]byte, *TitaniaClientError) {
 
 	httpClient := new(http.Client)
@@ -83,9 +82,7 @@ func (c *Client) api(
 }
 
 func (c *Client) RunnersCreate(
-	sourceCode string,
-	language string,
-	input string) (*RunnersCreateResponse, *TitaniaClientError) {
+	sourceCode, language, input string) (*RunnersCreateResponse, *TitaniaClientError) {
 
 	runnersCreateResponse := new(RunnersCreateResponse)
 
@@ -134,4 +131,20 @@ func (c *Client) RunnersGetDetails(
 	}
 
 	return runnersGetDetailsResponse, nil
+}
+
+func (c *Client) Do(
+	sourceCode, language, input string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
+
+	resp1, err := c.RunnersCreate(sourceCode, language, input)
+	if err != nil {
+		return nil, err
+	}
+
+	resp2, err := c.RunnersGetDetails(resp1.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp2, nil
 }

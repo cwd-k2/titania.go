@@ -18,8 +18,7 @@ type TestCase struct {
 func MakeTestCases(
 	baseDirectoryPath string,
 	testCaseDirectories []string,
-	inputExt string,
-	outputExt string) map[string]*TestCase {
+	inputExt, outputExt string) map[string]*TestCase {
 
 	testCases := make(map[string]*TestCase)
 
@@ -82,9 +81,8 @@ func MakeTestCases(
 }
 
 // helper function
-func makeCaseName(basepath string, filename string, ext string) string {
+func makeCaseName(basepath, filename, ext string) string {
 	return path.Join(
 		filepath.Base(basepath),
-		strings.Replace(
-			strings.Replace(filename, basepath, "", 1), ext, "", 1))
+		strings.Replace(strings.Replace(filename, basepath, "", 1), ext, "", 1))
 }
