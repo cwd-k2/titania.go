@@ -82,9 +82,10 @@ func (testRoom *TestRoom) Exec() []*TestOver {
 	over := make(map[string]*TestOver)
 
 	for unitName, testUnit := range testRoom.TestUnits {
-		over[unitName] = new(TestOver)
-		over[unitName].UnitName = unitName
-		over[unitName].Language = testUnit.Language
+		testOver := new(TestOver)
+		testOver.UnitName = unitName
+		testOver.Language = testUnit.Language
+		over[unitName] = testOver
 	}
 
 	testRoom.goEach(func(unitName, caseName string) {

@@ -50,9 +50,10 @@ func MakeTestUnits(
 					filepath.Base(baseDirectoryPath),
 					strings.Replace(sourceFileName, baseDirectoryPath, "", 1))
 
-			testUnits[unitName] = new(TestUnit)
-			testUnits[unitName].SourceCode = string(byteArray)
-			testUnits[unitName].Language = language
+			testUnit := new(TestUnit)
+			testUnit.SourceCode = string(byteArray)
+			testUnit.Language = language
+			testUnits[unitName] = testUnit
 
 		}
 	}
