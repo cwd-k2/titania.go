@@ -42,19 +42,20 @@ type Client struct {
 
 func (c *Client) api(
 	method, endpoint string,
-	params map[string]string) ([]byte, *TitaniaClientError) {
+	params map[string]string,
+	target interface{}) *TitaniaClientError {
 
 	params["api_key"] = c.APIKey
 
 	body, err := json.Marshal(params)
 	if err != nil {
-		return nil, &TitaniaClientError{-1, err}
+		return &TitaniaClientError{-1, err}
 	}
 
 	request, err := http.NewRequest(
 		method, c.Host+endpoint, bytes.NewReader(body))
 	if err != nil {
-		return nil, &TitaniaClientError{-1, err}
+		return &TitaniaClientError{-1, err}
 	}
 
 	request.Header.Set("Content-Type", "application/json")
@@ -62,24 +63,29 @@ func (c *Client) api(
 	httpClient := new(http.Client)
 	response, err := httpClient.Do(request)
 	if err != nil {
-		return nil, &TitaniaClientError{-1, err}
+		return &TitaniaClientError{-1, err}
 	}
 
 	defer response.Body.Close()
 
-	byteArray, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, &TitaniaClientError{-1, err}
-	}
-
 	if response.StatusCode >= 400 {
-		return nil, &TitaniaClientError{
+		byteArray, err := ioutil.ReadAll(response.Body)
+
+		if err != nil {
+			return &TitaniaClientError{-1, err}
+		}
+
+		return &TitaniaClientError{
 			response.StatusCode,
 			errors.New(string(byteArray)),
 		}
 	}
 
-	return byteArray, nil
+	if err := json.NewDecoder(response.Body).Decode(target); err != nil {
+		return &TitaniaClientError{-1, err}
+	}
+
+	return nil
 
 }
 
@@ -95,22 +101,13 @@ func (c *Client) RunnersCreate(
 	args["longpoll"] = "true"
 	args["longpoll_timeout"] = "100"
 
-	byteArray, err := c.api("POST", "/runners/create", args)
-	if err != nil {
+	if err := c.api("POST", "/runners/create", args, runnersCreateResponse); err != nil {
 		return nil, err
-	}
-
-	if err := json.Unmarshal(
-		byteArray, runnersCreateResponse); err != nil {
-		return nil, &TitaniaClientError{
-			-1,
-			errors.New(fmt.Sprintf("%s\n%s", err.Error(), string(byteArray))),
-		}
 	}
 
 	if runnersCreateResponse.ID == "" {
 		return nil, &TitaniaClientError{
-			-1, errors.New(fmt.Sprintf("%s\n%s", "error?", string(byteArray))),
+			-1, errors.New(fmt.Sprintf("%s\n%s", "error?", runnersCreateResponse.Error)),
 		}
 	}
 
@@ -125,17 +122,8 @@ func (c *Client) RunnersGetDetails(
 	args := make(map[string]string)
 	args["id"] = id
 
-	byteArray, err := c.api("GET", "/runners/get_details", args)
-	if err != nil {
+	if err := c.api("GET", "/runners/get_details", args, runnersGetDetailsResponse); err != nil {
 		return nil, err
-	}
-
-	if err := json.Unmarshal(
-		byteArray, runnersGetDetailsResponse); err != nil {
-		return nil, &TitaniaClientError{
-			-1,
-			errors.New(fmt.Sprintf("%s\n%s", err.Error(), string(byteArray))),
-		}
 	}
 
 	return runnersGetDetailsResponse, nil
