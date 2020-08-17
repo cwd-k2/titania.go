@@ -21,9 +21,9 @@ type ShowUnit struct {
 type ShowCase struct {
 	CaseName string `json:"case_name"`
 	Result   string `json:"result"`
-	Error    string `json:"error"`
 	Time     string `json:"time"`
 	OutPut   string `json:"output"`
+	Error    string `json:"error"`
 }
 
 // 流石に雑すぎる ちゃんと要約して
