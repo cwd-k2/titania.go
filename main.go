@@ -20,14 +20,14 @@ func main() {
 	var outcomes []*tester.ShowUnit
 
 	for _, dirname := range directories {
-		testRoom := tester.NewTestRoom(dirname, languages)
+		testUnit := tester.NewTestUnit(dirname, languages)
 		// 実行するテストがない
-		if testRoom == nil {
+		if testUnit == nil {
 			continue
 		}
 
 		fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(dirname)))
-		fruits := testRoom.Exec()
+		fruits := testUnit.Exec()
 
 		outcome := new(tester.ShowUnit)
 		outcome.Name = dirname
@@ -39,7 +39,6 @@ func main() {
 		// 何もテストが実行されなかった場合
 		println("Uh, OK, there's no test.")
 	} else {
-		fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold("ALL DONE"))
 
 		tester.WrapUp(outcomes)
 

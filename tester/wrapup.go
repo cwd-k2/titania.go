@@ -28,6 +28,9 @@ type ShowCase struct {
 
 // 流石に雑すぎる ちゃんと要約して
 func WrapUp(outcomes []*ShowUnit) {
+
+	fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold("ALL DONE"))
+
 	for _, outcome := range outcomes {
 
 		fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold(pretty.Cyan(outcome.Name)))

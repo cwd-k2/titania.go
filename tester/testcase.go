@@ -44,36 +44,36 @@ func MakeTestCases(
 
 		// 出力から先に決める
 		for _, outFileName := range outFileNames {
-			caseName := makeCaseName(baseDirectoryPath, outFileName, outputExt)
+			name := makeCaseName(baseDirectoryPath, outFileName, outputExt)
 
 			byteArray, err := ioutil.ReadFile(outFileName)
 			// ファイル読み取り失敗
 			if err != nil {
 				println(err)
-				testCases[caseName] = nil
+				testCases[name] = nil
 				continue
 			}
 
-			testCases[caseName] = new(TestCase)
-			testCases[caseName].Name = caseName
-			testCases[caseName].Output = string(byteArray)
+			testCases[name] = new(TestCase)
+			testCases[name].Name = name
+			testCases[name].Output = string(byteArray)
 		}
 
 		// 想定する出力があるものに大して入力を設定する
 		for _, inFileName := range inFileNames {
-			caseName := makeCaseName(baseDirectoryPath, inFileName, inputExt)
+			name := makeCaseName(baseDirectoryPath, inFileName, inputExt)
 
 			byteArray, err := ioutil.ReadFile(inFileName)
 			// ファイル読み取り失敗
 			if err != nil {
 				println(err)
-				testCases[caseName] = nil
+				testCases[name] = nil
 				continue
 			}
 
 			// 出力が用意されてなかったら作りません
-			if testCases[caseName] != nil {
-				testCases[caseName].Input = string(byteArray)
+			if testCases[name] != nil {
+				testCases[name].Input = string(byteArray)
 			}
 		}
 	}

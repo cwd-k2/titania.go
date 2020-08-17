@@ -22,17 +22,17 @@ type Config struct {
 
 func NewConfig(baseDirectoryPath string) *Config {
 	// ディレクトリ直下に titania.json がいるか確認したい
-	configFileName := path.Join(baseDirectoryPath, "titania.json")
-	if match, _ := filepath.Glob(configFileName); len(match) == 0 {
+	filename := path.Join(baseDirectoryPath, "titania.json")
+	if match, _ := filepath.Glob(filename); len(match) == 0 {
 		return nil
 	}
 
 	// ディレクトリ直下の titania.json を読んで設定を作る
-	configRawData, err := ioutil.ReadFile(configFileName)
+	rawData, err := ioutil.ReadFile(filename)
 
 	// File Read 失敗
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't read %s.\n", configFileName)
+		fmt.Fprintf(os.Stderr, "Couldn't read %s.\n", filename)
 		return nil
 	}
 
@@ -40,8 +40,8 @@ func NewConfig(baseDirectoryPath string) *Config {
 	config := new(Config)
 
 	// JSON パース失敗
-	if err := json.Unmarshal(configRawData, config); err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't parse %s.\n%s\n", configFileName, err)
+	if err := json.Unmarshal(rawData, config); err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't parse %s.\n%s\n", filename, err)
 		return nil
 	}
 

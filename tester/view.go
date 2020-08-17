@@ -16,11 +16,11 @@ type View struct {
 }
 
 func InitView(
-	testUnits map[string]*TestUnit,
+	testCodes map[string]*TestCode,
 	testCases map[string]*TestCase) *View {
 
 	view := new(View)
-	view.units = len(testUnits)
+	view.units = len(testCodes)
 	view.cases = len(testCases)
 
 	view.places = make(map[string]int)
@@ -28,7 +28,7 @@ func InitView(
 
 	i := 0
 	var indexes []string
-	for unitName := range testUnits {
+	for unitName := range testCodes {
 		view.places[unitName] = i
 		view.counts[unitName] = 0
 		indexes = append(indexes, unitName)
