@@ -19,11 +19,6 @@ type TestRoom struct {
 	TestCases map[string]*TestCase
 }
 
-type info struct {
-	UnitName string
-	Detail   *ShowCase
-}
-
 // NewTestRoom
 // returns *TestRoom
 func NewTestRoom(dirname string, languages []string) *TestRoom {
@@ -78,7 +73,7 @@ func NewTestRoom(dirname string, languages []string) *TestRoom {
 }
 
 func (testRoom *TestRoom) Exec() []*ShowUnit {
-	ch := make(chan info)
+	ch := make(chan string)
 
 	view := InitView(testRoom.TestUnits, testRoom.TestCases)
 	view.Draw()
@@ -93,20 +88,18 @@ func (testRoom *TestRoom) Exec() []*ShowUnit {
 	}
 
 	testRoom.goEach(func(testUnit *TestUnit, testCase *TestCase) {
-		info := testRoom.execTest(testUnit, testCase)
-		go view.Update(info.UnitName)
-		ch <- info
-	})
+		unitName, detail := testRoom.execTest(testUnit, testCase)
+		overs[unitName].Details = append(overs[unitName].Details, detail)
 
-	// 出力する
+		ch <- unitName
+	})
 
 	curr := 0
 	stop := len(testRoom.TestUnits) * len(testRoom.TestCases)
 
-	for exec := range ch {
+	for unitName := range ch {
 		curr++
-
-		overs[exec.UnitName].Details = append(overs[exec.UnitName].Details, exec.Detail)
+		go view.Update(unitName)
 
 		if curr == stop {
 			close(ch)
@@ -130,7 +123,7 @@ func (testRoom *TestRoom) Exec() []*ShowUnit {
 }
 
 func (testRoom *TestRoom) execTest(
-	testUnit *TestUnit, testCase *TestCase) info {
+	testUnit *TestUnit, testCase *TestCase) (string, *ShowCase) {
 
 	unitName := testUnit.Name
 	caseName := testCase.Name
@@ -150,7 +143,7 @@ func (testRoom *TestRoom) execTest(
 			ShowCase.Result = "TESTER ERROR"
 		}
 		ShowCase.Error = err.Error()
-		return info{unitName, ShowCase}
+		return unitName, ShowCase
 	}
 
 	// ビルドエラー
@@ -158,14 +151,14 @@ func (testRoom *TestRoom) execTest(
 		resp.BuildResult == "") {
 		ShowCase.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
 		ShowCase.Error = resp.BuildSTDERR
-		return info{unitName, ShowCase}
+		return unitName, ShowCase
 	}
 
 	// 実行時エラー
 	if resp.Result != "success" {
 		ShowCase.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
 		ShowCase.Error = resp.STDERR
-		return info{unitName, ShowCase}
+		return unitName, ShowCase
 	}
 
 	// 出力が正しいかどうか
@@ -177,7 +170,7 @@ func (testRoom *TestRoom) execTest(
 
 	ShowCase.Time = resp.Time
 	ShowCase.OutPut = resp.STDOUT
-	return info{unitName, ShowCase}
+	return unitName, ShowCase
 
 }
 
