@@ -17,8 +17,6 @@ func main() {
 	// ターゲットのディレクトリと言語
 	directories, languages := OptParse()
 
-	// 実行されたターゲットの数
-	i := 0
 	var outgoes []*tester.ShowRoom
 
 	for _, dirname := range directories {
@@ -28,7 +26,6 @@ func main() {
 			continue
 		}
 
-		i++
 		fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(dirname)))
 		fruits := testRoom.Exec()
 
@@ -38,7 +35,7 @@ func main() {
 		outgoes = append(outgoes, outgo)
 	}
 
-	if i == 0 {
+	if outgoes == nil {
 		// 何もテストが実行されなかった場合
 		println("Uh, OK, there's no test.")
 	} else {
