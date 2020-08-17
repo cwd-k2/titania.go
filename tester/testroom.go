@@ -128,49 +128,49 @@ func (testRoom *TestRoom) execTest(
 	unitName := testUnit.Name
 	caseName := testCase.Name
 
-	ShowCase := new(ShowCase)
-	ShowCase.Name = caseName
+	showCase := new(ShowCase)
+	showCase.Name = caseName
 
 	// 実際に paiza.io の API を利用して実行結果をもらう
 	resp, err := testRoom.Client.Do(testUnit.SourceCode, testUnit.Language, testCase.Input)
 
 	if err != nil {
 		if err.Code >= 500 {
-			ShowCase.Result = "SERVER ERROR"
+			showCase.Result = "SERVER ERROR"
 		} else if err.Code >= 400 {
-			ShowCase.Result = "CLIENT ERROR"
+			showCase.Result = "CLIENT ERROR"
 		} else {
-			ShowCase.Result = "TESTER ERROR"
+			showCase.Result = "TESTER ERROR"
 		}
-		ShowCase.Error = err.Error()
-		return unitName, ShowCase
+		showCase.Error = err.Error()
+		return unitName, showCase
 	}
 
 	// ビルドエラー
 	if !(resp.BuildResult == "success" ||
 		resp.BuildResult == "") {
-		ShowCase.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
-		ShowCase.Error = resp.BuildSTDERR
-		return unitName, ShowCase
+		showCase.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
+		showCase.Error = resp.BuildSTDERR
+		return unitName, showCase
 	}
 
 	// 実行時エラー
 	if resp.Result != "success" {
-		ShowCase.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
-		ShowCase.Error = resp.STDERR
-		return unitName, ShowCase
+		showCase.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
+		showCase.Error = resp.STDERR
+		return unitName, showCase
 	}
 
 	// 出力が正しいかどうか
 	if resp.STDOUT == testCase.Output {
-		ShowCase.Result = "PASS"
+		showCase.Result = "PASS"
 	} else {
-		ShowCase.Result = "FAIL"
+		showCase.Result = "FAIL"
 	}
 
-	ShowCase.Time = resp.Time
-	ShowCase.OutPut = resp.STDOUT
-	return unitName, ShowCase
+	showCase.Time = resp.Time
+	showCase.OutPut = resp.STDOUT
+	return unitName, showCase
 
 }
 
