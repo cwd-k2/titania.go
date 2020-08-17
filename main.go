@@ -41,9 +41,7 @@ func main() {
 	} else {
 		fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold("ALL DONE"))
 
-		for _, outcome := range outcomes {
-			tester.WrapUp(outcome)
-		}
+		tester.WrapUp(outcomes)
 
 		// JSON 形式に変換
 		rawout, err := json.MarshalIndent(outcomes, "", "  ")

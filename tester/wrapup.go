@@ -27,26 +27,28 @@ type ShowCase struct {
 }
 
 // 流石に雑すぎる ちゃんと要約して
-func WrapUp(outcome *ShowRoom) {
-	fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold(pretty.Cyan(outcome.RoomName)))
-	for _, fruit := range outcome.Fruits {
+func WrapUp(outcomes []*ShowRoom) {
+	for _, outcome := range outcomes {
+		fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold(pretty.Cyan(outcome.RoomName)))
+		for _, fruit := range outcome.Fruits {
 
-		fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.UnitName)))
+			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.UnitName)))
 
-		for _, detail := range fruit.Details {
-			switch detail.Result {
-			case "PASS":
-				fmt.Fprintf(os.Stderr, "%s: %s %ss\n", pretty.Green(detail.CaseName), pretty.Green(detail.Result), detail.Time)
-			case "FAIL":
-				fmt.Fprintf(os.Stderr, "%s: %s %ss\n", pretty.Yellow(detail.CaseName), pretty.Yellow(detail.Result), detail.Time)
-			case "CLIENT ERROR":
-				fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Magenta(detail.CaseName), pretty.Magenta(detail.Result))
-			case "SERVER ERROR":
-				fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Blue(detail.CaseName), pretty.Blue(detail.Result))
-			case "TESTER ERROR":
-				fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Bold(pretty.Red(detail.CaseName)), pretty.Bold(pretty.Red(detail.Result)))
-			default:
-				fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Red(detail.CaseName), pretty.Red(detail.Result))
+			for _, detail := range fruit.Details {
+				switch detail.Result {
+				case "PASS":
+					fmt.Fprintf(os.Stderr, "%s: %s %ss\n", pretty.Green(detail.CaseName), pretty.Green(detail.Result), detail.Time)
+				case "FAIL":
+					fmt.Fprintf(os.Stderr, "%s: %s %ss\n", pretty.Yellow(detail.CaseName), pretty.Yellow(detail.Result), detail.Time)
+				case "CLIENT ERROR":
+					fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Magenta(detail.CaseName), pretty.Magenta(detail.Result))
+				case "SERVER ERROR":
+					fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Blue(detail.CaseName), pretty.Blue(detail.Result))
+				case "TESTER ERROR":
+					fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Bold(pretty.Red(detail.CaseName)), pretty.Bold(pretty.Red(detail.Result)))
+				default:
+					fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Red(detail.CaseName), pretty.Red(detail.Result))
+				}
 			}
 		}
 	}
