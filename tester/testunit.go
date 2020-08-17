@@ -2,7 +2,6 @@ package tester
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -76,14 +75,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 func (testUnit *TestUnit) Exec(quiet bool) []*ShowCode {
 	ch := make(chan string)
 
-	view := InitView(testUnit.TestCodes, testUnit.TestCases)
-
-	if quiet {
-		fmt.Fprintf(os.Stderr, "[WAIT] %s\n", testUnit.Name)
-	} else {
-		view.Draw(testUnit.Name)
-	}
-
+	view := InitView(testUnit.Name, testUnit.TestCodes, testUnit.TestCases, quiet)
 	overs := make(map[string]*ShowCode)
 
 	for name, testCode := range testUnit.TestCodes {
@@ -93,29 +85,25 @@ func (testUnit *TestUnit) Exec(quiet bool) []*ShowCode {
 		overs[name] = over
 	}
 
-	testUnit.goEach(func(testCodes *TestCode, testCase *TestCase) {
-		unitName, detail := testUnit.exec(testCodes, testCase)
-		overs[unitName].Details = append(overs[unitName].Details, detail)
+	view.Draw()
 
-		ch <- unitName
+	testUnit.goEach(func(testCodes *TestCode, testCase *TestCase) {
+		codeName, detail := testUnit.exec(testCodes, testCase)
+		overs[codeName].Details = append(overs[codeName].Details, detail)
+
+		ch <- codeName
 	})
 
 	curr := 0
 	stop := len(testUnit.TestCodes) * len(testUnit.TestCases)
 
-	for unitName := range ch {
+	for codeName := range ch {
 		curr++
-		if !quiet {
-			view.Update(unitName)
-		}
+		view.Update(codeName)
 
 		if curr == stop {
 			close(ch)
 		}
-	}
-
-	if quiet {
-		fmt.Fprintf(os.Stderr, "[DONE] %s\n", testUnit.Name)
 	}
 
 	var fruits []*ShowCode

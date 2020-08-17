@@ -7,7 +7,19 @@ import (
 	"github.com/cwd-k2/titania.go/pretty"
 )
 
-type View struct {
+type View interface {
+	Draw()
+	Update(string)
+}
+
+type QuietView struct {
+	name  string
+	total int
+	count int
+}
+
+type FancyView struct {
+	name    string
 	units   int
 	cases   int
 	places  map[string]int
@@ -16,33 +28,49 @@ type View struct {
 }
 
 func InitView(
+	name string,
 	testCodes map[string]*TestCode,
-	testCases map[string]*TestCase) *View {
+	testCases map[string]*TestCase,
+	quiet bool) View {
 
-	view := new(View)
-	view.units = len(testCodes)
-	view.cases = len(testCases)
+	if quiet {
+		view := new(QuietView)
 
-	view.places = make(map[string]int)
-	view.counts = make(map[string]int)
+		view.name = name
+		view.total = len(testCodes) * len(testCases)
 
-	i := 0
-	var indexes []string
-	for unitName := range testCodes {
-		view.places[unitName] = i
-		view.counts[unitName] = 0
-		indexes = append(indexes, unitName)
-		i++
+		return view
+
+	} else {
+
+		view := new(FancyView)
+
+		view.name = name
+		view.units = len(testCodes)
+		view.cases = len(testCases)
+
+		view.places = make(map[string]int)
+		view.counts = make(map[string]int)
+
+		i := 0
+		var indexes []string
+		for codeName := range testCodes {
+			view.places[codeName] = i
+			view.counts[codeName] = 0
+			indexes = append(indexes, codeName)
+			i++
+		}
+
+		view.indexes = indexes
+
+		return view
 	}
-
-	view.indexes = indexes
-
-	return view
 
 }
 
-func (view *View) Draw(unitName string) {
-	fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(unitName)))
+func (view *FancyView) Draw() {
+
+	fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(view.name)))
 
 	for _, index := range view.indexes {
 		fmt.Fprintf(
@@ -50,26 +78,47 @@ func (view *View) Draw(unitName string) {
 			pretty.Yellow("WAIT"), "START",
 			pretty.Bold(pretty.Blue(index)))
 	}
+
 }
 
-func (view *View) Update(unitName string) {
-	position := view.places[unitName]
-
-	view.counts[unitName]++
+func (view *FancyView) Update(codeName string) {
+	position := view.places[codeName]
+	view.counts[codeName]++
 
 	pretty.Up(view.units - position)
 	pretty.Erase()
-	if view.counts[unitName] == view.cases {
+
+	if view.counts[codeName] == view.cases {
 		fmt.Fprintf(
 			os.Stderr, "[%s] %02d/%02d %s",
-			pretty.Green("DONE"), view.counts[unitName], view.cases,
-			pretty.Bold(pretty.Blue(unitName)))
+			pretty.Green("DONE"), view.counts[codeName], view.cases,
+			pretty.Bold(pretty.Blue(codeName)))
 	} else {
 		fmt.Fprintf(
 			os.Stderr, "[%s] %02d/%02d %s",
-			pretty.Yellow("WAIT"), view.counts[unitName], view.cases,
-			pretty.Bold(pretty.Blue(unitName)))
+			pretty.Yellow("WAIT"), view.counts[codeName], view.cases,
+			pretty.Bold(pretty.Blue(codeName)))
 	}
+
 	pretty.Down(view.units - position)
 	pretty.Beginning()
+}
+
+func (view *QuietView) Draw() {
+	fmt.Fprintf(
+		os.Stderr, "[%s] %s\n",
+		pretty.Green("LAUNCH"),
+		pretty.Bold(pretty.Cyan(view.name)))
+}
+
+func (view *QuietView) Update(codeName string) {
+	view.count++
+
+	if view.count == view.total {
+		fmt.Fprintf(
+			os.Stderr, "[%s] %s\n",
+			pretty.Yellow("FINISH"),
+			pretty.Bold(pretty.Cyan(view.name)))
+	}
+
 }

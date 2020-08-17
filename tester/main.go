@@ -38,9 +38,7 @@ func execute(
 	dirname string, languages []string,
 	outcomes *[]*ShowUnit, wg *sync.WaitGroup) {
 
-	quiet := wg != nil
-
-	if quiet {
+	if wg != nil {
 		defer wg.Done()
 	}
 
@@ -51,7 +49,7 @@ func execute(
 		return
 	}
 
-	fruits := testUnit.Exec(quiet)
+	fruits := testUnit.Exec(wg != nil)
 
 	outcome := new(ShowUnit)
 	outcome.Name = dirname
