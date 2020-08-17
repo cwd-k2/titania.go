@@ -149,7 +149,6 @@ func (testRoom *TestRoom) execTest(
 			testInfo.Result = "TESTER ERROR"
 		}
 		testInfo.Error = err.Error()
-		testInfo.Time = ""
 		return execinfo{unitName, testInfo}
 	}
 
@@ -158,7 +157,6 @@ func (testRoom *TestRoom) execTest(
 		resp.BuildResult == "") {
 		testInfo.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
 		testInfo.Error = resp.BuildSTDERR
-		testInfo.Time = ""
 		return execinfo{unitName, testInfo}
 	}
 
@@ -166,7 +164,6 @@ func (testRoom *TestRoom) execTest(
 	if resp.Result != "success" {
 		testInfo.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
 		testInfo.Error = resp.STDERR
-		testInfo.Time = ""
 		return execinfo{unitName, testInfo}
 	}
 
@@ -178,6 +175,7 @@ func (testRoom *TestRoom) execTest(
 	}
 
 	testInfo.Time = resp.Time
+	testInfo.OutPut = resp.STDOUT
 	return execinfo{unitName, testInfo}
 
 }

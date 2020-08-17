@@ -5,4 +5,5 @@ type TestInfo struct {
 	Result   string `json:"result"`
 	Error    string `json:"error"`
 	Time     string `json:"time"`
+	OutPut   string `json:"output"`
 }
