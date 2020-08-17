@@ -41,7 +41,9 @@ func InitView(
 
 }
 
-func (view *View) Draw() {
+func (view *View) Draw(unitName string) {
+	fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(unitName)))
+
 	for _, index := range view.indexes {
 		fmt.Fprintf(
 			os.Stderr, "[%s] %s %s\n",

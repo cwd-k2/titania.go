@@ -76,7 +76,7 @@ func (testUnit *TestUnit) Exec() []*ShowCode {
 	ch := make(chan string)
 
 	view := InitView(testUnit.TestCodes, testUnit.TestCases)
-	view.Draw()
+	view.Draw(testUnit.Name)
 
 	overs := make(map[string]*ShowCode)
 

@@ -1,8 +1,11 @@
 package tester
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/cwd-k2/titania.go/pretty"
 )
@@ -57,4 +60,24 @@ func WrapUp(outcomes []*ShowUnit) {
 			}
 		}
 	}
+}
+
+func OutPut(outcomes []*ShowUnit) {
+	// JSON 形式に変換
+	rawout, err := json.MarshalIndent(outcomes, "", "  ")
+	// JSON パース失敗
+	if err != nil {
+		panic(err)
+	}
+
+	// エスケープされた文字を戻す
+	output, err := strconv.Unquote(
+		strings.Replace(strconv.Quote(string(rawout)), `\\u`, `\u`, -1))
+	// 変換失敗
+	if err != nil {
+		panic(err)
+	}
+
+	// 実行結果を JSON 形式で出力
+	fmt.Println(string(output))
 }
