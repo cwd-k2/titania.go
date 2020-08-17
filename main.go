@@ -19,7 +19,7 @@ func main() {
 
 	// 実行されたターゲットの数
 	i := 0
-	details := make(map[string][]*tester.TestOver)
+	var outgoes []*tester.ShowRoom
 
 	for _, dirname := range directories {
 		testRoom := tester.NewTestRoom(dirname, languages)
@@ -30,9 +30,12 @@ func main() {
 
 		i++
 		fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(dirname)))
-		results := testRoom.Exec()
+		fruits := testRoom.Exec()
 
-		details[dirname] = results
+		outgo := new(tester.ShowRoom)
+		outgo.RoomName = dirname
+		outgo.Fruits = fruits
+		outgoes = append(outgoes, outgo)
 	}
 
 	if i == 0 {
@@ -41,15 +44,12 @@ func main() {
 	} else {
 		fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold("ALL DONE"))
 
-		for _, dirname := range directories {
-			// 要約
-			if details[dirname] != nil {
-				tester.WrapUp(dirname, details[dirname])
-			}
+		for _, outgo := range outgoes {
+			tester.WrapUp(outgo)
 		}
 
 		// JSON 形式に変換
-		rawout, err := json.MarshalIndent(details, "", "  ")
+		rawout, err := json.MarshalIndent(outgoes, "", "  ")
 		// JSON パース失敗
 		if err != nil {
 			panic(err)

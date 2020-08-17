@@ -44,9 +44,9 @@ func InitView(
 func (view *View) Draw() {
 	for _, index := range view.indexes {
 		fmt.Fprintf(
-			os.Stderr,
-			"[%s] %s %s\n", pretty.Yellow("WAIT"),
-			"START", pretty.Bold(pretty.Blue(index)))
+			os.Stderr, "[%s] %s %s\n",
+			pretty.Yellow("WAIT"), "START",
+			pretty.Bold(pretty.Blue(index)))
 	}
 }
 
@@ -59,15 +59,13 @@ func (view *View) Update(unitName string) {
 	pretty.Erase()
 	if view.counts[unitName] == view.cases {
 		fmt.Fprintf(
-			os.Stderr,
-			"[%s] %02d/%02d %s", pretty.Green("DONE"),
-			view.counts[unitName], view.cases,
+			os.Stderr, "[%s] %02d/%02d %s",
+			pretty.Green("DONE"), view.counts[unitName], view.cases,
 			pretty.Bold(pretty.Blue(unitName)))
 	} else {
 		fmt.Fprintf(
-			os.Stderr,
-			"[%s] %02d/%02d %s", pretty.Yellow("WAIT"),
-			view.counts[unitName], view.cases,
+			os.Stderr, "[%s] %02d/%02d %s",
+			pretty.Yellow("WAIT"), view.counts[unitName], view.cases,
 			pretty.Bold(pretty.Blue(unitName)))
 	}
 	pretty.Down(view.units - position)

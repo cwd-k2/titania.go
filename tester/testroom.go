@@ -19,9 +19,9 @@ type TestRoom struct {
 	TestCases map[string]*TestCase
 }
 
-type execinfo struct {
+type info struct {
 	UnitName string
-	Info     *TestInfo
+	Detail   *ShowCase
 }
 
 // NewTestRoom
@@ -47,8 +47,7 @@ func NewTestRoom(dirname string, languages []string) *TestRoom {
 
 	// テストユニット
 	testUnits := MakeTestUnits(
-		baseDirectoryPath,
-		languages,
+		baseDirectoryPath, languages,
 		config.SourceCodeDirectories)
 
 	// テストユニットがなければ実行しない
@@ -78,105 +77,107 @@ func NewTestRoom(dirname string, languages []string) *TestRoom {
 	return testRoom
 }
 
-func (testRoom *TestRoom) Exec() []*TestOver {
-	ch := make(chan execinfo)
-	view := InitTestView(testRoom.TestUnits, testRoom.TestCases)
-	over := make(map[string]*TestOver)
+func (testRoom *TestRoom) Exec() []*ShowUnit {
+	ch := make(chan info)
+
+	view := InitView(testRoom.TestUnits, testRoom.TestCases)
+	view.Draw()
+
+	overs := make(map[string]*ShowUnit)
 
 	for unitName, testUnit := range testRoom.TestUnits {
-		testOver := new(TestOver)
-		testOver.UnitName = unitName
-		testOver.Language = testUnit.Language
-		over[unitName] = testOver
+		over := new(ShowUnit)
+		over.UnitName = unitName
+		over.Language = testUnit.Language
+		overs[unitName] = over
 	}
 
 	testRoom.goEach(func(testUnit *TestUnit, testCase *TestCase) {
-		ch <- testRoom.execTest(testUnit, testCase)
+		info := testRoom.execTest(testUnit, testCase)
+		view.Update(info.UnitName)
+		ch <- info
 	})
 
 	// 出力する
-	view.Start()
 
 	curr := 0
 	stop := len(testRoom.TestUnits) * len(testRoom.TestCases)
 
 	for exec := range ch {
 		curr++
-		view.Refresh(exec.UnitName)
 
-		over[exec.UnitName].Details =
-			append(over[exec.UnitName].Details, exec.Info)
+		overs[exec.UnitName].Details = append(overs[exec.UnitName].Details, exec.Detail)
 
 		if curr == stop {
 			close(ch)
 		}
 	}
 
-	var results []*TestOver
+	var fruits []*ShowUnit
 
-	for _, testOver := range over {
-		sort.Slice(testOver.Details, func(i, j int) bool {
-			return testOver.Details[i].CaseName < testOver.Details[j].CaseName
+	for _, over := range overs {
+		sort.Slice(over.Details, func(i, j int) bool {
+			return over.Details[i].CaseName < over.Details[j].CaseName
 		})
-		results = append(results, testOver)
+		fruits = append(fruits, over)
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].UnitName < results[j].UnitName
+	sort.Slice(fruits, func(i, j int) bool {
+		return fruits[i].UnitName < fruits[j].UnitName
 	})
 
-	return results
+	return fruits
 }
 
 func (testRoom *TestRoom) execTest(
-	testUnit *TestUnit, testCase *TestCase) execinfo {
+	testUnit *TestUnit, testCase *TestCase) info {
 
 	unitName := testUnit.Name
 	caseName := testCase.Name
 
-	testInfo := new(TestInfo)
-	testInfo.CaseName = caseName
+	ShowCase := new(ShowCase)
+	ShowCase.CaseName = caseName
 
 	// 実際に paiza.io の API を利用して実行結果をもらう
 	resp, err := testRoom.Client.Do(testUnit.SourceCode, testUnit.Language, testCase.Input)
 
 	if err != nil {
 		if err.Code >= 500 {
-			testInfo.Result = "SERVER ERROR"
+			ShowCase.Result = "SERVER ERROR"
 		} else if err.Code >= 400 {
-			testInfo.Result = "CLIENT ERROR"
+			ShowCase.Result = "CLIENT ERROR"
 		} else {
-			testInfo.Result = "TESTER ERROR"
+			ShowCase.Result = "TESTER ERROR"
 		}
-		testInfo.Error = err.Error()
-		return execinfo{unitName, testInfo}
+		ShowCase.Error = err.Error()
+		return info{unitName, ShowCase}
 	}
 
 	// ビルドエラー
 	if !(resp.BuildResult == "success" ||
 		resp.BuildResult == "") {
-		testInfo.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
-		testInfo.Error = resp.BuildSTDERR
-		return execinfo{unitName, testInfo}
+		ShowCase.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
+		ShowCase.Error = resp.BuildSTDERR
+		return info{unitName, ShowCase}
 	}
 
 	// 実行時エラー
 	if resp.Result != "success" {
-		testInfo.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
-		testInfo.Error = resp.STDERR
-		return execinfo{unitName, testInfo}
+		ShowCase.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
+		ShowCase.Error = resp.STDERR
+		return info{unitName, ShowCase}
 	}
 
 	// 出力が正しいかどうか
 	if resp.STDOUT == testCase.Output {
-		testInfo.Result = "PASS"
+		ShowCase.Result = "PASS"
 	} else {
-		testInfo.Result = "FAIL"
+		ShowCase.Result = "FAIL"
 	}
 
-	testInfo.Time = resp.Time
-	testInfo.OutPut = resp.STDOUT
-	return execinfo{unitName, testInfo}
+	ShowCase.Time = resp.Time
+	ShowCase.OutPut = resp.STDOUT
+	return info{unitName, ShowCase}
 
 }
 
