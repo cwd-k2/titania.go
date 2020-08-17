@@ -107,7 +107,7 @@ func (c *Client) RunnersCreate(
 
 	if runnersCreateResponse.ID == "" {
 		return nil, &TitaniaClientError{
-			-1, errors.New(fmt.Sprintf("%s\n%s", "error?", runnersCreateResponse.Error)),
+			-1, errors.New(fmt.Sprintf("%s", runnersCreateResponse.Error)),
 		}
 	}
 
