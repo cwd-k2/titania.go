@@ -1,22 +1,61 @@
 package tester
 
-func Execute(directories, languages []string) []*ShowUnit {
-	var outcomes []*ShowUnit
+import (
+	"sort"
+	"sync"
+)
+
+func Execute(directories, languages []string, async bool) []*ShowUnit {
+
+	outcomes := []*ShowUnit{}
+
+	wg := new(sync.WaitGroup)
 
 	for _, dirname := range directories {
-		testUnit := NewTestUnit(dirname, languages)
-		// 実行するテストがない
-		if testUnit == nil {
-			continue
+
+		if async {
+
+			wg.Add(1)
+			go execute(dirname, languages, &outcomes, wg)
+
+		} else {
+
+			execute(dirname, languages, &outcomes, nil)
+
 		}
-
-		fruits := testUnit.Exec()
-
-		outcome := new(ShowUnit)
-		outcome.Name = dirname
-		outcome.Fruits = fruits
-		outcomes = append(outcomes, outcome)
 	}
 
+	wg.Wait()
+
+	sort.Slice(outcomes, func(i, j int) bool {
+		return outcomes[i].Name < outcomes[j].Name
+	})
+
 	return outcomes
+}
+
+func execute(
+	dirname string, languages []string,
+	outcomes *[]*ShowUnit, wg *sync.WaitGroup) {
+
+	quiet := wg != nil
+
+	if quiet {
+		defer wg.Done()
+	}
+
+	testUnit := NewTestUnit(dirname, languages)
+
+	// 実行するテストがない
+	if testUnit == nil {
+		return
+	}
+
+	fruits := testUnit.Exec(quiet)
+
+	outcome := new(ShowUnit)
+	outcome.Name = dirname
+	outcome.Fruits = fruits
+
+	*outcomes = append(*outcomes, outcome)
 }

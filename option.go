@@ -12,27 +12,27 @@ import (
 func cleanerPath(pwd, directory string) (string, error) {
 	if filepath.IsAbs(directory) {
 		dirname, err := filepath.Rel(pwd, directory)
-		if err != nil {
-			return dirname, err
-		}
-		return dirname, nil
+		return dirname, err
 	} else {
 		dirname, err := filepath.Rel(pwd, filepath.Join(pwd, directory))
-		if err != nil {
-			return dirname, err
-		}
-		return dirname, nil
+		return dirname, err
 	}
 }
 
 // オプション解析
-func OptParse() ([]string, []string) {
+func OptParse() ([]string, []string, bool) {
 	// テストする言語を指定する
 	// ここは flag を使わずに自前処理でも良さそう
 	var flagLanguages string
 	flag.StringVar(
 		&flagLanguages,
 		"lang", "", "languages to test (ex. --lang=ruby,python3,java)")
+
+	// async オプション（実験的）
+	var flagAsync bool
+	flag.BoolVar(
+		&flagAsync,
+		"async", false, "execute all tests asynchronously (experimantal)")
 
 	flag.Parse()
 	args := flag.Args()
@@ -72,5 +72,5 @@ func OptParse() ([]string, []string) {
 		languages = strings.Split(flagLanguages, ",")
 	}
 
-	return directories, languages
+	return directories, languages, flagAsync
 }

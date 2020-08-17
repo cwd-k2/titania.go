@@ -9,9 +9,9 @@ import (
 const VERSION = "0.0.0-alpha"
 
 func main() {
-	// ターゲットのディレクトリと言語
-	directories, languages := OptParse()
-	outcomes := tester.Execute(directories, languages)
+	// ターゲットのディレクトリと言語，async
+	directories, languages, async := OptParse()
+	outcomes := tester.Execute(directories, languages, async)
 
 	// 何もテストが実行されなかった場合
 	if outcomes == nil {

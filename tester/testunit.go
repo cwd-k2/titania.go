@@ -2,6 +2,7 @@ package tester
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -72,11 +73,16 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	return testUnit
 }
 
-func (testUnit *TestUnit) Exec() []*ShowCode {
+func (testUnit *TestUnit) Exec(quiet bool) []*ShowCode {
 	ch := make(chan string)
 
 	view := InitView(testUnit.TestCodes, testUnit.TestCases)
-	view.Draw(testUnit.Name)
+
+	if quiet {
+		fmt.Fprintf(os.Stderr, "[WAIT] %s\n", testUnit.Name)
+	} else {
+		view.Draw(testUnit.Name)
+	}
 
 	overs := make(map[string]*ShowCode)
 
@@ -88,7 +94,7 @@ func (testUnit *TestUnit) Exec() []*ShowCode {
 	}
 
 	testUnit.goEach(func(testCodes *TestCode, testCase *TestCase) {
-		unitName, detail := testUnit.execTest(testCodes, testCase)
+		unitName, detail := testUnit.exec(testCodes, testCase)
 		overs[unitName].Details = append(overs[unitName].Details, detail)
 
 		ch <- unitName
@@ -99,11 +105,17 @@ func (testUnit *TestUnit) Exec() []*ShowCode {
 
 	for unitName := range ch {
 		curr++
-		view.Update(unitName)
+		if !quiet {
+			view.Update(unitName)
+		}
 
 		if curr == stop {
 			close(ch)
 		}
+	}
+
+	if quiet {
+		fmt.Fprintf(os.Stderr, "[DONE] %s\n", testUnit.Name)
 	}
 
 	var fruits []*ShowCode
@@ -122,7 +134,7 @@ func (testUnit *TestUnit) Exec() []*ShowCode {
 	return fruits
 }
 
-func (testUnit *TestUnit) execTest(
+func (testUnit *TestUnit) exec(
 	testCode *TestCode, testCase *TestCase) (string, *ShowCase) {
 
 	unitName := testCode.Name
