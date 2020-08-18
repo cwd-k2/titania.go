@@ -37,7 +37,8 @@ func OptParse() ([]string, []string, bool) {
 	flag.Parse()
 	args := flag.Args()
 
-	var directories []string
+	directories := []string{}
+	languages := []string{}
 
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -57,6 +58,7 @@ func OptParse() ([]string, []string, bool) {
 		}
 
 	} else {
+
 		for _, directory := range args {
 			dirname, err := cleanerPath(pwd, directory)
 			if err != nil {
@@ -64,9 +66,8 @@ func OptParse() ([]string, []string, bool) {
 			}
 			directories = append(directories, dirname)
 		}
-	}
 
-	var languages []string
+	}
 
 	if flagLanguages != "" {
 		languages = strings.Split(flagLanguages, ",")

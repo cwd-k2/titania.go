@@ -7,7 +7,7 @@ import (
 
 func Execute(directories, languages []string, async bool) []*ShowUnit {
 
-	outcomes := []*ShowUnit{}
+	outcomes := make([]*ShowUnit, 0, len(directories))
 
 	wg := new(sync.WaitGroup)
 
@@ -26,6 +26,10 @@ func Execute(directories, languages []string, async bool) []*ShowUnit {
 	}
 
 	wg.Wait()
+
+	if len(outcomes) == 0 {
+		return nil
+	}
 
 	sort.Slice(outcomes, func(i, j int) bool {
 		return outcomes[i].Name < outcomes[j].Name

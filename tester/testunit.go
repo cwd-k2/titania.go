@@ -106,7 +106,7 @@ func (testUnit *TestUnit) Exec(quiet bool) []*ShowCode {
 		}
 	}
 
-	var fruits []*ShowCode
+	fruits := make([]*ShowCode, 0, len(overs))
 
 	for _, over := range overs {
 		sort.Slice(over.Details, func(i, j int) bool {
