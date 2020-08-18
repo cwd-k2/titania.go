@@ -1,9 +1,6 @@
 package tester
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/cwd-k2/titania.go/pretty"
 )
 
@@ -70,11 +67,11 @@ func InitView(
 
 func (view *FancyView) Draw() {
 
-	fmt.Fprintf(os.Stderr, "%s\n", pretty.Bold(pretty.Cyan(view.name)))
+	pretty.Printf("%s\n", pretty.Bold(pretty.Cyan(view.name)))
 
 	for _, index := range view.indexes {
-		fmt.Fprintf(
-			os.Stderr, "[%s] %s %s\n",
+		pretty.Printf(
+			"[%s] %s %s\n",
 			pretty.Yellow("WAIT"), "START",
 			pretty.Bold(pretty.Blue(index)))
 	}
@@ -89,14 +86,14 @@ func (view *FancyView) Update(codeName string) {
 	pretty.Erase()
 
 	if view.counts[codeName] == view.cases {
-		fmt.Fprintf(
-			os.Stderr, "[%s] %02d/%02d %s",
+		pretty.Printf(
+			"[%s] %02d/%02d %s",
 			pretty.Green("DONE"),
 			view.counts[codeName], view.cases,
 			pretty.Bold(pretty.Blue(codeName)))
 	} else {
-		fmt.Fprintf(
-			os.Stderr, "[%s] %02d/%02d %s",
+		pretty.Printf(
+			"[%s] %02d/%02d %s",
 			pretty.Yellow("WAIT"),
 			view.counts[codeName], view.cases,
 			pretty.Bold(pretty.Blue(codeName)))
@@ -107,8 +104,8 @@ func (view *FancyView) Update(codeName string) {
 }
 
 func (view *QuietView) Draw() {
-	fmt.Fprintf(
-		os.Stderr, "[%s] %s\n",
+	pretty.Printf(
+		"[%s] %s\n",
 		pretty.Green("LAUNCH"),
 		pretty.Bold(pretty.Cyan(view.name)))
 }
@@ -117,8 +114,8 @@ func (view *QuietView) Update(codeName string) {
 	view.count++
 
 	if view.count == view.total {
-		fmt.Fprintf(
-			os.Stderr, "[%s] %s\n",
+		pretty.Printf(
+			"[%s] %s\n",
 			pretty.Yellow("FINISH"),
 			pretty.Bold(pretty.Cyan(view.name)))
 	}

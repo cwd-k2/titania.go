@@ -2,11 +2,11 @@ package tester
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/cwd-k2/titania.go/pretty"
 )
 
 // Config
@@ -32,7 +32,7 @@ func NewConfig(baseDirectoryPath string) *Config {
 
 	// File Read 失敗
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't read %s.\n", filename)
+		pretty.Printf("Couldn't read %s.\n", filename)
 		return nil
 	}
 
@@ -41,7 +41,7 @@ func NewConfig(baseDirectoryPath string) *Config {
 
 	// JSON パース失敗
 	if err := json.Unmarshal(rawData, config); err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't parse %s.\n%s\n", filename, err)
+		pretty.Printf("Couldn't parse %s.\n%s\n", filename, err)
 		return nil
 	}
 

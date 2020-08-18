@@ -5,28 +5,32 @@ import (
 	"os"
 )
 
+func Printf(format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, a...)
+}
+
 func Up(n int) {
-	fmt.Fprintf(os.Stderr, "\033[%dA", n)
+	Printf("\033[%dA", n)
 }
 
 func Down(n int) {
-	fmt.Fprintf(os.Stderr, "\033[%dB", n)
+	Printf("\033[%dB", n)
 }
 
 func Right(n int) {
-	fmt.Fprintf(os.Stderr, "\033[%dC", n)
+	Printf("\033[%dC", n)
 }
 
 func Left(n int) {
-	fmt.Fprintf(os.Stderr, "\033[%dD", n)
+	Printf("\033[%dD", n)
 }
 
 func Erase() {
-	fmt.Fprintf(os.Stderr, "\033[2K\033[G")
+	Printf("\033[2K\033[G")
 }
 
 func Beginning() {
-	fmt.Fprintf(os.Stderr, "\033[G")
+	Printf("\033[G")
 }
 
 func Bold(str string) string {

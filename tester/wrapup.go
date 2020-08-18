@@ -3,7 +3,6 @@ package tester
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -31,29 +30,29 @@ type ShowCase struct {
 
 // 流石に雑すぎる ちゃんと要約して
 func WrapUp(outcomes []*ShowUnit) {
-	fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold("ALL DONE"))
+	pretty.Printf("\n%s\n", pretty.Bold("ALL DONE"))
 
 	for _, outcome := range outcomes {
-		fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold(pretty.Cyan(outcome.Name)))
+		pretty.Printf("\n%s\n", pretty.Bold(pretty.Cyan(outcome.Name)))
 
 		for _, fruit := range outcome.Fruits {
 
-			fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.Name)))
+			pretty.Printf("%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.Name)))
 
 			for _, detail := range fruit.Details {
 				switch detail.Result {
 				case "PASS":
-					fmt.Fprintf(os.Stderr, "%s: %s %ss\n", pretty.Green(detail.Name), pretty.Green(detail.Result), detail.Time)
+					pretty.Printf("%s: %s %ss\n", pretty.Green(detail.Name), pretty.Green(detail.Result), detail.Time)
 				case "FAIL":
-					fmt.Fprintf(os.Stderr, "%s: %s %ss\n", pretty.Yellow(detail.Name), pretty.Yellow(detail.Result), detail.Time)
+					pretty.Printf("%s: %s %ss\n", pretty.Yellow(detail.Name), pretty.Yellow(detail.Result), detail.Time)
 				case "CLIENT ERROR":
-					fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Magenta(detail.Name), pretty.Magenta(detail.Result))
+					pretty.Printf("%s: %s\n", pretty.Magenta(detail.Name), pretty.Magenta(detail.Result))
 				case "SERVER ERROR":
-					fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Blue(detail.Name), pretty.Blue(detail.Result))
+					pretty.Printf("%s: %s\n", pretty.Blue(detail.Name), pretty.Blue(detail.Result))
 				case "TESTER ERROR":
-					fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Bold(pretty.Red(detail.Name)), pretty.Bold(pretty.Red(detail.Result)))
+					pretty.Printf("%s: %s\n", pretty.Bold(pretty.Red(detail.Name)), pretty.Bold(pretty.Red(detail.Result)))
 				default:
-					fmt.Fprintf(os.Stderr, "%s: %s\n", pretty.Red(detail.Name), pretty.Red(detail.Result))
+					pretty.Printf("%s: %s\n", pretty.Red(detail.Name), pretty.Red(detail.Result))
 				}
 			}
 		}
