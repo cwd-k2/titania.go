@@ -68,8 +68,7 @@ func Print(outcomes []*ShowUnit) {
 	}
 
 	// エスケープされた文字を戻す
-	output, err := strconv.Unquote(
-		strings.Replace(strconv.Quote(string(rawout)), `\\u`, `\u`, -1))
+	output, err := strconv.Unquote(strings.Replace(strconv.Quote(string(rawout)), `\\u`, `\u`, -1))
 	// 変換失敗
 	if err != nil {
 		panic(err)
