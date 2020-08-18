@@ -46,7 +46,8 @@ func execute(
 		return
 	}
 
-	fruits := testUnit.Exec(wg != nil)
+	view := testUnit.InitView(wg != nil)
+	fruits := testUnit.Exec(view)
 
 	outcome := new(ShowUnit)
 	outcome.Name = dirname

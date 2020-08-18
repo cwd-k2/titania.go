@@ -17,19 +17,19 @@ type QuietView struct {
 
 type FancyView struct {
 	name    string
-	units   int
+	codes   int
 	cases   int
 	counts  []int
 	indexes []string
 }
 
-func InitView(name string, testCodes []*TestCode, testCases []*TestCase, quiet bool) View {
+func (testUnit *TestUnit) InitView(quiet bool) View {
 
 	if quiet {
 		view := new(QuietView)
 
-		view.name = name
-		view.total = len(testCodes) * len(testCases)
+		view.name = testUnit.Name
+		view.total = len(testUnit.TestCodes) * len(testUnit.TestCases)
 
 		return view
 
@@ -37,14 +37,14 @@ func InitView(name string, testCodes []*TestCode, testCases []*TestCase, quiet b
 
 		view := new(FancyView)
 
-		view.name = name
-		view.units = len(testCodes)
-		view.cases = len(testCases)
+		view.name = testUnit.Name
+		view.codes = len(testUnit.TestCodes)
+		view.cases = len(testUnit.TestCases)
 
-		view.counts = make([]int, len(testCodes))
+		view.counts = make([]int, len(testUnit.TestCodes))
 
-		indexes := make([]string, 0, len(testCodes))
-		for _, testCode := range testCodes {
+		indexes := make([]string, 0, len(testUnit.TestCodes))
+		for _, testCode := range testUnit.TestCodes {
 			indexes = append(indexes, testCode.Name)
 		}
 
@@ -71,7 +71,7 @@ func (view *FancyView) Draw() {
 func (view *FancyView) Update(position int) {
 	view.counts[position]++
 
-	pretty.Up(view.units - position)
+	pretty.Up(view.codes - position)
 	pretty.Erase()
 
 	if view.counts[position] == view.cases {
@@ -88,7 +88,7 @@ func (view *FancyView) Update(position int) {
 			pretty.Bold(pretty.Blue(view.indexes[position])))
 	}
 
-	pretty.Down(view.units - position)
+	pretty.Down(view.codes - position)
 	pretty.Beginning()
 }
 

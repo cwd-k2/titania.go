@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/cwd-k2/titania.go/client"
 )
@@ -69,10 +70,19 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	return testUnit
 }
 
-func (testUnit *TestUnit) Exec(quiet bool) []*ShowCode {
+func MakeTestUnits(directories, languages []string) []*TestUnit {
+	testUnits := make([]*TestUnit, 0, len(directories))
+	for _, dirname := range directories {
+		testUnit := NewTestUnit(dirname, languages)
+		if testUnit != nil {
+			testUnits = append(testUnits, testUnit)
+		}
+	}
+	return testUnits
+}
 
-	ch := make(chan int)
-	view := InitView(testUnit.Name, testUnit.TestCodes, testUnit.TestCases, quiet)
+func (testUnit *TestUnit) Exec(view View) []*ShowCode {
+	wg := new(sync.WaitGroup)
 	fruits := make([]*ShowCode, len(testUnit.TestCodes))
 
 	for i, testCode := range testUnit.TestCodes {
@@ -85,29 +95,19 @@ func (testUnit *TestUnit) Exec(quiet bool) []*ShowCode {
 
 	view.Draw()
 
-	testUnit.goEach(func(i, j int, testCode *TestCode, testCase *TestCase) {
+	testUnit.goEachWithWg(wg, func(i, j int, testCode *TestCode, testCase *TestCase) {
+		defer wg.Done()
 		detail := testUnit.exec(testCode, testCase)
 		fruits[i].Details[j] = detail
-		ch <- i
+		view.Update(i)
 	})
 
-	curr := 0
-	stop := len(testUnit.TestCodes) * len(testUnit.TestCases)
-
-	for i := range ch {
-		curr++
-		view.Update(i)
-
-		if curr == stop {
-			close(ch)
-		}
-	}
+	wg.Wait()
 
 	return fruits
 }
 
-func (testUnit *TestUnit) exec(
-	testCode *TestCode, testCase *TestCase) *ShowCase {
+func (testUnit *TestUnit) exec(testCode *TestCode, testCase *TestCase) *ShowCase {
 
 	detail := new(ShowCase)
 	detail.Name = testCase.Name
@@ -155,11 +155,10 @@ func (testUnit *TestUnit) exec(
 
 }
 
-func (testUnit *TestUnit) goEach(
-	delegateFunc func(int, int, *TestCode, *TestCase)) {
-
+func (testUnit *TestUnit) goEachWithWg(wg *sync.WaitGroup, delegateFunc func(int, int, *TestCode, *TestCase)) {
 	for i, testCode := range testUnit.TestCodes {
 		for j, testCase := range testUnit.TestCases {
+			wg.Add(1)
 			go delegateFunc(i, j, testCode, testCase)
 		}
 	}
