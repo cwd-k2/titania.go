@@ -31,7 +31,7 @@ The target directories should contain `titania.json`, like below.
   "source_code_directories": ["./source_*"], // directories containing source codes (relative paths)
   "test_case_directories": ["./test_case"],  // directories containing input/answer for test (relative paths)
   "test_case_input_extension": ".in",        // input files' extension
-  "test_case_output_extension": ".out"       // answer files' extension
+  "test_case_answer_extension": ".out"       // answer files' extension
 }
 ```
 

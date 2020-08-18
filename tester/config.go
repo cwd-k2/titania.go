@@ -17,7 +17,7 @@ type Config struct {
 	SourceCodeDirectories   []string `json:"source_code_directories"`
 	TestCaseDirectories     []string `json:"test_case_directories"`
 	TestCaseInputExtension  string   `json:"test_case_input_extension"`
-	TestCaseAnswerExtension string   `json:"test_case_output_extension"`
+	TestCaseAnswerExtension string   `json:"test_case_answer_extension"`
 }
 
 func NewConfig(basepath string) *Config {
