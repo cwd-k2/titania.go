@@ -17,7 +17,7 @@ func Execute(directories, languages []string, async bool) []*Outcome {
 
 		wg := new(sync.WaitGroup)
 
-		for i, testUnit := range targets {
+		for i, target := range targets {
 			wg.Add(1)
 
 			go func(i int, target *Target) {
@@ -25,7 +25,7 @@ func Execute(directories, languages []string, async bool) []*Outcome {
 				view := target.InitView(true)
 				outcome := target.Exec(view)
 				outcomes[i] = outcome
-			}(i, testUnit)
+			}(i, target)
 
 		}
 

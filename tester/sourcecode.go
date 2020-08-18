@@ -14,7 +14,7 @@ type SourceCode struct {
 	SourceCode string
 }
 
-// returns []*TestCodes
+// returns []*SourceCode
 func MakeSourceCode(
 	basepath string,
 	languages []string,
