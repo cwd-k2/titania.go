@@ -77,5 +77,5 @@ func MakeTestCases(
 
 // helper function
 func mkCaseName(basepath, filename, ext string) string {
-	return filepath.Join(filepath.Base(basepath), strings.Replace(strings.Replace(filename, basepath, "", 1), ext, "", 1))
+	return strings.Replace(strings.Replace(filename, basepath+string(filepath.Separator), "", 1), ext, "", 1)
 }

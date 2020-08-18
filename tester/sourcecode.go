@@ -36,7 +36,7 @@ func MakeSourceCode(
 		tmp1 := make([]*SourceCode, 0, len(filenames))
 
 		for _, filename := range filenames {
-			name := filepath.Join(filepath.Base(basepath), strings.Replace(filename, basepath, "", 1))
+			name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
 
 			sourceCodeRaw, err := ioutil.ReadFile(filename)
 			// ファイル読み取り失敗
