@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -40,10 +39,7 @@ type Client struct {
 	Host   string
 }
 
-func (c *Client) api(
-	method, endpoint string,
-	params map[string]string,
-	target interface{}) *TitaniaClientError {
+func (c *Client) api(method, endpoint string, params map[string]string, target interface{}) *TitaniaClientError {
 
 	params["api_key"] = c.APIKey
 
@@ -52,8 +48,7 @@ func (c *Client) api(
 		return &TitaniaClientError{-1, err}
 	}
 
-	request, err := http.NewRequest(
-		method, c.Host+endpoint, bytes.NewReader(body))
+	request, err := http.NewRequest(method, c.Host+endpoint, bytes.NewReader(body))
 	if err != nil {
 		return &TitaniaClientError{-1, err}
 	}
@@ -75,10 +70,7 @@ func (c *Client) api(
 			return &TitaniaClientError{-1, err}
 		}
 
-		return &TitaniaClientError{
-			response.StatusCode,
-			errors.New(string(byteArray)),
-		}
+		return &TitaniaClientError{response.StatusCode, errors.New(string(byteArray))}
 	}
 
 	if err := json.NewDecoder(response.Body).Decode(target); err != nil {
@@ -89,8 +81,7 @@ func (c *Client) api(
 
 }
 
-func (c *Client) RunnersCreate(
-	sourceCode, language, input string) (*RunnersCreateResponse, *TitaniaClientError) {
+func (c *Client) RunnersCreate(sourceCode, language, input string) (*RunnersCreateResponse, *TitaniaClientError) {
 
 	runnersCreateResponse := new(RunnersCreateResponse)
 
@@ -105,16 +96,13 @@ func (c *Client) RunnersCreate(
 	}
 
 	if runnersCreateResponse.ID == "" {
-		return nil, &TitaniaClientError{
-			-1, errors.New(fmt.Sprintf("%s", runnersCreateResponse.Error)),
-		}
+		return nil, &TitaniaClientError{-1, errors.New(runnersCreateResponse.Error)}
 	}
 
 	return runnersCreateResponse, nil
 }
 
-func (c *Client) RunnersGetDetails(
-	id string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
+func (c *Client) RunnersGetDetails(id string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
 
 	runnersGetDetailsResponse := new(RunnersGetDetailsResponse)
 
@@ -128,18 +116,17 @@ func (c *Client) RunnersGetDetails(
 	return runnersGetDetailsResponse, nil
 }
 
-func (c *Client) Do(
-	sourceCode, language, input string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
+func (c *Client) Do(sourceCode, language, input string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
 
-	resp1, err := c.RunnersCreate(sourceCode, language, input)
+	runnersCreateResponse, err := c.RunnersCreate(sourceCode, language, input)
 	if err != nil {
 		return nil, err
 	}
 
-	resp2, err := c.RunnersGetDetails(resp1.ID)
+	runnersGetDetailsResponse, err := c.RunnersGetDetails(runnersCreateResponse.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp2, nil
+	return runnersGetDetailsResponse, nil
 }

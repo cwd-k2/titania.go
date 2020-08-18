@@ -17,7 +17,7 @@ type TestCode struct {
 // returns []*TestCodes
 func MakeTestCodes(
 	basepath string,
-	languageList []string,
+	languages []string,
 	SourceCodeDirectories []string) []*TestCode {
 
 	tmp0 := make([][]*TestCode, 0, len(SourceCodeDirectories))
@@ -36,6 +36,8 @@ func MakeTestCodes(
 		tmp1 := make([]*TestCode, 0, len(filenames))
 
 		for _, filename := range filenames {
+			name := filepath.Join(filepath.Base(basepath), strings.Replace(filename, basepath, "", 1))
+
 			sourceCode, err := ioutil.ReadFile(filename)
 			// ファイル読み取り失敗
 			if err != nil {
@@ -44,11 +46,9 @@ func MakeTestCodes(
 			}
 
 			language := LanguageType(filename)
-			if language == "plain" || !accepted(languageList, language) {
+			if language == "plain" || !accepted(languages, language) {
 				continue
 			}
-
-			name := filepath.Join(filepath.Base(basepath), strings.Replace(filename, basepath, "", 1))
 
 			testCode := new(TestCode)
 			testCode.Name = name
@@ -58,7 +58,6 @@ func MakeTestCodes(
 			length++
 			tmp1 = append(tmp1, testCode)
 		}
-
 		tmp0 = append(tmp0, tmp1)
 	}
 

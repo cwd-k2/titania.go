@@ -63,9 +63,7 @@ func MakeTestCases(
 			length++
 			tmp1 = append(tmp1, testCase)
 		}
-
 		tmp0 = append(tmp0, tmp1)
-
 	}
 
 	testCases := make([]*TestCase, 0, length)
