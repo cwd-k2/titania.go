@@ -9,57 +9,57 @@ import (
 	"github.com/cwd-k2/titania.go/pretty"
 )
 
-type ShowUnit struct {
-	Name   string      `json:"target"`
-	Fruits []*ShowCode `json:"fruits"`
+type Outcome struct {
+	Target string   `json:"target"`
+	Fruits []*Fruit `json:"fruits"`
 }
 
-type ShowCode struct {
-	Name     string      `json:"source_code"`
-	Language string      `json:"language"`
-	Details  []*ShowCase `json:"details"`
+type Fruit struct {
+	SourceCode string    `json:"source_code"`
+	Language   string    `json:"language"`
+	Details    []*Detail `json:"details"`
 }
 
-type ShowCase struct {
-	Name   string `json:"test_case"`
-	Result string `json:"result"`
-	Time   string `json:"time"`
-	OutPut string `json:"output"`
-	Error  string `json:"error"`
+type Detail struct {
+	TestCase string `json:"test_case"`
+	Result   string `json:"result"`
+	Time     string `json:"time"`
+	OutPut   string `json:"output"`
+	Error    string `json:"error"`
 }
 
 // 流石に雑すぎる ちゃんと要約して
-func WrapUp(outcomes []*ShowUnit) {
+func WrapUp(outcomes []*Outcome) {
 	pretty.Printf("\n%s\n", pretty.Bold("ALL DONE"))
 
 	for _, outcome := range outcomes {
-		pretty.Printf("\n%s\n", pretty.Bold(pretty.Cyan(outcome.Name)))
+		pretty.Printf("\n%s\n", pretty.Bold(pretty.Cyan(outcome.Target)))
 
 		for _, fruit := range outcome.Fruits {
 
-			pretty.Printf("%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.Name)))
+			pretty.Printf("%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.SourceCode)))
 
 			for _, detail := range fruit.Details {
 				switch detail.Result {
 				case "PASS":
-					pretty.Printf("%s: %s %ss\n", pretty.Green(detail.Name), pretty.Green(detail.Result), detail.Time)
+					pretty.Printf("%s: %s %ss\n", pretty.Green(detail.TestCase), pretty.Green(detail.Result), detail.Time)
 				case "FAIL":
-					pretty.Printf("%s: %s %ss\n", pretty.Yellow(detail.Name), pretty.Yellow(detail.Result), detail.Time)
+					pretty.Printf("%s: %s %ss\n", pretty.Yellow(detail.TestCase), pretty.Yellow(detail.Result), detail.Time)
 				case "CLIENT ERROR":
-					pretty.Printf("%s: %s\n", pretty.Magenta(detail.Name), pretty.Magenta(detail.Result))
+					pretty.Printf("%s: %s\n", pretty.Magenta(detail.TestCase), pretty.Magenta(detail.Result))
 				case "SERVER ERROR":
-					pretty.Printf("%s: %s\n", pretty.Blue(detail.Name), pretty.Blue(detail.Result))
+					pretty.Printf("%s: %s\n", pretty.Blue(detail.TestCase), pretty.Blue(detail.Result))
 				case "TESTER ERROR":
-					pretty.Printf("%s: %s\n", pretty.Bold(pretty.Red(detail.Name)), pretty.Bold(pretty.Red(detail.Result)))
+					pretty.Printf("%s: %s\n", pretty.Bold(pretty.Red(detail.TestCase)), pretty.Bold(pretty.Red(detail.Result)))
 				default:
-					pretty.Printf("%s: %s\n", pretty.Red(detail.Name), pretty.Red(detail.Result))
+					pretty.Printf("%s: %s\n", pretty.Red(detail.TestCase), pretty.Red(detail.Result))
 				}
 			}
 		}
 	}
 }
 
-func Print(outcomes []*ShowUnit) {
+func Print(outcomes []*Outcome) {
 	// JSON 形式に変換
 	rawout, err := json.MarshalIndent(outcomes, "", "  ")
 	// JSON パース失敗

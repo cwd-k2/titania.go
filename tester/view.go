@@ -23,13 +23,13 @@ type FancyView struct {
 	indexes []string
 }
 
-func (testUnit *TestUnit) InitView(quiet bool) View {
+func (target *Target) InitView(quiet bool) View {
 
 	if quiet {
 		view := new(QuietView)
 
-		view.name = testUnit.Name
-		view.total = len(testUnit.TestCodes) * len(testUnit.TestCases)
+		view.name = target.Name
+		view.total = len(target.SourceCodes) * len(target.TestCases)
 
 		return view
 
@@ -37,15 +37,15 @@ func (testUnit *TestUnit) InitView(quiet bool) View {
 
 		view := new(FancyView)
 
-		view.name = testUnit.Name
-		view.codes = len(testUnit.TestCodes)
-		view.cases = len(testUnit.TestCases)
+		view.name = target.Name
+		view.codes = len(target.SourceCodes)
+		view.cases = len(target.TestCases)
 
-		view.counts = make([]int, len(testUnit.TestCodes))
+		view.counts = make([]int, len(target.SourceCodes))
 
-		indexes := make([]string, 0, len(testUnit.TestCodes))
-		for _, testCode := range testUnit.TestCodes {
-			indexes = append(indexes, testCode.Name)
+		indexes := make([]string, 0, len(target.SourceCodes))
+		for _, sourceCode := range target.SourceCodes {
+			indexes = append(indexes, sourceCode.Name)
 		}
 
 		view.indexes = indexes
@@ -60,10 +60,7 @@ func (view *FancyView) Draw() {
 	pretty.Printf("%s\n", pretty.Bold(pretty.Cyan(view.name)))
 
 	for _, index := range view.indexes {
-		pretty.Printf(
-			"[%s] %s %s\n",
-			pretty.Yellow("WAIT"), "START",
-			pretty.Bold(pretty.Blue(index)))
+		pretty.Printf("[%s] %s %s\n", pretty.Yellow("WAIT"), "START", pretty.Bold(pretty.Blue(index)))
 	}
 
 }
@@ -75,17 +72,9 @@ func (view *FancyView) Update(position int) {
 	pretty.Erase()
 
 	if view.counts[position] == view.cases {
-		pretty.Printf(
-			"[%s] %02d/%02d %s",
-			pretty.Green("DONE"),
-			view.counts[position], view.cases,
-			pretty.Bold(pretty.Blue(view.indexes[position])))
+		pretty.Printf("[%s] %02d/%02d %s", pretty.Green("DONE"), view.counts[position], view.cases, pretty.Bold(pretty.Blue(view.indexes[position])))
 	} else {
-		pretty.Printf(
-			"[%s] %02d/%02d %s",
-			pretty.Yellow("WAIT"),
-			view.counts[position], view.cases,
-			pretty.Bold(pretty.Blue(view.indexes[position])))
+		pretty.Printf("[%s] %02d/%02d %s", pretty.Yellow("WAIT"), view.counts[position], view.cases, pretty.Bold(pretty.Blue(view.indexes[position])))
 	}
 
 	pretty.Down(view.codes - position)
@@ -93,20 +82,14 @@ func (view *FancyView) Update(position int) {
 }
 
 func (view *QuietView) Draw() {
-	pretty.Printf(
-		"[%s] %s\n",
-		pretty.Green("LAUNCH"),
-		pretty.Bold(pretty.Cyan(view.name)))
+	pretty.Printf("[%s] %s\n", pretty.Green("LAUNCH"), pretty.Bold(pretty.Cyan(view.name)))
 }
 
 func (view *QuietView) Update(_ int) {
 	view.count++
 
 	if view.count == view.total {
-		pretty.Printf(
-			"[%s] %s\n",
-			pretty.Yellow("FINISH"),
-			pretty.Bold(pretty.Cyan(view.name)))
+		pretty.Printf("[%s] %s\n", pretty.Yellow("FINISH"), pretty.Bold(pretty.Cyan(view.name)))
 	}
 
 }

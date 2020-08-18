@@ -9,19 +9,19 @@ import (
 	"github.com/cwd-k2/titania.go/client"
 )
 
-// TestUnit
-// contains paiza.io API client, config, TestCodes, and TestCases
-type TestUnit struct {
-	Name      string
-	Client    *client.Client
-	Config    *Config
-	TestCodes []*TestCode
-	TestCases []*TestCase
+// Target
+// contains paiza.io API client, config, SourceCodes, and TestCases
+type Target struct {
+	Name        string
+	Client      *client.Client
+	Config      *Config
+	SourceCodes []*SourceCode
+	TestCases   []*TestCase
 }
 
-// NewtestUnit
-// returns *TestUnit
-func NewTestUnit(dirname string, languages []string) *TestUnit {
+// NewTarget
+// returns *Target
+func NewTarget(dirname string, languages []string) *Target {
 	basepath, err := filepath.Abs(dirname)
 	// ここのエラーは公式のドキュメント見てもわからんのだけど何？
 	if err != nil {
@@ -41,10 +41,10 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	client.APIKey = config.APIKey
 
 	// ソースコード
-	testCodes := MakeTestCodes(basepath, languages, config.SourceCodeDirectories)
+	sourceCodes := MakeSourceCode(basepath, languages, config.SourceCodeDirectories)
 
 	// ソースコードがなければ実行しない
-	if len(testCodes) == 0 {
+	if len(sourceCodes) == 0 {
 		return nil
 	}
 
@@ -53,71 +53,71 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 		basepath,
 		config.TestCaseDirectories,
 		config.TestCaseInputExtension,
-		config.TestCaseOutputExtension)
+		config.TestCaseAnswerExtension)
 
 	// テストケースがなければ実行しない
 	if len(testCases) == 0 {
 		return nil
 	}
 
-	testUnit := new(TestUnit)
-	testUnit.Name = dirname
-	testUnit.Client = client
-	testUnit.Config = config
-	testUnit.TestCodes = testCodes
-	testUnit.TestCases = testCases
+	target := new(Target)
+	target.Name = dirname
+	target.Client = client
+	target.Config = config
+	target.SourceCodes = sourceCodes
+	target.TestCases = testCases
 
-	return testUnit
+	return target
 }
 
-func MakeTestUnits(directories, languages []string) []*TestUnit {
-	testUnits := make([]*TestUnit, 0, len(directories))
+func MakeTargets(directories, languages []string) []*Target {
+	targets := make([]*Target, 0, len(directories))
 	for _, dirname := range directories {
-		testUnit := NewTestUnit(dirname, languages)
-		if testUnit != nil {
-			testUnits = append(testUnits, testUnit)
+		target := NewTarget(dirname, languages)
+		if target != nil {
+			targets = append(targets, target)
 		}
 	}
-	return testUnits
+	return targets
 }
 
-func (testUnit *TestUnit) Exec(view View) *ShowUnit {
+func (target *Target) Exec(view View) *Outcome {
 	wg := new(sync.WaitGroup)
-	fruits := make([]*ShowCode, len(testUnit.TestCodes))
+	fruits := make([]*Fruit, len(target.SourceCodes))
 
-	for i, testCode := range testUnit.TestCodes {
-		fruit := new(ShowCode)
-		fruit.Name = testCode.Name
-		fruit.Language = testCode.Language
-		fruit.Details = make([]*ShowCase, len(testUnit.TestCases))
+	for i, sourceCode := range target.SourceCodes {
+		fruit := new(Fruit)
+		fruit.SourceCode = sourceCode.Name
+		fruit.Language = sourceCode.Language
+		fruit.Details = make([]*Detail, len(target.TestCases))
 		fruits[i] = fruit
 	}
 
 	view.Draw()
 
-	testUnit.goEachWithWg(wg, func(i, j int, testCode *TestCode, testCase *TestCase) {
+	target.goEachWithWg(wg, func(i, j int, sourceCode *SourceCode, testCase *TestCase) {
 		defer wg.Done()
-		detail := testUnit.exec(testCode, testCase)
+		detail := target.exec(sourceCode, testCase)
 		fruits[i].Details[j] = detail
 		view.Update(i)
 	})
 
 	wg.Wait()
 
-	outcome := new(ShowUnit)
-	outcome.Name = testUnit.Name
+	outcome := new(Outcome)
+	outcome.Target = target.Name
 	outcome.Fruits = fruits
 
 	return outcome
 }
 
-func (testUnit *TestUnit) exec(testCode *TestCode, testCase *TestCase) *ShowCase {
+func (target *Target) exec(sourceCode *SourceCode, testCase *TestCase) *Detail {
 
-	detail := new(ShowCase)
-	detail.Name = testCase.Name
+	detail := new(Detail)
+	detail.TestCase = testCase.Name
 
 	// 実際に paiza.io の API を利用して実行結果をもらう
-	resp, err := testUnit.Client.Do(testCode.SourceCode, testCode.Language, testCase.Input)
+	resp, err := target.Client.Do(sourceCode.SourceCode, sourceCode.Language, testCase.Input)
 
 	if err != nil {
 		if err.Code >= 500 {
@@ -132,8 +132,7 @@ func (testUnit *TestUnit) exec(testCode *TestCode, testCase *TestCase) *ShowCase
 	}
 
 	// ビルドエラー
-	if !(resp.BuildResult == "success" ||
-		resp.BuildResult == "") {
+	if !(resp.BuildResult == "success" || resp.BuildResult == "") {
 		detail.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
 		detail.Error = resp.BuildSTDERR
 		return detail
@@ -147,7 +146,7 @@ func (testUnit *TestUnit) exec(testCode *TestCode, testCase *TestCase) *ShowCase
 	}
 
 	// 出力が正しいかどうか
-	if resp.STDOUT == testCase.Output {
+	if resp.STDOUT == testCase.Answer {
 		detail.Result = "PASS"
 	} else {
 		detail.Result = "FAIL"
@@ -159,11 +158,11 @@ func (testUnit *TestUnit) exec(testCode *TestCode, testCase *TestCase) *ShowCase
 
 }
 
-func (testUnit *TestUnit) goEachWithWg(wg *sync.WaitGroup, delegateFunc func(int, int, *TestCode, *TestCase)) {
-	for i, testCode := range testUnit.TestCodes {
-		for j, testCase := range testUnit.TestCases {
+func (target *Target) goEachWithWg(wg *sync.WaitGroup, delegateFunc func(int, int, *SourceCode, *TestCase)) {
+	for i, sourceCode := range target.SourceCodes {
+		for j, testCase := range target.TestCases {
 			wg.Add(1)
-			go delegateFunc(i, j, testCode, testCase)
+			go delegateFunc(i, j, sourceCode, testCase)
 		}
 	}
 }

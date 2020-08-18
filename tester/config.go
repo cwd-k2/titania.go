@@ -17,12 +17,12 @@ type Config struct {
 	SourceCodeDirectories   []string `json:"source_code_directories"`
 	TestCaseDirectories     []string `json:"test_case_directories"`
 	TestCaseInputExtension  string   `json:"test_case_input_extension"`
-	TestCaseOutputExtension string   `json:"test_case_output_extension"`
+	TestCaseAnswerExtension string   `json:"test_case_output_extension"`
 }
 
-func NewConfig(baseDirectoryPath string) *Config {
+func NewConfig(basepath string) *Config {
 	// ディレクトリ直下に titania.json がいるか確認したい
-	filename := path.Join(baseDirectoryPath, "titania.json")
+	filename := path.Join(basepath, "titania.json")
 	if match, _ := filepath.Glob(filename); len(match) == 0 {
 		return nil
 	}

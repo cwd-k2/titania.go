@@ -4,26 +4,26 @@ import (
 	"sync"
 )
 
-func Execute(directories, languages []string, async bool) []*ShowUnit {
-	testUnits := MakeTestUnits(directories, languages)
+func Execute(directories, languages []string, async bool) []*Outcome {
+	targets := MakeTargets(directories, languages)
 
-	if len(testUnits) == 0 {
+	if len(targets) == 0 {
 		return nil
 	}
 
-	outcomes := make([]*ShowUnit, len(testUnits))
+	outcomes := make([]*Outcome, len(targets))
 
 	if async {
 
 		wg := new(sync.WaitGroup)
 
-		for i, testUnit := range testUnits {
+		for i, testUnit := range targets {
 			wg.Add(1)
 
-			go func(i int, testUnit *TestUnit) {
+			go func(i int, target *Target) {
 				defer wg.Done()
-				view := testUnit.InitView(true)
-				outcome := testUnit.Exec(view)
+				view := target.InitView(true)
+				outcome := target.Exec(view)
 				outcomes[i] = outcome
 			}(i, testUnit)
 
@@ -33,9 +33,9 @@ func Execute(directories, languages []string, async bool) []*ShowUnit {
 
 	} else {
 
-		for i, testUnit := range testUnits {
-			view := testUnit.InitView(false)
-			outcome := testUnit.Exec(view)
+		for i, target := range targets {
+			view := target.InitView(false)
+			outcome := target.Exec(view)
 			outcomes[i] = outcome
 		}
 

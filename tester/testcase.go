@@ -11,21 +11,21 @@ import (
 type TestCase struct {
 	Name   string
 	Input  string
-	Output string
+	Answer string
 }
 
 // returns []*TestCases
 func MakeTestCases(
 	basepath string,
 	testCaseDirectories []string,
-	inputExt, outputExt string) []*TestCase {
+	inputExt, answerExt string) []*TestCase {
 
 	tmp0 := make([][]*TestCase, 0, len(testCaseDirectories))
 	length := 0
 
 	for _, dirname := range testCaseDirectories {
 		// 出力(正解)ファイル
-		pattern := filepath.Join(basepath, dirname, "*"+outputExt)
+		pattern := filepath.Join(basepath, dirname, "*"+answerExt)
 		filenames, err := filepath.Glob(pattern)
 		// ここのエラーは bad pattern
 		if err != nil {
@@ -36,10 +36,10 @@ func MakeTestCases(
 
 		// 想定する出力があるものに対してして入力を設定する
 		// 出力から先に決める
-		for _, outputfile := range filenames {
-			name := mkCaseName(basepath, outputfile, outputExt)
+		for _, answerfile := range filenames {
+			name := mkCaseName(basepath, answerfile, answerExt)
 
-			output, err := ioutil.ReadFile(outputfile)
+			answer, err := ioutil.ReadFile(answerfile)
 			// ファイル読み取り失敗
 			if err != nil {
 				println(err)
@@ -58,7 +58,7 @@ func MakeTestCases(
 			testCase := new(TestCase)
 			testCase.Name = name
 			testCase.Input = string(input)
-			testCase.Output = string(output)
+			testCase.Answer = string(answer)
 
 			length++
 			tmp1 = append(tmp1, testCase)
@@ -77,7 +77,5 @@ func MakeTestCases(
 
 // helper function
 func mkCaseName(basepath, filename, ext string) string {
-	return filepath.Join(
-		filepath.Base(basepath),
-		strings.Replace(strings.Replace(filename, basepath, "", 1), ext, "", 1))
+	return filepath.Join(filepath.Base(basepath), strings.Replace(strings.Replace(filename, basepath, "", 1), ext, "", 1))
 }

@@ -6,21 +6,21 @@ import (
 	"strings"
 )
 
-// TestCode
+// SourceCode
 // contains source code, its language
-type TestCode struct {
+type SourceCode struct {
 	Name       string
 	Language   string
 	SourceCode string
 }
 
 // returns []*TestCodes
-func MakeTestCodes(
+func MakeSourceCode(
 	basepath string,
 	languages []string,
-	SourceCodeDirectories []string) []*TestCode {
+	SourceCodeDirectories []string) []*SourceCode {
 
-	tmp0 := make([][]*TestCode, 0, len(SourceCodeDirectories))
+	tmp0 := make([][]*SourceCode, 0, len(SourceCodeDirectories))
 	length := 0
 
 	for _, dirname := range SourceCodeDirectories {
@@ -33,12 +33,12 @@ func MakeTestCodes(
 			continue
 		}
 
-		tmp1 := make([]*TestCode, 0, len(filenames))
+		tmp1 := make([]*SourceCode, 0, len(filenames))
 
 		for _, filename := range filenames {
 			name := filepath.Join(filepath.Base(basepath), strings.Replace(filename, basepath, "", 1))
 
-			sourceCode, err := ioutil.ReadFile(filename)
+			sourceCodeRaw, err := ioutil.ReadFile(filename)
 			// ファイル読み取り失敗
 			if err != nil {
 				println(err)
@@ -50,23 +50,23 @@ func MakeTestCodes(
 				continue
 			}
 
-			testCode := new(TestCode)
-			testCode.Name = name
-			testCode.Language = language
-			testCode.SourceCode = string(sourceCode)
+			sourceCode := new(SourceCode)
+			sourceCode.Name = name
+			sourceCode.Language = language
+			sourceCode.SourceCode = string(sourceCodeRaw)
 
 			length++
-			tmp1 = append(tmp1, testCode)
+			tmp1 = append(tmp1, sourceCode)
 		}
 		tmp0 = append(tmp0, tmp1)
 	}
 
-	testCodes := make([]*TestCode, 0, length)
+	sourceCodes := make([]*SourceCode, 0, length)
 	for _, tmp := range tmp0 {
-		testCodes = append(testCodes, tmp...)
+		sourceCodes = append(sourceCodes, tmp...)
 	}
 
-	return testCodes
+	return sourceCodes
 }
 
 func accepted(array []string, element string) bool {
