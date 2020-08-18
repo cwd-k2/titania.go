@@ -87,11 +87,11 @@ func (testUnit *TestUnit) Exec(quiet bool) []*ShowCode {
 
 	view.Draw()
 
-	testUnit.goEach(func(testCodes *TestCode, testCase *TestCase) {
-		codeName, detail := testUnit.exec(testCodes, testCase)
-		overs[codeName].Details = append(overs[codeName].Details, detail)
+	testUnit.goEach(func(testCode *TestCode, testCase *TestCase) {
+		detail := testUnit.exec(testCode, testCase)
+		overs[testCode.Name].Details = append(overs[testCode.Name].Details, detail)
 
-		ch <- codeName
+		ch <- testCode.Name
 	})
 
 	curr := 0
@@ -123,13 +123,10 @@ func (testUnit *TestUnit) Exec(quiet bool) []*ShowCode {
 }
 
 func (testUnit *TestUnit) exec(
-	testCode *TestCode, testCase *TestCase) (string, *ShowCase) {
-
-	unitName := testCode.Name
-	caseName := testCase.Name
+	testCode *TestCode, testCase *TestCase) *ShowCase {
 
 	showCase := new(ShowCase)
-	showCase.Name = caseName
+	showCase.Name = testCase.Name
 
 	// 実際に paiza.io の API を利用して実行結果をもらう
 	resp, err := testUnit.Client.Do(testCode.SourceCode, testCode.Language, testCase.Input)
@@ -143,7 +140,7 @@ func (testUnit *TestUnit) exec(
 			showCase.Result = "TESTER ERROR"
 		}
 		showCase.Error = err.Error()
-		return unitName, showCase
+		return showCase
 	}
 
 	// ビルドエラー
@@ -151,14 +148,14 @@ func (testUnit *TestUnit) exec(
 		resp.BuildResult == "") {
 		showCase.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
 		showCase.Error = resp.BuildSTDERR
-		return unitName, showCase
+		return showCase
 	}
 
 	// 実行時エラー
 	if resp.Result != "success" {
 		showCase.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
 		showCase.Error = resp.STDERR
-		return unitName, showCase
+		return showCase
 	}
 
 	// 出力が正しいかどうか
@@ -170,7 +167,7 @@ func (testUnit *TestUnit) exec(
 
 	showCase.Time = resp.Time
 	showCase.OutPut = resp.STDOUT
-	return unitName, showCase
+	return showCase
 
 }
 
