@@ -11,11 +11,9 @@ import (
 // パスを相対パスとして綺麗な形に
 func cleanerPath(pwd, directory string) (string, error) {
 	if filepath.IsAbs(directory) {
-		dirname, err := filepath.Rel(pwd, directory)
-		return dirname, err
+		return filepath.Rel(pwd, directory)
 	} else {
-		dirname, err := filepath.Rel(pwd, filepath.Join(pwd, directory))
-		return dirname, err
+		return filepath.Rel(pwd, filepath.Join(pwd, directory))
 	}
 }
 
@@ -37,8 +35,8 @@ func OptParse() ([]string, []string, bool) {
 	flag.Parse()
 	args := flag.Args()
 
-	directories := []string{}
-	languages := []string{}
+	var directories []string
+	var languages []string
 
 	pwd, err := os.Getwd()
 	if err != nil {
