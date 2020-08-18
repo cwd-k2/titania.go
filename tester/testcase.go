@@ -2,7 +2,6 @@ package tester
 
 import (
 	"io/ioutil"
-	"path"
 	"path/filepath"
 	"strings"
 )
@@ -15,71 +14,63 @@ type TestCase struct {
 	Output string
 }
 
-// returns map[string]*TestCases
+// returns []*TestCases
 func MakeTestCases(
 	basepath string,
 	testCaseDirectories []string,
-	inputExt, outputExt string) map[string]*TestCase {
+	inputExt, outputExt string) []*TestCase {
 
-	testCases := make(map[string]*TestCase)
+	tmp0 := make([][]*TestCase, 0, len(testCaseDirectories))
+	length := 0
 
 	for _, dirname := range testCaseDirectories {
 		// 出力(正解)ファイル
-		outFileNamePattern := path.Join(basepath, dirname, "*"+outputExt)
-		outFileNames, err := filepath.Glob(outFileNamePattern)
+		pattern := filepath.Join(basepath, dirname, "*"+outputExt)
+		filenames, err := filepath.Glob(pattern)
 		// ここのエラーは bad pattern
 		if err != nil {
 			println(err)
 			continue
 		}
+		tmp1 := make([]*TestCase, 0, len(filenames))
 
-		// 入力ファイル
-		inFileNamePattern := path.Join(basepath, dirname, "*"+inputExt)
-		inFileNames, err := filepath.Glob(inFileNamePattern)
-		// ここのエラーは bad pattern
-		if err != nil {
-			println(err)
-			continue
-		}
-
+		// 想定する出力があるものに対してして入力を設定する
 		// 出力から先に決める
-		for _, filename := range outFileNames {
-			name := makeCaseName(basepath, filename, outputExt)
+		for _, outputfile := range filenames {
+			name := mkCaseName(basepath, outputfile, outputExt)
 
-			byteArray, err := ioutil.ReadFile(filename)
+			output, err := ioutil.ReadFile(outputfile)
 			// ファイル読み取り失敗
 			if err != nil {
 				println(err)
-				testCases[name] = nil
+				continue
+			}
+
+			// 入力ファイル
+			inputfile := filepath.Join(basepath, dirname, filepath.Base(name)+inputExt)
+
+			input, err := ioutil.ReadFile(inputfile)
+			if err != nil {
+				println(err)
 				continue
 			}
 
 			testCase := new(TestCase)
 			testCase.Name = name
-			testCase.Output = string(byteArray)
+			testCase.Input = string(input)
+			testCase.Output = string(output)
 
-			testCases[name] = testCase
+			length++
+			tmp1 = append(tmp1, testCase)
 		}
 
-		// 想定する出力があるものに大して入力を設定する
-		for _, filename := range inFileNames {
-			name := makeCaseName(basepath, filename, inputExt)
-			testCase := testCases[name]
-			// 出力が用意されてなかったら作りません
-			if testCase == nil {
-				continue
-			}
+		tmp0 = append(tmp0, tmp1)
 
-			byteArray, err := ioutil.ReadFile(filename)
-			// ファイル読み取り失敗
-			if err != nil {
-				println(err)
-				testCase = nil
-				continue
-			}
+	}
 
-			testCase.Input = string(byteArray)
-		}
+	testCases := make([]*TestCase, 0, length)
+	for _, tmp := range tmp0 {
+		testCases = append(testCases, tmp...)
 	}
 
 	return testCases
@@ -87,8 +78,8 @@ func MakeTestCases(
 }
 
 // helper function
-func makeCaseName(basepath, filename, ext string) string {
-	return path.Join(
+func mkCaseName(basepath, filename, ext string) string {
+	return filepath.Join(
 		filepath.Base(basepath),
 		strings.Replace(strings.Replace(filename, basepath, "", 1), ext, "", 1))
 }

@@ -6,7 +6,7 @@ import (
 
 type View interface {
 	Draw()
-	Update(string)
+	Update(int)
 }
 
 type QuietView struct {
@@ -19,16 +19,11 @@ type FancyView struct {
 	name    string
 	units   int
 	cases   int
-	places  map[string]int
-	counts  map[string]int
+	counts  []int
 	indexes []string
 }
 
-func InitView(
-	name string,
-	testCodes map[string]*TestCode,
-	testCases map[string]*TestCase,
-	quiet bool) View {
+func InitView(name string, testCodes []*TestCode, testCases []*TestCase, quiet bool) View {
 
 	if quiet {
 		view := new(QuietView)
@@ -46,16 +41,11 @@ func InitView(
 		view.units = len(testCodes)
 		view.cases = len(testCases)
 
-		view.places = make(map[string]int)
-		view.counts = make(map[string]int)
+		view.counts = make([]int, len(testCodes))
 
-		i := 0
 		indexes := make([]string, 0, len(testCodes))
-		for codeName := range testCodes {
-			view.places[codeName] = i
-			view.counts[codeName] = 0
-			indexes = append(indexes, codeName)
-			i++
+		for _, testCode := range testCodes {
+			indexes = append(indexes, testCode.Name)
 		}
 
 		view.indexes = indexes
@@ -78,25 +68,24 @@ func (view *FancyView) Draw() {
 
 }
 
-func (view *FancyView) Update(codeName string) {
-	position := view.places[codeName]
-	view.counts[codeName]++
+func (view *FancyView) Update(position int) {
+	view.counts[position]++
 
 	pretty.Up(view.units - position)
 	pretty.Erase()
 
-	if view.counts[codeName] == view.cases {
+	if view.counts[position] == view.cases {
 		pretty.Printf(
 			"[%s] %02d/%02d %s",
 			pretty.Green("DONE"),
-			view.counts[codeName], view.cases,
-			pretty.Bold(pretty.Blue(codeName)))
+			view.counts[position], view.cases,
+			pretty.Bold(pretty.Blue(view.indexes[position])))
 	} else {
 		pretty.Printf(
 			"[%s] %02d/%02d %s",
 			pretty.Yellow("WAIT"),
-			view.counts[codeName], view.cases,
-			pretty.Bold(pretty.Blue(codeName)))
+			view.counts[position], view.cases,
+			pretty.Bold(pretty.Blue(view.indexes[position])))
 	}
 
 	pretty.Down(view.units - position)
@@ -110,7 +99,7 @@ func (view *QuietView) Draw() {
 		pretty.Bold(pretty.Cyan(view.name)))
 }
 
-func (view *QuietView) Update(codeName string) {
+func (view *QuietView) Update(_ int) {
 	view.count++
 
 	if view.count == view.total {

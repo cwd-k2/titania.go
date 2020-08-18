@@ -2,7 +2,6 @@ package tester
 
 import (
 	"io/ioutil"
-	"path"
 	"path/filepath"
 	"strings"
 )
@@ -15,47 +14,57 @@ type TestCode struct {
 	SourceCode string
 }
 
-// returns map[string]*TestCodes
+// returns []*TestCodes
 func MakeTestCodes(
 	basepath string,
 	languageList []string,
-	SourceCodeDirectories []string) map[string]*TestCode {
+	SourceCodeDirectories []string) []*TestCode {
 
-	testCodes := make(map[string]*TestCode)
+	tmp0 := make([][]*TestCode, 0, len(SourceCodeDirectories))
+	length := 0
 
 	for _, dirname := range SourceCodeDirectories {
 		// ソースファイル
-		sourceFileNamePattern := path.Join(basepath, dirname, "*.*")
-		sourceFileNames, err := filepath.Glob(sourceFileNamePattern)
+		pattern := filepath.Join(basepath, dirname, "*.*")
+		filenames, err := filepath.Glob(pattern)
 		// ここのエラーは bad pattern
 		if err != nil {
 			println(err)
 			continue
 		}
 
-		for _, sourceFileName := range sourceFileNames {
-			byteArray, err := ioutil.ReadFile(sourceFileName)
+		tmp1 := make([]*TestCode, 0, len(filenames))
+
+		for _, filename := range filenames {
+			sourceCode, err := ioutil.ReadFile(filename)
 			// ファイル読み取り失敗
 			if err != nil {
 				println(err)
 				continue
 			}
 
-			language := LanguageType(sourceFileName)
+			language := LanguageType(filename)
 			if language == "plain" || !accepted(languageList, language) {
 				continue
 			}
 
-			name := path.Join(
-				filepath.Base(basepath), strings.Replace(sourceFileName, basepath, "", 1))
+			name := filepath.Join(filepath.Base(basepath), strings.Replace(filename, basepath, "", 1))
 
 			testCode := new(TestCode)
 			testCode.Name = name
 			testCode.Language = language
-			testCode.SourceCode = string(byteArray)
+			testCode.SourceCode = string(sourceCode)
 
-			testCodes[name] = testCode
+			length++
+			tmp1 = append(tmp1, testCode)
 		}
+
+		tmp0 = append(tmp0, tmp1)
+	}
+
+	testCodes := make([]*TestCode, 0, length)
+	for _, tmp := range tmp0 {
+		testCodes = append(testCodes, tmp...)
 	}
 
 	return testCodes
