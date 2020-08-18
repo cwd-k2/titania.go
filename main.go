@@ -20,5 +20,5 @@ func main() {
 	}
 
 	tester.WrapUp(outcomes)
-	defer tester.OutPut(outcomes)
+	defer tester.Print(outcomes)
 }

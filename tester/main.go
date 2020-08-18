@@ -6,22 +6,15 @@ import (
 )
 
 func Execute(directories, languages []string, async bool) []*ShowUnit {
-
 	outcomes := make([]*ShowUnit, 0, len(directories))
-
 	wg := new(sync.WaitGroup)
 
 	for _, dirname := range directories {
-
 		if async {
-
 			wg.Add(1)
 			go execute(dirname, languages, &outcomes, wg)
-
 		} else {
-
 			execute(dirname, languages, &outcomes, nil)
-
 		}
 	}
 

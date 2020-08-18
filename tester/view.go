@@ -53,7 +53,7 @@ func InitView(
 		view.counts = make(map[string]int)
 
 		i := 0
-		var indexes []string
+		indexes := make([]string, 0, len(testCodes))
 		for codeName := range testCodes {
 			view.places[codeName] = i
 			view.counts[codeName] = 0
@@ -91,12 +91,14 @@ func (view *FancyView) Update(codeName string) {
 	if view.counts[codeName] == view.cases {
 		fmt.Fprintf(
 			os.Stderr, "[%s] %02d/%02d %s",
-			pretty.Green("DONE"), view.counts[codeName], view.cases,
+			pretty.Green("DONE"),
+			view.counts[codeName], view.cases,
 			pretty.Bold(pretty.Blue(codeName)))
 	} else {
 		fmt.Fprintf(
 			os.Stderr, "[%s] %02d/%02d %s",
-			pretty.Yellow("WAIT"), view.counts[codeName], view.cases,
+			pretty.Yellow("WAIT"),
+			view.counts[codeName], view.cases,
 			pretty.Bold(pretty.Blue(codeName)))
 	}
 

@@ -17,7 +17,7 @@ type TestCase struct {
 
 // returns map[string]*TestCases
 func MakeTestCases(
-	baseDirectoryPath string,
+	basepath string,
 	testCaseDirectories []string,
 	inputExt, outputExt string) map[string]*TestCase {
 
@@ -25,7 +25,7 @@ func MakeTestCases(
 
 	for _, dirname := range testCaseDirectories {
 		// 出力(正解)ファイル
-		outFileNamePattern := path.Join(baseDirectoryPath, dirname, "*"+outputExt)
+		outFileNamePattern := path.Join(basepath, dirname, "*"+outputExt)
 		outFileNames, err := filepath.Glob(outFileNamePattern)
 		// ここのエラーは bad pattern
 		if err != nil {
@@ -34,7 +34,7 @@ func MakeTestCases(
 		}
 
 		// 入力ファイル
-		inFileNamePattern := path.Join(baseDirectoryPath, dirname, "*"+inputExt)
+		inFileNamePattern := path.Join(basepath, dirname, "*"+inputExt)
 		inFileNames, err := filepath.Glob(inFileNamePattern)
 		// ここのエラーは bad pattern
 		if err != nil {
@@ -43,10 +43,10 @@ func MakeTestCases(
 		}
 
 		// 出力から先に決める
-		for _, outFileName := range outFileNames {
-			name := makeCaseName(baseDirectoryPath, outFileName, outputExt)
+		for _, filename := range outFileNames {
+			name := makeCaseName(basepath, filename, outputExt)
 
-			byteArray, err := ioutil.ReadFile(outFileName)
+			byteArray, err := ioutil.ReadFile(filename)
 			// ファイル読み取り失敗
 			if err != nil {
 				println(err)
@@ -54,27 +54,31 @@ func MakeTestCases(
 				continue
 			}
 
-			testCases[name] = new(TestCase)
-			testCases[name].Name = name
-			testCases[name].Output = string(byteArray)
+			testCase := new(TestCase)
+			testCase.Name = name
+			testCase.Output = string(byteArray)
+
+			testCases[name] = testCase
 		}
 
 		// 想定する出力があるものに大して入力を設定する
-		for _, inFileName := range inFileNames {
-			name := makeCaseName(baseDirectoryPath, inFileName, inputExt)
-
-			byteArray, err := ioutil.ReadFile(inFileName)
-			// ファイル読み取り失敗
-			if err != nil {
-				println(err)
-				testCases[name] = nil
+		for _, filename := range inFileNames {
+			name := makeCaseName(basepath, filename, inputExt)
+			testCase := testCases[name]
+			// 出力が用意されてなかったら作りません
+			if testCase == nil {
 				continue
 			}
 
-			// 出力が用意されてなかったら作りません
-			if testCases[name] != nil {
-				testCases[name].Input = string(byteArray)
+			byteArray, err := ioutil.ReadFile(filename)
+			// ファイル読み取り失敗
+			if err != nil {
+				println(err)
+				testCase = nil
+				continue
 			}
+
+			testCase.Input = string(byteArray)
 		}
 	}
 

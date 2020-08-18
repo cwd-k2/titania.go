@@ -17,7 +17,7 @@ type TestCode struct {
 
 // returns map[string]*TestCodes
 func MakeTestCodes(
-	baseDirectoryPath string,
+	basepath string,
 	languageList []string,
 	SourceCodeDirectories []string) map[string]*TestCode {
 
@@ -25,7 +25,7 @@ func MakeTestCodes(
 
 	for _, dirname := range SourceCodeDirectories {
 		// ソースファイル
-		sourceFileNamePattern := path.Join(baseDirectoryPath, dirname, "*.*")
+		sourceFileNamePattern := path.Join(basepath, dirname, "*.*")
 		sourceFileNames, err := filepath.Glob(sourceFileNamePattern)
 		// ここのエラーは bad pattern
 		if err != nil {
@@ -47,16 +47,14 @@ func MakeTestCodes(
 			}
 
 			name := path.Join(
-				filepath.Base(baseDirectoryPath),
-				strings.Replace(sourceFileName, baseDirectoryPath, "", 1))
+				filepath.Base(basepath), strings.Replace(sourceFileName, basepath, "", 1))
 
 			testCode := new(TestCode)
 			testCode.Name = name
-			testCode.SourceCode = string(byteArray)
 			testCode.Language = language
+			testCode.SourceCode = string(byteArray)
 
 			testCodes[name] = testCode
-
 		}
 	}
 

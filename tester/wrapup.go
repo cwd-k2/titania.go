@@ -31,11 +31,9 @@ type ShowCase struct {
 
 // 流石に雑すぎる ちゃんと要約して
 func WrapUp(outcomes []*ShowUnit) {
-
 	fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold("ALL DONE"))
 
 	for _, outcome := range outcomes {
-
 		fmt.Fprintf(os.Stderr, "\n%s\n", pretty.Bold(pretty.Cyan(outcome.Name)))
 
 		for _, fruit := range outcome.Fruits {
@@ -62,7 +60,7 @@ func WrapUp(outcomes []*ShowUnit) {
 	}
 }
 
-func OutPut(outcomes []*ShowUnit) {
+func Print(outcomes []*ShowUnit) {
 	// JSON 形式に変換
 	rawout, err := json.MarshalIndent(outcomes, "", "  ")
 	// JSON パース失敗

@@ -22,7 +22,7 @@ type TestUnit struct {
 // NewtestUnit
 // returns *TestUnit
 func NewTestUnit(dirname string, languages []string) *TestUnit {
-	baseDirectoryPath, err := filepath.Abs(dirname)
+	basepath, err := filepath.Abs(dirname)
 	// ここのエラーは公式のドキュメント見てもわからんのだけど何？
 	if err != nil {
 		println(err)
@@ -30,7 +30,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	}
 
 	// 設定
-	config := NewConfig(baseDirectoryPath)
+	config := NewConfig(basepath)
 	if config == nil {
 		return nil
 	}
@@ -41,9 +41,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	client.APIKey = config.APIKey
 
 	// ソースコード
-	testCodes := MakeTestCodes(
-		baseDirectoryPath, languages,
-		config.SourceCodeDirectories)
+	testCodes := MakeTestCodes(basepath, languages, config.SourceCodeDirectories)
 
 	// ソースコードがなければ実行しない
 	if len(testCodes) == 0 {
@@ -52,7 +50,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 
 	// テストケース
 	testCases := MakeTestCases(
-		baseDirectoryPath,
+		basepath,
 		config.TestCaseDirectories,
 		config.TestCaseInputExtension,
 		config.TestCaseOutputExtension)
@@ -78,11 +76,12 @@ func (testUnit *TestUnit) Exec(quiet bool) []*ShowCode {
 	view := InitView(testUnit.Name, testUnit.TestCodes, testUnit.TestCases, quiet)
 	overs := make(map[string]*ShowCode)
 
-	for name, testCode := range testUnit.TestCodes {
-		over := new(ShowCode)
-		over.Name = name
-		over.Language = testCode.Language
-		overs[name] = over
+	for _, testCode := range testUnit.TestCodes {
+		overs[testCode.Name] = &ShowCode{
+			testCode.Name,
+			testCode.Language,
+			make([]*ShowCase, 0, len(testUnit.TestCases)),
+		}
 	}
 
 	view.Draw()
@@ -106,7 +105,7 @@ func (testUnit *TestUnit) Exec(quiet bool) []*ShowCode {
 		}
 	}
 
-	fruits := make([]*ShowCode, 0, len(overs))
+	fruits := make([]*ShowCode, 0, len(testUnit.TestCodes))
 
 	for _, over := range overs {
 		sort.Slice(over.Details, func(i, j int) bool {
