@@ -49,6 +49,8 @@ func LanguageType(filename string) string {
 		return "coffeescript"
 	case ".vb":
 		return "vb"
+	case ".cbl":
+		fallthrough
 	case ".cob":
 		return "cobol"
 	case ".fs":
