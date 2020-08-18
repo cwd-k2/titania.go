@@ -81,7 +81,7 @@ func MakeTestUnits(directories, languages []string) []*TestUnit {
 	return testUnits
 }
 
-func (testUnit *TestUnit) Exec(view View) []*ShowCode {
+func (testUnit *TestUnit) Exec(view View) *ShowUnit {
 	wg := new(sync.WaitGroup)
 	fruits := make([]*ShowCode, len(testUnit.TestCodes))
 
@@ -104,7 +104,11 @@ func (testUnit *TestUnit) Exec(view View) []*ShowCode {
 
 	wg.Wait()
 
-	return fruits
+	outcome := new(ShowUnit)
+	outcome.Name = testUnit.Name
+	outcome.Fruits = fruits
+
+	return outcome
 }
 
 func (testUnit *TestUnit) exec(testCode *TestCode, testCase *TestCase) *ShowCase {
