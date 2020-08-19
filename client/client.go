@@ -90,6 +90,7 @@ func (c *Client) RunnersCreate(sourceCode, language, input string) (*RunnersCrea
 	args["language"] = language
 	args["input"] = input
 	args["longpoll"] = "true"
+	args["longpoll_timeout"] = "30"
 
 	if err := c.api("POST", "/runners/create", args, runnersCreateResponse); err != nil {
 		return nil, err
