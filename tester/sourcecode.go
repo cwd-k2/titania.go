@@ -29,7 +29,7 @@ func MakeSourceCode(
 		filenames, err := filepath.Glob(pattern)
 		// ここのエラーは bad pattern
 		if err != nil {
-			println(err)
+			println(err.Error())
 			continue
 		}
 
@@ -41,7 +41,7 @@ func MakeSourceCode(
 			sourceCodeRaw, err := ioutil.ReadFile(filename)
 			// ファイル読み取り失敗
 			if err != nil {
-				println(err)
+				println(err.Error())
 				continue
 			}
 

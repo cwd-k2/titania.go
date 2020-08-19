@@ -29,7 +29,7 @@ func MakeTestCases(
 		filenames, err := filepath.Glob(pattern)
 		// ここのエラーは bad pattern
 		if err != nil {
-			println(err)
+			println(err.Error())
 			continue
 		}
 		tmp1 := make([]*TestCase, 0, len(filenames))
@@ -42,7 +42,7 @@ func MakeTestCases(
 			answer, err := ioutil.ReadFile(answerfile)
 			// ファイル読み取り失敗
 			if err != nil {
-				println(err)
+				println(err.Error())
 				continue
 			}
 
@@ -51,7 +51,7 @@ func MakeTestCases(
 
 			input, err := ioutil.ReadFile(inputfile)
 			if err != nil {
-				println(err)
+				println(err.Error())
 				continue
 			}
 

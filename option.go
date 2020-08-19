@@ -43,6 +43,7 @@ func OptParse() ([]string, []string, bool) {
 	var args []string
 	var async bool = false
 	var languages []string
+	var directories []string
 
 	for _, arg := range os.Args[1:] {
 		if arg == "--help" || arg == "-h" {
@@ -60,8 +61,6 @@ func OptParse() ([]string, []string, bool) {
 			args = append(args, arg)
 		}
 	}
-
-	var directories []string
 
 	pwd, err := os.Getwd()
 	if err != nil {

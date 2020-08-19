@@ -72,10 +72,11 @@ func (view *FancyView) Update(position int) {
 	pretty.Erase()
 
 	if view.counts[position] == view.cases {
-		pretty.Printf("[%s] %02d/%02d %s", pretty.Green("DONE"), view.counts[position], view.cases, pretty.Bold(pretty.Blue(view.indexes[position])))
+		pretty.Printf("[%s] ", pretty.Green("DONE"))
 	} else {
-		pretty.Printf("[%s] %02d/%02d %s", pretty.Yellow("WAIT"), view.counts[position], view.cases, pretty.Bold(pretty.Blue(view.indexes[position])))
+		pretty.Printf("[%s] ", pretty.Yellow("WAIT"))
 	}
+	pretty.Printf("%02d/%02d %s", pretty.Green("DONE"), view.counts[position], view.cases, pretty.Bold(pretty.Blue(view.indexes[position])))
 
 	pretty.Down(view.codes - position)
 	pretty.Beginning()
