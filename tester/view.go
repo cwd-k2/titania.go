@@ -76,7 +76,7 @@ func (view *FancyView) Update(position int) {
 	} else {
 		pretty.Printf("[%s] ", pretty.Yellow("WAIT"))
 	}
-	pretty.Printf("%02d/%02d %s", pretty.Green("DONE"), view.counts[position], view.cases, pretty.Bold(pretty.Blue(view.indexes[position])))
+	pretty.Printf("%02d/%02d %s", view.counts[position], view.cases, pretty.Bold(pretty.Blue(view.indexes[position])))
 
 	pretty.Down(view.codes - position)
 	pretty.Beginning()
