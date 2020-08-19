@@ -1,12 +1,33 @@
 package main
 
 import (
-	"flag"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/cwd-k2/titania.go/pretty"
 )
+
+func version() {
+	pretty.Printf("titania.go %s\n", VERSION)
+	os.Exit(1)
+}
+
+func usage() {
+	pretty.Printf(`usage: titania.go [options] [targets]
+
+targets:
+  target directory to test, that has titania.json.
+  if not specified, titania.go will take all subdirectories as targets.
+
+options:
+  --help,    -h              show this help message
+  --version, -v              show version
+  --lang=lang1[,lang2[,...]] language[s] to test
+`)
+	os.Exit(1)
+}
 
 // パスを相対パスとして綺麗な形に
 func cleanerPath(pwd, directory string) (string, error) {
@@ -19,20 +40,28 @@ func cleanerPath(pwd, directory string) (string, error) {
 
 // オプション解析
 func OptParse() ([]string, []string, bool) {
-	// テストする言語を指定する
-	// ここは flag を使わずに自前処理でも良さそう
-	var flagLanguages string
-	flag.StringVar(&flagLanguages, "lang", "", "languages to test (ex. --lang=ruby,python3,java)")
+	var args []string
+	var async bool = false
+	var languages []string
 
-	// async オプション（実験的）
-	var async bool
-	flag.BoolVar(&async, "async", false, "execute all tests asynchronously (experimantal)")
-
-	flag.Parse()
-	args := flag.Args()
+	for _, arg := range os.Args[1:] {
+		if arg == "--help" || arg == "-h" {
+			usage()
+		} else if arg == "--version" || arg == "-v" {
+			version()
+		} else if strings.HasPrefix(arg, "--lang=") {
+			languages = strings.Split(strings.Replace(arg, "--lang=", "", 1), ",")
+		} else if strings.HasPrefix(arg, "--async") {
+			async = true
+		} else if strings.HasPrefix(arg, "-") {
+			pretty.Printf("Unknown option: %s\n", arg)
+			usage()
+		} else {
+			args = append(args, arg)
+		}
+	}
 
 	var directories []string
-	var languages []string
 
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -61,10 +90,6 @@ func OptParse() ([]string, []string, bool) {
 			directories = append(directories, dirname)
 		}
 
-	}
-
-	if flagLanguages != "" {
-		languages = strings.Split(flagLanguages, ",")
 	}
 
 	return directories, languages, async

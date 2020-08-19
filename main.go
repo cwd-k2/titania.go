@@ -6,7 +6,7 @@ import (
 	"github.com/cwd-k2/titania.go/tester"
 )
 
-const VERSION = "0.0.0-alpha"
+const VERSION = "v0.1.0-alpha"
 
 func main() {
 	// ターゲットのディレクトリと言語，async
