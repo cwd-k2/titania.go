@@ -153,7 +153,7 @@ func (target *Target) exec(sourceCode *SourceCode, testCase *TestCase) *Detail {
 	}
 
 	detail.Time = resp.Time
-	detail.OutPut = resp.STDOUT
+	detail.Output = resp.STDOUT
 	return detail
 
 }

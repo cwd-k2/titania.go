@@ -24,7 +24,7 @@ type Detail struct {
 	TestCase string `json:"test_case"`
 	Result   string `json:"result"`
 	Time     string `json:"time"`
-	OutPut   string `json:"output"`
+	Output   string `json:"output"`
 	Error    string `json:"error"`
 }
 
