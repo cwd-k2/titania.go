@@ -28,8 +28,7 @@ type Detail struct {
 	Error    string `json:"error"`
 }
 
-// 流石に雑すぎる ちゃんと要約して
-func WrapUp(outcomes []*Outcome) {
+func Final(outcomes []*Outcome) {
 	pretty.Printf("\n%s\n", pretty.Bold("ALL DONE"))
 
 	for _, outcome := range outcomes {

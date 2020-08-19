@@ -19,6 +19,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	tester.WrapUp(outcomes)
-	defer tester.Print(outcomes)
+	tester.Final(outcomes)
+	tester.Print(outcomes)
 }
