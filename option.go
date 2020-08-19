@@ -22,15 +22,11 @@ func OptParse() ([]string, []string, bool) {
 	// テストする言語を指定する
 	// ここは flag を使わずに自前処理でも良さそう
 	var flagLanguages string
-	flag.StringVar(
-		&flagLanguages,
-		"lang", "", "languages to test (ex. --lang=ruby,python3,java)")
+	flag.StringVar(&flagLanguages, "lang", "", "languages to test (ex. --lang=ruby,python3,java)")
 
 	// async オプション（実験的）
-	var flagAsync bool
-	flag.BoolVar(
-		&flagAsync,
-		"async", false, "execute all tests asynchronously (experimantal)")
+	var async bool
+	flag.BoolVar(&async, "async", false, "execute all tests asynchronously (experimantal)")
 
 	flag.Parse()
 	args := flag.Args()
@@ -71,5 +67,5 @@ func OptParse() ([]string, []string, bool) {
 		languages = strings.Split(flagLanguages, ",")
 	}
 
-	return directories, languages, flagAsync
+	return directories, languages, async
 }
