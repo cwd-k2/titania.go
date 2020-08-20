@@ -18,12 +18,12 @@ type SourceCode struct {
 func MakeSourceCode(
 	basepath string,
 	languages []string,
-	SourceCodeDirectories []string) []*SourceCode {
+	sourceCodeDirectories []string) []*SourceCode {
 
-	tmp0 := make([][]*SourceCode, 0, len(SourceCodeDirectories))
+	tmp0 := make([][]*SourceCode, 0, len(sourceCodeDirectories))
 	length := 0
 
-	for _, dirname := range SourceCodeDirectories {
+	for _, dirname := range sourceCodeDirectories {
 		// ソースファイル
 		pattern := filepath.Join(basepath, dirname, "*.*")
 		filenames, err := filepath.Glob(pattern)
