@@ -124,15 +124,16 @@ func (target *Target) exec(sourceCode *SourceCode, testCase *TestCase) *Detail {
 
 	detail := sourceCode.Exec(target.Client, testCase)
 
+	// if result not set (this means execution was successful).
 	if detail.Result == "" {
 
 		if target.Method != nil {
-			// use custom testing method
+			// use custom testing method.
 			res, ers := target.Method.Exec(target.Client, testCase, detail)
 			detail.Result = strings.TrimRight(res, "\n")
 			detail.Error += ers
 		} else {
-			// 出力が正しいかどうか
+			// just compare ouput and expected answer.
 			if detail.Output == testCase.Answer {
 				detail.Result = "PASS"
 			} else {

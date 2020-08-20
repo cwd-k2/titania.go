@@ -11,7 +11,7 @@ const VERSION = "v0.1.1"
 func main() {
 	// ターゲットのディレクトリと言語，async
 	directories, languages, async := OptParse()
-	outcomes := tester.Execute(directories, languages, async)
+	outcomes := tester.Exec(directories, languages, async)
 
 	// 何もテストが実行されなかった場合
 	if outcomes == nil {

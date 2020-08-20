@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-func Execute(directories, languages []string, async bool) []*Outcome {
+func Exec(directories, languages []string, async bool) []*Outcome {
 	targets := MakeTargets(directories, languages)
 
 	if len(targets) == 0 {
