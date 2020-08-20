@@ -10,6 +10,7 @@ import (
 
 // Target
 // contains paiza.io API client, config, SourceCodes, and TestCases
+// physically, this stands for a directory.
 type Target struct {
 	Name        string
 	Client      *client.Client
