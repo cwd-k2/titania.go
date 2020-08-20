@@ -1,7 +1,6 @@
 package tester
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -15,6 +14,7 @@ type Target struct {
 	Name        string
 	Client      *client.Client
 	Config      *Config
+	Method      *Method
 	SourceCodes []*SourceCode
 	TestCases   []*TestCase
 }
@@ -60,12 +60,16 @@ func NewTarget(dirname string, languages []string) *Target {
 		return nil
 	}
 
+	// テストメソッド
+	method := NewMethod(basepath, config.TestMethodFileName)
+
 	target := new(Target)
 	target.Name = dirname
 	target.Client = client
 	target.Config = config
 	target.SourceCodes = sourceCodes
 	target.TestCases = testCases
+	target.Method = method
 
 	return target
 }
@@ -106,6 +110,11 @@ func (target *Target) Exec(view View) *Outcome {
 
 	outcome := new(Outcome)
 	outcome.Target = target.Name
+	if target.Method != nil {
+		outcome.Method = target.Method.Name
+	} else {
+		outcome.Method = "default"
+	}
 	outcome.Fruits = fruits
 
 	return outcome
@@ -113,47 +122,25 @@ func (target *Target) Exec(view View) *Outcome {
 
 func (target *Target) exec(sourceCode *SourceCode, testCase *TestCase) *Detail {
 
-	detail := new(Detail)
-	detail.TestCase = testCase.Name
+	detail := sourceCode.Exec(target.Client, testCase)
 
-	// 実際に paiza.io の API を利用して実行結果をもらう
-	resp, err := target.Client.Do(sourceCode.SourceCode, sourceCode.Language, testCase.Input)
+	if detail.Result == "" {
 
-	if err != nil {
-		if err.Code >= 500 {
-			detail.Result = "SERVER ERROR"
-		} else if err.Code >= 400 {
-			detail.Result = "CLIENT ERROR"
+		if target.Method != nil {
+			// use custom testing method
+			res, ers := target.Method.Exec(target.Client, testCase, detail)
+			detail.Result = strings.TrimRight(res, "\n")
+			detail.Error += ers
 		} else {
-			detail.Result = "TESTER ERROR"
+			// 出力が正しいかどうか
+			if detail.Output == testCase.Answer {
+				detail.Result = "PASS"
+			} else {
+				detail.Result = "FAIL"
+			}
 		}
-		detail.Error = err.Error()
-		return detail
 	}
 
-	// ビルドエラー
-	if !(resp.BuildResult == "success" || resp.BuildResult == "") {
-		detail.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
-		detail.Error = resp.BuildSTDERR
-		return detail
-	}
-
-	// 実行時エラー
-	if resp.Result != "success" {
-		detail.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
-		detail.Error = resp.STDERR
-		return detail
-	}
-
-	// 出力が正しいかどうか
-	if resp.STDOUT == testCase.Answer {
-		detail.Result = "PASS"
-	} else {
-		detail.Result = "FAIL"
-	}
-
-	detail.Time = resp.Time
-	detail.Output = resp.STDOUT
 	return detail
 
 }

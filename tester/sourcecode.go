@@ -1,9 +1,12 @@
 package tester
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/cwd-k2/titania.go/client"
 )
 
 // SourceCode
@@ -67,6 +70,46 @@ func MakeSourceCode(
 	}
 
 	return sourceCodes
+}
+
+func (sourceCode *SourceCode) Exec(client *client.Client, testCase *TestCase) *Detail {
+	detail := new(Detail)
+	detail.TestCase = testCase.Name
+
+	// 実際に paiza.io の API を利用して実行結果をもらう
+	resp, err := client.Do(sourceCode.SourceCode, sourceCode.Language, testCase.Input)
+
+	if err != nil {
+		if err.Code >= 500 {
+			detail.Result = "SERVER ERROR"
+		} else if err.Code >= 400 {
+			detail.Result = "CLIENT ERROR"
+		} else {
+			detail.Result = "TESTER ERROR"
+		}
+		detail.Error = err.Error()
+		return detail
+	}
+
+	// ビルドエラー
+	if !(resp.BuildResult == "success" || resp.BuildResult == "") {
+		detail.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
+		detail.Error = resp.BuildSTDERR
+		return detail
+	}
+
+	// 実行時エラー
+	if resp.Result != "success" {
+		detail.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
+		detail.Error = resp.STDERR
+		return detail
+	}
+
+	detail.Time = resp.Time
+	detail.Error = resp.STDERR
+	detail.Output = resp.STDOUT
+
+	return detail
 }
 
 func accepted(array []string, element string) bool {

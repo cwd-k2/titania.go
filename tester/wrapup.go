@@ -11,6 +11,7 @@ import (
 
 type Outcome struct {
 	Target string   `json:"target"`
+	Method string   `json:"method"`
 	Fruits []*Fruit `json:"fruits"`
 }
 
