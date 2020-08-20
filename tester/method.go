@@ -44,16 +44,20 @@ func NewMethod(basepath, testMethodFileName string) *Method {
 	return method
 }
 
+// Exec
+// returns STDOUT and STDERR for test method execution.
+// STDOUT should be the result, and STDERR should be the reason for that output.
 func (method *Method) Exec(client *client.Client, testCase *TestCase, detail *Detail) (string, string) {
 
 	// input for test_method goes in this format.
+	// output + "\0" + input + "\0" + answer + "\0"
 	elems := []string{
-		testCase.Input,
-		"END_OF_CHUNK",
 		detail.Output,
-		"END_OF_CHUNK",
+		"\000",
+		testCase.Input,
+		"\000",
 		testCase.Answer,
-		"END_OF_CHUNK",
+		"\000",
 	}
 
 	input := strings.Join(elems, "")
