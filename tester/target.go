@@ -14,9 +14,9 @@ type Target struct {
 	Name        string
 	Client      *client.Client
 	Config      *Config
+	Method      *Method
 	SourceCodes []*SourceCode
 	TestCases   []*TestCase
-	Method      *Method
 }
 
 // NewTarget
@@ -110,9 +110,10 @@ func (target *Target) Exec(view View) *Outcome {
 
 	outcome := new(Outcome)
 	outcome.Target = target.Name
-	outcome.Method = "default"
 	if target.Method != nil {
 		outcome.Method = target.Method.Name
+	} else {
+		outcome.Method = "default"
 	}
 	outcome.Fruits = fruits
 
