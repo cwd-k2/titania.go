@@ -26,10 +26,11 @@ The target directories should contain `titania.json`, like below.
 {
   "host": "http://api.paiza.io:80", // paiza.io API host
   "api_key": "guest",               // paiza.io API api_key
-  "source_code_directories": ["./source_*"], // directories containing source codes (relative paths)
-  "test_case_directories": ["./test_case"],  // directories containing input/answer for test (relative paths)
-  "test_case_input_extension": ".in",        // input files' extension
-  "test_case_answer_extension": ".out"       // answer files' extension
+  "source_code_directories": ["./source_*"],  // directories containing source codes (relative paths)
+  "test_case_directories": ["./test_case"],   // directories containing input/answer for test (relative paths)
+  "test_case_input_extension": ".in",         // input files' extension
+  "test_case_answer_extension": ".out",       // answer files' extension
+  "test_method_file_name": "./test_method.rb" // testing method file.
 }
 ```
 
@@ -50,7 +51,45 @@ $ titania.go example_01 example_02 > /dev/null
 $ titania.go --lang=ruby,haskell > /dev/null
 ```
 
-### Output
+### Source codes; Languages
+
+`titania.go` detects source codes' languages by thier extensions.
+
+### Input and Answer
+
+For test cases to run, `titania.go` requires both input and expected output files.
+
+Correspoiding input and answer files should have same **names**, except thier extensions.
+
+### Additional testing method
+
+`titania.go` compare execution STDOUT and answer by default, but you can set another testing method, by setting `test_method_file_name`.
+
+For test method execution, a single case's execution output, test case's input and expected answer are handed through STDIN, and they are joined by null character.
+
+Simply, goes like this.
+
+`<STDOUT>\0<STDIN>\0<ANSWER>\0`
+
+Okay, let's see an example.
+
+```ruby
+# output, input, answer can be separated by null charactor.
+# ruby's `gets` will read until the argument.
+# note that all below have \0 on their end.
+output = gets "\0"
+input  = gets "\0"
+answer = gets "\0"
+
+# and test method should output PASS or FAIL
+STDOUT.puts output == answer ? "FAIL" : "PASS"
+STDERR.puts "Just for fun, inversing the result."
+```
+
+This '\0 separator' strategy would be a kind of awful, but I didn't come up with any other solutions.
+
+
+## Results
 
 **Test results' details** will be written to **STDOUT**, in JSON format. Like below.
 
@@ -58,6 +97,7 @@ $ titania.go --lang=ruby,haskell > /dev/null
 [
   {
     "target": "example_02",
+    "method": "default",
     "fruits": [
       {
         "source_code": "source_haskell/main.hs",
