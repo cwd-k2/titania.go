@@ -3,7 +3,6 @@ package tester
 import (
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/cwd-k2/titania.go/client"
 )
@@ -87,7 +86,7 @@ func MakeTargets(directories, languages []string) []*Target {
 }
 
 func (target *Target) Exec(view View) *Outcome {
-	wg := new(sync.WaitGroup)
+	ch := make(chan int)
 	fruits := make([]*Fruit, len(target.SourceCodes))
 
 	for i, sourceCode := range target.SourceCodes {
@@ -100,14 +99,21 @@ func (target *Target) Exec(view View) *Outcome {
 
 	view.Draw()
 
-	target.goEachWithWg(wg, func(i, j int, sourceCode *SourceCode, testCase *TestCase) {
-		defer wg.Done()
+	target.goEach(func(i, j int, sourceCode *SourceCode, testCase *TestCase) {
 		detail := target.exec(sourceCode, testCase)
 		fruits[i].Details[j] = detail
-		view.Update(i)
+		ch <- i
 	})
 
-	wg.Wait()
+	curr := 0
+	stop := len(target.SourceCodes) * len(target.TestCases)
+	for i := range ch {
+		curr++
+		view.Update(i)
+		if curr == stop {
+			close(ch)
+		}
+	}
 
 	outcome := new(Outcome)
 	outcome.Target = target.Name
@@ -147,10 +153,9 @@ func (target *Target) exec(sourceCode *SourceCode, testCase *TestCase) *Detail {
 
 }
 
-func (target *Target) goEachWithWg(wg *sync.WaitGroup, delegateFunc func(int, int, *SourceCode, *TestCase)) {
+func (target *Target) goEach(delegateFunc func(int, int, *SourceCode, *TestCase)) {
 	for i, sourceCode := range target.SourceCodes {
 		for j, testCase := range target.TestCases {
-			wg.Add(1)
 			go delegateFunc(i, j, sourceCode, testCase)
 		}
 	}
