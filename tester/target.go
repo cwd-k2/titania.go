@@ -7,10 +7,10 @@ import (
 	"github.com/cwd-k2/titania.go/client"
 )
 
-// Target
+// TestUnit
 // contains paiza.io API client, config, SourceCodes, and TestCases
 // physically, this stands for a directory.
-type Target struct {
+type TestUnit struct {
 	Name        string
 	Client      *client.Client
 	Config      *Config
@@ -19,9 +19,9 @@ type Target struct {
 	TestCases   []*TestCase
 }
 
-// NewTarget
-// returns *Target
-func NewTarget(dirname string, languages []string) *Target {
+// NewTestUnit
+// returns *TestUnit
+func NewTestUnit(dirname string, languages []string) *TestUnit {
 	basepath, err := filepath.Abs(dirname)
 	// ここのエラーは公式のドキュメント見てもわからんのだけど何？
 	if err != nil {
@@ -63,50 +63,50 @@ func NewTarget(dirname string, languages []string) *Target {
 	// テストメソッド
 	method := NewMethod(basepath, config.TestMethodFileName)
 
-	target := new(Target)
-	target.Name = dirname
-	target.Client = client
-	target.Config = config
-	target.SourceCodes = sourceCodes
-	target.TestCases = testCases
-	target.Method = method
+	testUnit := new(TestUnit)
+	testUnit.Name = dirname
+	testUnit.Client = client
+	testUnit.Config = config
+	testUnit.SourceCodes = sourceCodes
+	testUnit.TestCases = testCases
+	testUnit.Method = method
 
-	return target
+	return testUnit
 }
 
-func MakeTargets(directories, languages []string) []*Target {
-	targets := make([]*Target, 0, len(directories))
+func MakeTestUnits(directories, languages []string) []*TestUnit {
+	testUnits := make([]*TestUnit, 0, len(directories))
 	for _, dirname := range directories {
-		target := NewTarget(dirname, languages)
-		if target != nil {
-			targets = append(targets, target)
+		testUnit := NewTestUnit(dirname, languages)
+		if testUnit != nil {
+			testUnits = append(testUnits, testUnit)
 		}
 	}
-	return targets
+	return testUnits
 }
 
-func (target *Target) Exec(view View) *Outcome {
+func (testUnit *TestUnit) Exec(view View) *Outcome {
 	ch := make(chan int)
-	fruits := make([]*Fruit, len(target.SourceCodes))
+	fruits := make([]*Fruit, len(testUnit.SourceCodes))
 
-	for i, sourceCode := range target.SourceCodes {
+	for i, sourceCode := range testUnit.SourceCodes {
 		fruit := new(Fruit)
 		fruit.SourceCode = sourceCode.Name
 		fruit.Language = sourceCode.Language
-		fruit.Details = make([]*Detail, len(target.TestCases))
+		fruit.Details = make([]*Detail, len(testUnit.TestCases))
 		fruits[i] = fruit
 	}
 
 	view.Draw()
 
-	target.goEach(func(i, j int, sourceCode *SourceCode, testCase *TestCase) {
-		detail := target.exec(sourceCode, testCase)
+	testUnit.goEach(func(i, j int, sourceCode *SourceCode, testCase *TestCase) {
+		detail := testUnit.exec(sourceCode, testCase)
 		fruits[i].Details[j] = detail
 		ch <- i
 	})
 
 	curr := 0
-	stop := len(target.SourceCodes) * len(target.TestCases)
+	stop := len(testUnit.SourceCodes) * len(testUnit.TestCases)
 	for i := range ch {
 		curr++
 		view.Update(i)
@@ -116,9 +116,9 @@ func (target *Target) Exec(view View) *Outcome {
 	}
 
 	outcome := new(Outcome)
-	outcome.Target = target.Name
-	if target.Method != nil {
-		outcome.Method = target.Method.Name
+	outcome.TestUnit = testUnit.Name
+	if testUnit.Method != nil {
+		outcome.Method = testUnit.Method.Name
 	} else {
 		outcome.Method = "default"
 	}
@@ -127,16 +127,16 @@ func (target *Target) Exec(view View) *Outcome {
 	return outcome
 }
 
-func (target *Target) exec(sourceCode *SourceCode, testCase *TestCase) *Detail {
+func (testUnit *TestUnit) exec(sourceCode *SourceCode, testCase *TestCase) *Detail {
 
-	detail := sourceCode.Exec(target.Client, testCase)
+	detail := sourceCode.Exec(testUnit.Client, testCase)
 
 	// if result not set (this means execution was successful).
 	if detail.Result == "" {
 
-		if target.Method != nil {
+		if testUnit.Method != nil {
 			// use custom testing method.
-			res, ers := target.Method.Exec(target.Client, testCase, detail)
+			res, ers := testUnit.Method.Exec(testUnit.Client, testCase, detail)
 			detail.Result = strings.TrimRight(res, "\n")
 			detail.Error += ers
 		} else {
@@ -153,9 +153,9 @@ func (target *Target) exec(sourceCode *SourceCode, testCase *TestCase) *Detail {
 
 }
 
-func (target *Target) goEach(delegateFunc func(int, int, *SourceCode, *TestCase)) {
-	for i, sourceCode := range target.SourceCodes {
-		for j, testCase := range target.TestCases {
+func (testUnit *TestUnit) goEach(delegateFunc func(int, int, *SourceCode, *TestCase)) {
+	for i, sourceCode := range testUnit.SourceCodes {
+		for j, testCase := range testUnit.TestCases {
 			go delegateFunc(i, j, sourceCode, testCase)
 		}
 	}

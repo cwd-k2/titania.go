@@ -15,10 +15,10 @@ func version() {
 }
 
 func usage() {
-	pretty.Printf(`usage: titania.go [options] [targets]
+	pretty.Printf(`usage: titania.go [options] [directories]
 
 targets:
-  target directories to test, that have titania.json.
+  directories to test, that have titania.json.
   if not specified, titania.go will take all subdirectories as targets.
 
 options:
