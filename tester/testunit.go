@@ -14,7 +14,7 @@ type TestUnit struct {
 	Name        string
 	Client      *client.Client
 	Config      *Config
-	Method      *Method
+	TestMethod  *TestMethod
 	SourceCodes []*SourceCode
 	TestCases   []*TestCase
 }
@@ -61,7 +61,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	}
 
 	// テストメソッド
-	method := NewMethod(basepath, config.TestMethodFileName)
+	testMethod := NewTestMethod(basepath, config.TestMethodFileName)
 
 	testUnit := new(TestUnit)
 	testUnit.Name = dirname
@@ -69,7 +69,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	testUnit.Config = config
 	testUnit.SourceCodes = sourceCodes
 	testUnit.TestCases = testCases
-	testUnit.Method = method
+	testUnit.TestMethod = testMethod
 
 	return testUnit
 }
@@ -117,8 +117,8 @@ func (testUnit *TestUnit) Exec(view View) *Outcome {
 
 	outcome := new(Outcome)
 	outcome.TestUnit = testUnit.Name
-	if testUnit.Method != nil {
-		outcome.Method = testUnit.Method.Name
+	if testUnit.TestMethod != nil {
+		outcome.Method = testUnit.TestMethod.Name
 	} else {
 		outcome.Method = "default"
 	}
@@ -134,9 +134,9 @@ func (testUnit *TestUnit) exec(sourceCode *SourceCode, testCase *TestCase) *Deta
 	// if result not set (this means execution was successful).
 	if detail.Result == "" {
 
-		if testUnit.Method != nil {
+		if testUnit.TestMethod != nil {
 			// use custom testing method.
-			res, ers := testUnit.Method.Exec(testUnit.Client, testCase, detail)
+			res, ers := testUnit.TestMethod.Exec(testUnit.Client, testCase, detail)
 			detail.Result = strings.TrimRight(res, "\n")
 			detail.Error += ers
 		} else {

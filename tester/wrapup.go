@@ -10,9 +10,9 @@ import (
 )
 
 type Outcome struct {
-	TestUnit string   `json:"test_unit"`
-	Method   string   `json:"method"`
-	Fruits   []*Fruit `json:"fruits"`
+	TestUnit   string   `json:"test_unit"`
+	TestMethod string   `json:"test_method"`
+	Fruits     []*Fruit `json:"fruits"`
 }
 
 type Fruit struct {

@@ -9,13 +9,13 @@ import (
 	"github.com/cwd-k2/titania.go/client"
 )
 
-type Method struct {
+type TestMethod struct {
 	Name       string
 	Language   string
 	SourceCode string
 }
 
-func NewMethod(basepath, testMethodFileName string) *Method {
+func NewTestMethod(basepath, testMethodFileName string) *TestMethod {
 	if testMethodFileName == "" {
 		return nil
 	}
@@ -36,18 +36,18 @@ func NewMethod(basepath, testMethodFileName string) *Method {
 
 	name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
 
-	method := new(Method)
-	method.Name = name
-	method.Language = language
-	method.SourceCode = string(sourceCodeRaw)
+	testMethod := new(TestMethod)
+	testMethod.Name = name
+	testMethod.Language = language
+	testMethod.SourceCode = string(sourceCodeRaw)
 
-	return method
+	return testMethod
 }
 
 // Exec
 // returns STDOUT and STDERR for test method execution.
 // STDOUT should be the result, and STDERR should be the reason for that output.
-func (method *Method) Exec(client *client.Client, testCase *TestCase, detail *Detail) (string, string) {
+func (testMethod *TestMethod) Exec(client *client.Client, testCase *TestCase, detail *Detail) (string, string) {
 
 	// input for test_method goes in this format.
 	// output + "\0" + input + "\0" + answer + "\0"
@@ -63,7 +63,7 @@ func (method *Method) Exec(client *client.Client, testCase *TestCase, detail *De
 	input := strings.Join(elems, "")
 
 	// 実際に paiza.io の API を利用して実行結果をもらう
-	resp, err := client.Do(method.SourceCode, method.Language, input)
+	resp, err := client.Do(testMethod.SourceCode, testMethod.Language, input)
 
 	if err != nil {
 		if err.Code >= 500 {
