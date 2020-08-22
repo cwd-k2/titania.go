@@ -16,7 +16,7 @@ type Outcome struct {
 }
 
 type Fruit struct {
-	SourceCode string    `json:"source_code"`
+	TestTarget string    `json:"test_target"`
 	Language   string    `json:"language"`
 	Details    []*Detail `json:"details"`
 }
@@ -37,7 +37,7 @@ func Final(outcomes []*Outcome) {
 
 		for _, fruit := range outcome.Fruits {
 
-			pretty.Printf("%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.SourceCode)))
+			pretty.Printf("%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.TestTarget)))
 
 			for _, detail := range fruit.Details {
 				switch detail.Result {

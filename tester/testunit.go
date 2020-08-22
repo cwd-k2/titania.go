@@ -15,7 +15,7 @@ type TestUnit struct {
 	Client      *client.Client
 	Config      *Config
 	TestMethod  *TestMethod
-	SourceCodes []*SourceCode
+	TestTargets []*TestTarget
 	TestCases   []*TestCase
 }
 
@@ -41,10 +41,10 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	client.APIKey = config.APIKey
 
 	// ソースコード
-	sourceCodes := MakeSourceCode(basepath, languages, config.SourceCodeDirectories)
+	testTargets := MakeTestTargets(basepath, languages, config.TestTargetDirectories)
 
 	// ソースコードがなければ実行しない
-	if len(sourceCodes) == 0 {
+	if len(testTargets) == 0 {
 		return nil
 	}
 
@@ -67,7 +67,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	testUnit.Name = dirname
 	testUnit.Client = client
 	testUnit.Config = config
-	testUnit.SourceCodes = sourceCodes
+	testUnit.TestTargets = testTargets
 	testUnit.TestCases = testCases
 	testUnit.TestMethod = testMethod
 
@@ -87,26 +87,26 @@ func MakeTestUnits(directories, languages []string) []*TestUnit {
 
 func (testUnit *TestUnit) Exec(view View) *Outcome {
 	ch := make(chan int)
-	fruits := make([]*Fruit, len(testUnit.SourceCodes))
+	fruits := make([]*Fruit, len(testUnit.TestTargets))
 
-	for i, sourceCode := range testUnit.SourceCodes {
+	for i, testTarget := range testUnit.TestTargets {
 		fruit := new(Fruit)
-		fruit.SourceCode = sourceCode.Name
-		fruit.Language = sourceCode.Language
+		fruit.TestTarget = testTarget.Name
+		fruit.Language = testTarget.Language
 		fruit.Details = make([]*Detail, len(testUnit.TestCases))
 		fruits[i] = fruit
 	}
 
 	view.Draw()
 
-	testUnit.goEach(func(i, j int, sourceCode *SourceCode, testCase *TestCase) {
-		detail := testUnit.exec(sourceCode, testCase)
+	testUnit.goEach(func(i, j int, testTarget *TestTarget, testCase *TestCase) {
+		detail := testUnit.exec(testTarget, testCase)
 		fruits[i].Details[j] = detail
 		ch <- i
 	})
 
 	curr := 0
-	stop := len(testUnit.SourceCodes) * len(testUnit.TestCases)
+	stop := len(testUnit.TestTargets) * len(testUnit.TestCases)
 	for i := range ch {
 		curr++
 		view.Update(i)
@@ -127,9 +127,9 @@ func (testUnit *TestUnit) Exec(view View) *Outcome {
 	return outcome
 }
 
-func (testUnit *TestUnit) exec(sourceCode *SourceCode, testCase *TestCase) *Detail {
+func (testUnit *TestUnit) exec(testTarget *TestTarget, testCase *TestCase) *Detail {
 
-	detail := sourceCode.Exec(testUnit.Client, testCase)
+	detail := testTarget.Exec(testUnit.Client, testCase)
 
 	// if result not set (this means execution was successful).
 	if detail.Result == "" {
@@ -153,10 +153,10 @@ func (testUnit *TestUnit) exec(sourceCode *SourceCode, testCase *TestCase) *Deta
 
 }
 
-func (testUnit *TestUnit) goEach(delegateFunc func(int, int, *SourceCode, *TestCase)) {
-	for i, sourceCode := range testUnit.SourceCodes {
+func (testUnit *TestUnit) goEach(delegateFunc func(int, int, *TestTarget, *TestCase)) {
+	for i, testTarget := range testUnit.TestTargets {
 		for j, testCase := range testUnit.TestCases {
-			go delegateFunc(i, j, sourceCode, testCase)
+			go delegateFunc(i, j, testTarget, testCase)
 		}
 	}
 }

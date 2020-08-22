@@ -29,7 +29,7 @@ func (testUnit *TestUnit) InitView(quiet bool) View {
 		view := new(QuietView)
 
 		view.name = testUnit.Name
-		view.total = len(testUnit.SourceCodes) * len(testUnit.TestCases)
+		view.total = len(testUnit.TestTargets) * len(testUnit.TestCases)
 
 		return view
 
@@ -38,14 +38,14 @@ func (testUnit *TestUnit) InitView(quiet bool) View {
 		view := new(FancyView)
 
 		view.name = testUnit.Name
-		view.codes = len(testUnit.SourceCodes)
+		view.codes = len(testUnit.TestTargets)
 		view.cases = len(testUnit.TestCases)
 
-		view.counts = make([]int, len(testUnit.SourceCodes))
+		view.counts = make([]int, len(testUnit.TestTargets))
 
-		indexes := make([]string, 0, len(testUnit.SourceCodes))
-		for _, sourceCode := range testUnit.SourceCodes {
-			indexes = append(indexes, sourceCode.Name)
+		indexes := make([]string, 0, len(testUnit.TestTargets))
+		for _, testTarget := range testUnit.TestTargets {
+			indexes = append(indexes, testTarget.Name)
 		}
 
 		view.indexes = indexes

@@ -26,7 +26,7 @@ The directories should contain `titania.json`, like below.
 {
   "host": "http://api.paiza.io:80", // paiza.io API host
   "api_key": "guest",               // paiza.io API api_key
-  "source_code_directories": ["./source_*"],  // directories containing source codes (relative paths)
+  "test_target_directories": ["./source_*"],  // directories containing test targets (relative paths)
   "test_case_directories": ["./test_case"],   // directories containing input/answer for test (relative paths)
   "test_case_input_extension": ".in",         // input files' extension
   "test_case_answer_extension": ".out",       // answer files' extension
@@ -100,7 +100,7 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
     "test_method": "default",
     "fruits": [
       {
-        "source_code": "source_haskell/main.hs",
+        "test_target": "source_haskell/main.hs",
         "language": "haskell",
         "details": [
           {
@@ -120,7 +120,7 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
         ]
       },
       {
-        "source_code": "source_ruby/main.rb",
+        "test_target": "source_ruby/main.rb",
         "language": "ruby",
         "details": [
           {

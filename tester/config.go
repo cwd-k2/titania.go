@@ -14,7 +14,7 @@ import (
 type Config struct {
 	Host                    string   `json:"host"`
 	APIKey                  string   `json:"api_key"`
-	SourceCodeDirectories   []string `json:"source_code_directories"`
+	TestTargetDirectories   []string `json:"test_target_directories"`
 	TestCaseDirectories     []string `json:"test_case_directories"`
 	TestCaseInputExtension  string   `json:"test_case_input_extension"`
 	TestCaseAnswerExtension string   `json:"test_case_answer_extension"`

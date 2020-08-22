@@ -9,24 +9,25 @@ import (
 	"github.com/cwd-k2/titania.go/client"
 )
 
-// SourceCode
+// TestTarget
 // contains source code, its language
-type SourceCode struct {
+type TestTarget struct {
 	Name       string
 	Language   string
 	SourceCode string
+	Expect     string
 }
 
-// returns []*SourceCode
-func MakeSourceCode(
+// returns []*TestTarget
+func MakeTestTargets(
 	basepath string,
 	languages []string,
-	sourceCodeDirectories []string) []*SourceCode {
+	testTartgetDirectories []string) []*TestTarget {
 
-	tmp0 := make([][]*SourceCode, 0, len(sourceCodeDirectories))
+	tmp0 := make([][]*TestTarget, 0, len(testTartgetDirectories))
 	length := 0
 
-	for _, dirname := range sourceCodeDirectories {
+	for _, dirname := range testTartgetDirectories {
 		// ソースファイル
 		pattern := filepath.Join(basepath, dirname, "*.*")
 		filenames, err := filepath.Glob(pattern)
@@ -36,7 +37,7 @@ func MakeSourceCode(
 			continue
 		}
 
-		tmp1 := make([]*SourceCode, 0, len(filenames))
+		tmp1 := make([]*TestTarget, 0, len(filenames))
 
 		for _, filename := range filenames {
 			name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
@@ -53,31 +54,31 @@ func MakeSourceCode(
 				continue
 			}
 
-			sourceCode := new(SourceCode)
-			sourceCode.Name = name
-			sourceCode.Language = language
-			sourceCode.SourceCode = string(sourceCodeRaw)
+			testTarget := new(TestTarget)
+			testTarget.Name = name
+			testTarget.Language = language
+			testTarget.SourceCode = string(sourceCodeRaw)
 
 			length++
-			tmp1 = append(tmp1, sourceCode)
+			tmp1 = append(tmp1, testTarget)
 		}
 		tmp0 = append(tmp0, tmp1)
 	}
 
-	sourceCodes := make([]*SourceCode, 0, length)
+	testTargets := make([]*TestTarget, 0, length)
 	for _, tmp := range tmp0 {
-		sourceCodes = append(sourceCodes, tmp...)
+		testTargets = append(testTargets, tmp...)
 	}
 
-	return sourceCodes
+	return testTargets
 }
 
-func (sourceCode *SourceCode) Exec(client *client.Client, testCase *TestCase) *Detail {
+func (testTarget *TestTarget) Exec(client *client.Client, testCase *TestCase) *Detail {
 	detail := new(Detail)
 	detail.TestCase = testCase.Name
 
 	// 実際に paiza.io の API を利用して実行結果をもらう
-	resp, err := client.Do(sourceCode.SourceCode, sourceCode.Language, testCase.Input)
+	resp, err := client.Do(testTarget.SourceCode, testTarget.Language, testCase.Input)
 
 	if err != nil {
 		if err.Code >= 500 {
