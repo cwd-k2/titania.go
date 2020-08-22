@@ -20,7 +20,7 @@ $ titania.go [options] [directories]
 
 ### Prerequisite
 
-The target directories should contain `titania.json`, like below.
+The directories should contain `titania.json`, like below.
 
 ```
 {
@@ -41,10 +41,10 @@ Examples are [here](https://github.com/cwd-k2/titania.example).
 ```bash
 $ cd example
 
-# if no arguments specified, titania.go will take all subdirectories as targets.
+# if no arguments specified, titania.go will take all subdirectories.
 $ titania.go > /dev/null
 
-# target directories' paths as arguments
+# tested directories' paths as arguments
 $ titania.go example_01 example_02 > /dev/null
 
 # you can specify languages to test on, with -lang flag
@@ -96,8 +96,8 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
 ```json
 [
   {
-    "target": "example_02",
-    "method": "default",
+    "test_unit": "example_02",
+    "test_method": "default",
     "fruits": [
       {
         "source_code": "source_haskell/main.hs",
@@ -154,11 +154,11 @@ This is because we use STDOUT for pipe, redirect, or so.
 If you want to record the results, below is the usage.
 
 ```bash
-$ titania.go [targets] > filename.json
+$ titania.go [directories] > filename.json
 ```
 
 Or, if you just want to know runtime information, below is the way you go (Like example).
 
 ```bash
-$ titania.go [targets] > /dev/null
+$ titania.go [directories] > /dev/null
 ```
