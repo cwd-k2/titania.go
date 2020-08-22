@@ -118,9 +118,9 @@ func (testUnit *TestUnit) Exec(view View) *Outcome {
 	outcome := new(Outcome)
 	outcome.TestUnit = testUnit.Name
 	if testUnit.TestMethod != nil {
-		outcome.Method = testUnit.TestMethod.Name
+		outcome.TestMethod = testUnit.TestMethod.Name
 	} else {
-		outcome.Method = "default"
+		outcome.TestMethod = "default"
 	}
 	outcome.Fruits = fruits
 
