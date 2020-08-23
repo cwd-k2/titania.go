@@ -8,12 +8,11 @@ import (
 )
 
 // TestTopic
-// contains paiza.io API client, config, SourceCodes, and TestCases
+// contains paiza.io API client, SourceCodes, and TestCases
 // physically, this stands for a directory.
 type TestTopic struct {
 	Name        string
 	Client      *client.Client
-	Config      *Config
 	TestMethod  *TestMethod
 	TestTargets []*TestTarget
 	TestCases   []*TestCase
@@ -60,7 +59,6 @@ func NewTestTopic(dirname string, languages []string) *TestTopic {
 	testTopic := new(TestTopic)
 	testTopic.Name = dirname
 	testTopic.Client = client
-	testTopic.Config = config
 	testTopic.TestTargets = testTargets
 	testTopic.TestCases = testCases
 	testTopic.TestMethod = testMethod
