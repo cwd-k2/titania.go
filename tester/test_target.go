@@ -39,10 +39,14 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 			continue
 		}
 
-		expect := config.Expect
+		var expect string
+		if config.Expect != "" {
+			expect = config.Expect
+		} else {
+			expect = "PASS"
+		}
 
 		tmp1 := make([]*TestTarget, 0, len(filenames))
-
 		for _, filename := range filenames {
 			name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
 
@@ -62,12 +66,7 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 			testTarget.Name = name
 			testTarget.Language = language
 			testTarget.SourceCode = string(sourceCodeRaw)
-
-			if expect != "" {
-				testTarget.Expect = expect
-			} else {
-				testTarget.Expect = "PASS"
-			}
+			testTarget.Expect = expect
 
 			length++
 			tmp1 = append(tmp1, testTarget)

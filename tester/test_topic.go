@@ -81,6 +81,17 @@ func (testTopic *TestTopic) Exec(view View) *Outcome {
 	ch := make(chan int)
 	fruits := make([]*Fruit, len(testTopic.TestTargets))
 
+	outcome := new(Outcome)
+	outcome.TestTopic = testTopic.Name
+	if testTopic.TestMethod != nil {
+		outcome.TestMethod = testTopic.TestMethod.Name
+	} else {
+		outcome.TestMethod = "default"
+	}
+
+	curr := 0
+	stop := len(testTopic.TestTargets) * len(testTopic.TestCases)
+
 	for i, testTarget := range testTopic.TestTargets {
 		fruit := new(Fruit)
 		fruit.TestTarget = testTarget.Name
@@ -98,8 +109,6 @@ func (testTopic *TestTopic) Exec(view View) *Outcome {
 		ch <- i
 	})
 
-	curr := 0
-	stop := len(testTopic.TestTargets) * len(testTopic.TestCases)
 	for i := range ch {
 		curr++
 		view.Update(i)
@@ -108,13 +117,6 @@ func (testTopic *TestTopic) Exec(view View) *Outcome {
 		}
 	}
 
-	outcome := new(Outcome)
-	outcome.TestTopic = testTopic.Name
-	if testTopic.TestMethod != nil {
-		outcome.TestMethod = testTopic.TestMethod.Name
-	} else {
-		outcome.TestMethod = "default"
-	}
 	outcome.Fruits = fruits
 
 	return outcome
@@ -143,7 +145,7 @@ func (testTopic *TestTopic) exec(testTarget *TestTarget, testCase *TestCase) *De
 
 	}
 
-	detail.Expected = detail.Result == testTarget.Expect
+	detail.IsExpected = detail.Result == testTarget.Expect
 
 	return detail
 

@@ -23,12 +23,12 @@ type Fruit struct {
 }
 
 type Detail struct {
-	TestCase string `json:"test_case"`
-	Result   string `json:"result"`
-	Expected bool   `json:"expected"`
-	Time     string `json:"time"`
-	Output   string `json:"output"`
-	Error    string `json:"error"`
+	TestCase   string `json:"test_case"`
+	Result     string `json:"result"`
+	IsExpected bool   `json:"is_expected"`
+	Time       string `json:"time"`
+	Output     string `json:"output"`
+	Error      string `json:"error"`
 }
 
 func Final(outcomes []*Outcome) {
@@ -52,13 +52,13 @@ func Final(outcomes []*Outcome) {
 				case "PASS":
 					fallthrough
 				case "FAIL":
-					if detail.Expected {
+					if detail.IsExpected {
 						pretty.Printf("%s: %s %ss\n", pretty.Green(detail.TestCase), pretty.Green(detail.Result), detail.Time)
 					} else {
 						pretty.Printf("%s: %s %ss\n", pretty.Yellow(detail.TestCase), pretty.Yellow(detail.Result), detail.Time)
 					}
 				default:
-					if detail.Expected {
+					if detail.IsExpected {
 						pretty.Printf("%s: %s\n", pretty.Green(detail.TestCase), pretty.Green(detail.Result))
 					} else {
 						pretty.Printf("%s: %s\n", pretty.Red(detail.TestCase), pretty.Red(detail.Result))
