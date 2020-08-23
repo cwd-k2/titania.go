@@ -6,12 +6,12 @@ import (
 	"github.com/cwd-k2/titania.go/tester"
 )
 
-const VERSION = "v0.1.1"
+const VERSION = "v0.2.0-alpha"
 
 func main() {
 	// ターゲットのディレクトリと言語，async
 	directories, languages, async := OptParse()
-	outcomes := tester.Execute(directories, languages, async)
+	outcomes := tester.Exec(directories, languages, async)
 
 	// 何もテストが実行されなかった場合
 	if outcomes == nil {

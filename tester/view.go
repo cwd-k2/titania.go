@@ -23,13 +23,13 @@ type FancyView struct {
 	indexes []string
 }
 
-func (target *Target) InitView(quiet bool) View {
+func (testTopic *TestTopic) InitView(quiet bool) View {
 
 	if quiet {
 		view := new(QuietView)
 
-		view.name = target.Name
-		view.total = len(target.SourceCodes) * len(target.TestCases)
+		view.name = testTopic.Name
+		view.total = len(testTopic.TestTargets) * len(testTopic.TestCases)
 
 		return view
 
@@ -37,15 +37,15 @@ func (target *Target) InitView(quiet bool) View {
 
 		view := new(FancyView)
 
-		view.name = target.Name
-		view.codes = len(target.SourceCodes)
-		view.cases = len(target.TestCases)
+		view.name = testTopic.Name
+		view.codes = len(testTopic.TestTargets)
+		view.cases = len(testTopic.TestCases)
 
-		view.counts = make([]int, len(target.SourceCodes))
+		view.counts = make([]int, len(testTopic.TestTargets))
 
-		indexes := make([]string, 0, len(target.SourceCodes))
-		for _, sourceCode := range target.SourceCodes {
-			indexes = append(indexes, sourceCode.Name)
+		indexes := make([]string, 0, len(testTopic.TestTargets))
+		for _, testTarget := range testTopic.TestTargets {
+			indexes = append(indexes, testTarget.Name)
 		}
 
 		view.indexes = indexes

@@ -4,28 +4,28 @@ import (
 	"sync"
 )
 
-func Execute(directories, languages []string, async bool) []*Outcome {
-	targets := MakeTargets(directories, languages)
+func Exec(directories, languages []string, async bool) []*Outcome {
+	testTopics := MakeTestTopics(directories, languages)
 
-	if len(targets) == 0 {
+	if len(testTopics) == 0 {
 		return nil
 	}
 
-	outcomes := make([]*Outcome, len(targets))
+	outcomes := make([]*Outcome, len(testTopics))
 
 	if async {
 
 		wg := new(sync.WaitGroup)
 
-		for i, target := range targets {
+		for i, testTopic := range testTopics {
 			wg.Add(1)
 
-			go func(i int, target *Target) {
+			go func(i int, testTopic *TestTopic) {
 				defer wg.Done()
-				view := target.InitView(true)
-				outcome := target.Exec(view)
+				view := testTopic.InitView(true)
+				outcome := testTopic.Exec(view)
 				outcomes[i] = outcome
-			}(i, target)
+			}(i, testTopic)
 
 		}
 
@@ -33,9 +33,9 @@ func Execute(directories, languages []string, async bool) []*Outcome {
 
 	} else {
 
-		for i, target := range targets {
-			view := target.InitView(false)
-			outcome := target.Exec(view)
+		for i, testTopic := range testTopics {
+			view := testTopic.InitView(false)
+			outcome := testTopic.Exec(view)
 			outcomes[i] = outcome
 		}
 
