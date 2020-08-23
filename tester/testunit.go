@@ -7,10 +7,10 @@ import (
 	"github.com/cwd-k2/titania.go/client"
 )
 
-// TestUnit
+// TestTopic
 // contains paiza.io API client, config, SourceCodes, and TestCases
 // physically, this stands for a directory.
-type TestUnit struct {
+type TestTopic struct {
 	Name        string
 	Client      *client.Client
 	Config      *Config
@@ -19,9 +19,9 @@ type TestUnit struct {
 	TestCases   []*TestCase
 }
 
-// NewTestUnit
-// returns *TestUnit
-func NewTestUnit(dirname string, languages []string) *TestUnit {
+// NewTestTopic
+// returns *TestTopic
+func NewTestTopic(dirname string, languages []string) *TestTopic {
 	basepath, err := filepath.Abs(dirname)
 	// ここのエラーは公式のドキュメント見てもわからんのだけど何？
 	if err != nil {
@@ -57,51 +57,51 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	// テストメソッド
 	testMethod := NewTestMethod(basepath, config.TestMethod)
 
-	testUnit := new(TestUnit)
-	testUnit.Name = dirname
-	testUnit.Client = client
-	testUnit.Config = config
-	testUnit.TestTargets = testTargets
-	testUnit.TestCases = testCases
-	testUnit.TestMethod = testMethod
+	testTopic := new(TestTopic)
+	testTopic.Name = dirname
+	testTopic.Client = client
+	testTopic.Config = config
+	testTopic.TestTargets = testTargets
+	testTopic.TestCases = testCases
+	testTopic.TestMethod = testMethod
 
-	return testUnit
+	return testTopic
 }
 
-func MakeTestUnits(directories, languages []string) []*TestUnit {
-	testUnits := make([]*TestUnit, 0, len(directories))
+func MakeTestTopics(directories, languages []string) []*TestTopic {
+	testTopics := make([]*TestTopic, 0, len(directories))
 	for _, dirname := range directories {
-		testUnit := NewTestUnit(dirname, languages)
-		if testUnit != nil {
-			testUnits = append(testUnits, testUnit)
+		testTopic := NewTestTopic(dirname, languages)
+		if testTopic != nil {
+			testTopics = append(testTopics, testTopic)
 		}
 	}
-	return testUnits
+	return testTopics
 }
 
-func (testUnit *TestUnit) Exec(view View) *Outcome {
+func (testTopic *TestTopic) Exec(view View) *Outcome {
 	ch := make(chan int)
-	fruits := make([]*Fruit, len(testUnit.TestTargets))
+	fruits := make([]*Fruit, len(testTopic.TestTargets))
 
-	for i, testTarget := range testUnit.TestTargets {
+	for i, testTarget := range testTopic.TestTargets {
 		fruit := new(Fruit)
 		fruit.TestTarget = testTarget.Name
 		fruit.Language = testTarget.Language
 		fruit.Expect = testTarget.Expect
-		fruit.Details = make([]*Detail, len(testUnit.TestCases))
+		fruit.Details = make([]*Detail, len(testTopic.TestCases))
 		fruits[i] = fruit
 	}
 
 	view.Draw()
 
-	testUnit.goEach(func(i, j int, testTarget *TestTarget, testCase *TestCase) {
-		detail := testUnit.exec(testTarget, testCase)
+	testTopic.goEach(func(i, j int, testTarget *TestTarget, testCase *TestCase) {
+		detail := testTopic.exec(testTarget, testCase)
 		fruits[i].Details[j] = detail
 		ch <- i
 	})
 
 	curr := 0
-	stop := len(testUnit.TestTargets) * len(testUnit.TestCases)
+	stop := len(testTopic.TestTargets) * len(testTopic.TestCases)
 	for i := range ch {
 		curr++
 		view.Update(i)
@@ -111,9 +111,9 @@ func (testUnit *TestUnit) Exec(view View) *Outcome {
 	}
 
 	outcome := new(Outcome)
-	outcome.TestUnit = testUnit.Name
-	if testUnit.TestMethod != nil {
-		outcome.TestMethod = testUnit.TestMethod.Name
+	outcome.TestTopic = testTopic.Name
+	if testTopic.TestMethod != nil {
+		outcome.TestMethod = testTopic.TestMethod.Name
 	} else {
 		outcome.TestMethod = "default"
 	}
@@ -122,16 +122,16 @@ func (testUnit *TestUnit) Exec(view View) *Outcome {
 	return outcome
 }
 
-func (testUnit *TestUnit) exec(testTarget *TestTarget, testCase *TestCase) *Detail {
+func (testTopic *TestTopic) exec(testTarget *TestTarget, testCase *TestCase) *Detail {
 
-	detail := testTarget.Exec(testUnit.Client, testCase)
+	detail := testTarget.Exec(testTopic.Client, testCase)
 
 	// if result not set (this means execution was successful).
 	if detail.Result == "" {
 
-		if testUnit.TestMethod != nil {
+		if testTopic.TestMethod != nil {
 			// use custom testing method.
-			res, ers := testUnit.TestMethod.Exec(testUnit.Client, testCase, detail)
+			res, ers := testTopic.TestMethod.Exec(testTopic.Client, testCase, detail)
 			detail.Result = strings.TrimRight(res, "\n")
 			detail.Error += ers
 		} else {
@@ -151,9 +151,9 @@ func (testUnit *TestUnit) exec(testTarget *TestTarget, testCase *TestCase) *Deta
 
 }
 
-func (testUnit *TestUnit) goEach(delegateFunc func(int, int, *TestTarget, *TestCase)) {
-	for i, testTarget := range testUnit.TestTargets {
-		for j, testCase := range testUnit.TestCases {
+func (testTopic *TestTopic) goEach(delegateFunc func(int, int, *TestTarget, *TestCase)) {
+	for i, testTarget := range testTopic.TestTargets {
+		for j, testCase := range testTopic.TestCases {
 			go delegateFunc(i, j, testTarget, testCase)
 		}
 	}
