@@ -69,6 +69,7 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 		tmp0 = append(tmp0, tmp1)
 	}
 
+	// flatten
 	testCases := make([]*TestCase, 0, length)
 	for _, tmp := range tmp0 {
 		testCases = append(testCases, tmp...)

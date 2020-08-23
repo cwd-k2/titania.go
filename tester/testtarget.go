@@ -75,6 +75,7 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 		tmp0 = append(tmp0, tmp1)
 	}
 
+	// flatten
 	testTargets := make([]*TestTarget, 0, length)
 	for _, tmp := range tmp0 {
 		testTargets = append(testTargets, tmp...)

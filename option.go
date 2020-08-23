@@ -22,8 +22,8 @@ targets:
   if not specified, titania.go will take all subdirectories as targets.
 
 options:
-  --help,    -h              show this help message
-  --version, -v              show version
+  -h, --help                 show this help message
+  -v, --version              show version
   --lang=lang1[,lang2[,...]] language[s] to test
 `)
 	os.Exit(1)
