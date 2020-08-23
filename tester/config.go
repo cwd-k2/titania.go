@@ -6,19 +6,17 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/cwd-k2/titania.go/client"
 	"github.com/cwd-k2/titania.go/pretty"
 )
 
 // Config
 // test configs
 type Config struct {
-	Host                    string   `json:"host"`
-	APIKey                  string   `json:"api_key"`
-	TestTargetDirectories   []string `json:"test_target_directories"`
-	TestCaseDirectories     []string `json:"test_case_directories"`
-	TestCaseInputExtension  string   `json:"test_case_input_extension"`
-	TestCaseAnswerExtension string   `json:"test_case_answer_extension"`
-	TestMethodFileName      string   `json:"test_method_file_name"`
+	ClientConfig client.Config      `json:"client"`
+	TestTarget   []TestTargetConfig `json:"test_target"`
+	TestCase     []TestCaseConfig   `json:"test_case"`
+	TestMethod   TestMethodConfig   `json:"test_method"`
 }
 
 func NewConfig(basepath string) *Config {

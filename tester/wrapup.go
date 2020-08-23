@@ -18,12 +18,14 @@ type Outcome struct {
 type Fruit struct {
 	TestTarget string    `json:"test_target"`
 	Language   string    `json:"language"`
+	Expect     string    `json:"expect"`
 	Details    []*Detail `json:"details"`
 }
 
 type Detail struct {
 	TestCase string `json:"test_case"`
 	Result   string `json:"result"`
+	Expected bool   `json:"expected"`
 	Time     string `json:"time"`
 	Output   string `json:"output"`
 	Error    string `json:"error"`
@@ -41,18 +43,26 @@ func Final(outcomes []*Outcome) {
 
 			for _, detail := range fruit.Details {
 				switch detail.Result {
-				case "PASS":
-					pretty.Printf("%s: %s %ss\n", pretty.Green(detail.TestCase), pretty.Green(detail.Result), detail.Time)
-				case "FAIL":
-					pretty.Printf("%s: %s %ss\n", pretty.Yellow(detail.TestCase), pretty.Yellow(detail.Result), detail.Time)
 				case "CLIENT ERROR":
 					pretty.Printf("%s: %s\n", pretty.Magenta(detail.TestCase), pretty.Magenta(detail.Result))
 				case "SERVER ERROR":
 					pretty.Printf("%s: %s\n", pretty.Blue(detail.TestCase), pretty.Blue(detail.Result))
 				case "TESTER ERROR":
 					pretty.Printf("%s: %s\n", pretty.Bold(pretty.Red(detail.TestCase)), pretty.Bold(pretty.Red(detail.Result)))
+				case "PASS":
+					fallthrough
+				case "FAIL":
+					if detail.Expected {
+						pretty.Printf("%s: %s %ss\n", pretty.Green(detail.TestCase), pretty.Green(detail.Result), detail.Time)
+					} else {
+						pretty.Printf("%s: %s %ss\n", pretty.Yellow(detail.TestCase), pretty.Yellow(detail.Result), detail.Time)
+					}
 				default:
-					pretty.Printf("%s: %s\n", pretty.Red(detail.TestCase), pretty.Red(detail.Result))
+					if detail.Expected {
+						pretty.Printf("%s: %s\n", pretty.Green(detail.TestCase), pretty.Green(detail.Result))
+					} else {
+						pretty.Printf("%s: %s\n", pretty.Red(detail.TestCase), pretty.Red(detail.Result))
+					}
 				}
 			}
 		}

@@ -36,12 +36,10 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	}
 
 	// paiza.io API クライアント
-	client := new(client.Client)
-	client.Host = config.Host
-	client.APIKey = config.APIKey
+	client := client.NewClient(config.ClientConfig)
 
 	// ソースコード
-	testTargets := MakeTestTargets(basepath, languages, config.TestTargetDirectories)
+	testTargets := MakeTestTargets(basepath, languages, config.TestTarget)
 
 	// ソースコードがなければ実行しない
 	if len(testTargets) == 0 {
@@ -49,11 +47,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	}
 
 	// テストケース
-	testCases := MakeTestCases(
-		basepath,
-		config.TestCaseDirectories,
-		config.TestCaseInputExtension,
-		config.TestCaseAnswerExtension)
+	testCases := MakeTestCases(basepath, config.TestCase)
 
 	// テストケースがなければ実行しない
 	if len(testCases) == 0 {
@@ -61,7 +55,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	}
 
 	// テストメソッド
-	testMethod := NewTestMethod(basepath, config.TestMethodFileName)
+	testMethod := NewTestMethod(basepath, config.TestMethod)
 
 	testUnit := new(TestUnit)
 	testUnit.Name = dirname
@@ -93,6 +87,7 @@ func (testUnit *TestUnit) Exec(view View) *Outcome {
 		fruit := new(Fruit)
 		fruit.TestTarget = testTarget.Name
 		fruit.Language = testTarget.Language
+		fruit.Expect = testTarget.Expect
 		fruit.Details = make([]*Detail, len(testUnit.TestCases))
 		fruits[i] = fruit
 	}
@@ -147,7 +142,10 @@ func (testUnit *TestUnit) exec(testTarget *TestTarget, testCase *TestCase) *Deta
 				detail.Result = "FAIL"
 			}
 		}
+
 	}
+
+	detail.Expected = detail.Result == testTarget.Expect
 
 	return detail
 

@@ -24,13 +24,23 @@ The directories should contain `titania.json`, like below.
 
 ```
 {
-  "host": "http://api.paiza.io:80", // paiza.io API host
-  "api_key": "guest",               // paiza.io API api_key
-  "test_target_directories": ["./source_*"],  // directories containing test targets (relative paths)
-  "test_case_directories": ["./test_case"],   // directories containing input/answer for test (relative paths)
-  "test_case_input_extension": ".in",         // input files' extension
-  "test_case_answer_extension": ".out",       // answer files' extension
-  "test_method_file_name": "./test_method.rb" // testing method file.
+  "client": {
+    "host": "http://api.paiza.io:80",
+    "api_key": "guest"
+  },
+  "test_target": [
+    { "pattern": "./source_code/main.*" },
+    { "pattern": "./source_code/wrong_answer.rb", "expect": "FAIL" },
+    { "pattern": "./source_code/time_out.rb" },
+    { "pattern": "./source_code/build_error.c", "expect": "BUILD FAILURE" }
+  ],
+  "test_case": [
+    {
+      "directory": "./test_case",
+      "input_extension": ".in",  // needed
+      "output_extension": ".ans" // needed
+    }
+  ]
 }
 ```
 
@@ -63,7 +73,25 @@ Correspoiding input and answer files should have same **names**, except thier ex
 
 ### Additional testing method
 
-`titania.go` compare execution STDOUT and answer by default, but you can set another testing method, by setting `test_method_file_name`.
+`titania.go` compare execution STDOUT and answer by default, but you can set another testing method, by setting `test_method`.
+
+```json
+{
+  "client": {
+    "host": "http://api.paiza.io:80",
+    "api_key": "guest"
+  },
+  "test_target": [
+    { "pattern": "./source_*/*.*" }
+  ],
+  "test_case": [
+    { "directory": "./test_case", "input_extension": ".in", "output_extension": ".out" }
+  ],
+  "test_method": {
+    "file_name": "./test_method.rb"
+  }
+}
+```
 
 For test method execution, a single case's execution output, test case's input and expected answer are handed through STDIN, and they are joined by null character.
 
@@ -96,54 +124,62 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
 ```json
 [
   {
-    "test_unit": "example_02",
+    "test_unit": "example_01",
     "test_method": "default",
     "fruits": [
       {
-        "test_target": "source_haskell/main.hs",
-        "language": "haskell",
+        "test_target": "source_code/main.c",
+        "language": "c",
+        "expect": "PASS",
         "details": [
           {
             "test_case": "test_case/01",
             "result": "PASS",
+            "expected": true,
             "time": "0.00",
             "output": "50\n",
             "error": ""
           },
+          (snip)
+        ]
+      },
+      (snip)
+      {
+        "test_target": "source_code/time_out.rb",
+        "language": "ruby",
+        "expect": "PASS",
+        "details": [
           {
-            "test_case": "test_case/02",
-            "result": "PASS",
-            "time": "0.00",
-            "output": "20\n",
+            "test_case": "test_case/01",
+            "result": "EXECUTION TIMEOUT",
+            "expected": false,
+            "time": "",
+            "output": "",
             "error": ""
-          }
+          },
+          (snip)
         ]
       },
       {
-        "test_target": "source_ruby/main.rb",
-        "language": "ruby",
+        "test_target": "source_code/build_error.c",
+        "language": "c",
+        "expect": "BUILD FAILURE",
         "details": [
           {
             "test_case": "test_case/01",
-            "result": "PASS",
-            "time": "0.09",
-            "output": "50\n",
-            "error": ""
+            "result": "BUILD FAILURE",
+            "expected": true,
+            "time": "",
+            "output": "",
+            "error": "Main.c:1:1: error: unknown type name 'include'\ninclude <stdio.h>\n^\nMain.c:1:9: error: expected identifier or '('\ninclude <stdio.h>\n        ^\n2 errors generated.\n"
           },
-          {
-            "test_case": "test_case/02",
-            "result": "PASS",
-            "time": "0.10",
-            "output": "20\n",
-            "error": ""
-          }
+          (snip)
         ]
       }
     ]
   }
 ]
 ```
-
 
 ## Philosophy
 

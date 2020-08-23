@@ -15,12 +15,16 @@ type TestMethod struct {
 	SourceCode string
 }
 
-func NewTestMethod(basepath, testMethodFileName string) *TestMethod {
-	if testMethodFileName == "" {
+type TestMethodConfig struct {
+	FileName string `json:"file_name"`
+}
+
+func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
+	if config.FileName == "" {
 		return nil
 	}
 
-	filename := filepath.Join(basepath, testMethodFileName)
+	filename := filepath.Join(basepath, config.FileName)
 
 	sourceCodeRaw, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -65,6 +69,7 @@ func (testMethod *TestMethod) Exec(client *client.Client, testCase *TestCase, de
 	// 実際に paiza.io の API を利用して実行結果をもらう
 	resp, err := client.Do(testMethod.SourceCode, testMethod.Language, input)
 
+	// Errors that are not related to source_code
 	if err != nil {
 		if err.Code >= 500 {
 			return "SERVER ERROR", err.Error()

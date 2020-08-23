@@ -35,8 +35,15 @@ type RunnersGetDetailsResponse struct {
 }
 
 type Client struct {
-	APIKey string
 	Host   string
+	APIKey string
+}
+
+func NewClient(config Config) *Client {
+	client := new(Client)
+	client.Host = config.Host
+	client.APIKey = config.APIKey
+	return client
 }
 
 func (c *Client) api(method, endpoint string, params map[string]string, target interface{}) *TitaniaClientError {

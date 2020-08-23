@@ -18,24 +18,28 @@ type TestTarget struct {
 	Expect     string
 }
 
-// returns []*TestTarget
-func MakeTestTargets(
-	basepath string,
-	languages []string,
-	testTartgetDirectories []string) []*TestTarget {
+type TestTargetConfig struct {
+	Pattern string `json:"pattern"`
+	Expect  string `json:"expect"`
+}
 
-	tmp0 := make([][]*TestTarget, 0, len(testTartgetDirectories))
+// returns []*TestTarget
+func MakeTestTargets(basepath string, languages []string, configs []TestTargetConfig) []*TestTarget {
+
+	tmp0 := make([][]*TestTarget, 0, len(configs))
 	length := 0
 
-	for _, dirname := range testTartgetDirectories {
+	for _, config := range configs {
 		// ソースファイル
-		pattern := filepath.Join(basepath, dirname, "*.*")
+		pattern := filepath.Join(basepath, config.Pattern)
 		filenames, err := filepath.Glob(pattern)
 		// ここのエラーは bad pattern
 		if err != nil {
 			println(err.Error())
 			continue
 		}
+
+		expect := config.Expect
 
 		tmp1 := make([]*TestTarget, 0, len(filenames))
 
@@ -59,6 +63,12 @@ func MakeTestTargets(
 			testTarget.Language = language
 			testTarget.SourceCode = string(sourceCodeRaw)
 
+			if expect != "" {
+				testTarget.Expect = expect
+			} else {
+				testTarget.Expect = "PASS"
+			}
+
 			length++
 			tmp1 = append(tmp1, testTarget)
 		}
@@ -80,6 +90,7 @@ func (testTarget *TestTarget) Exec(client *client.Client, testCase *TestCase) *D
 	// 実際に paiza.io の API を利用して実行結果をもらう
 	resp, err := client.Do(testTarget.SourceCode, testTarget.Language, testCase.Input)
 
+	// Errors that are not related to source_code
 	if err != nil {
 		if err.Code >= 500 {
 			detail.Result = "SERVER ERROR"
