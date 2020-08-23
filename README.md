@@ -37,8 +37,8 @@ The directories should contain `titania.json`, like below.
   "test_case": [
     {
       "directory": "./test_case",
-      "input_extension": ".in",  // needed
-      "output_extension": ".ans" // needed
+      "input_extension": ".in",
+      "output_extension": ".ans"
     }
   ]
 }
