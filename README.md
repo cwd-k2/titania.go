@@ -124,7 +124,7 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
 ```json
 [
   {
-    "test_topic": "example_01",
+    "test_matter": "example_01",
     "test_method": "default",
     "fruits": [
       {
@@ -135,7 +135,7 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
           {
             "test_case": "test_case/01",
             "result": "PASS",
-            "expected": true,
+            "is_expected": true,
             "time": "0.00",
             "output": "50\n",
             "error": ""
@@ -152,7 +152,7 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
           {
             "test_case": "test_case/01",
             "result": "EXECUTION TIMEOUT",
-            "expected": false,
+            "is_expected": false,
             "time": "",
             "output": "",
             "error": ""
@@ -168,7 +168,7 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
           {
             "test_case": "test_case/01",
             "result": "BUILD FAILURE",
-            "expected": true,
+            "is_expected": true,
             "time": "",
             "output": "",
             "error": "Main.c:1:1: error: unknown type name 'include'\ninclude <stdio.h>\n^\nMain.c:1:9: error: expected identifier or '('\ninclude <stdio.h>\n        ^\n2 errors generated.\n"

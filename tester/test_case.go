@@ -35,13 +35,13 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 			println(err.Error())
 			continue
 		}
-		tmp1 := make([]*TestCase, 0, len(filenames))
 
-		// 想定する出力があるものに対してして入力を設定する
-		// 出力から先に決める
+		tmp1 := make([]*TestCase, 0, len(filenames))
 		for _, answerfile := range filenames {
 			name := mkCaseName(basepath, answerfile, config.OutputExtention)
 
+			// 想定する出力があるものに対してして入力を設定する
+			// 出力から先に決める
 			answer, err := ioutil.ReadFile(answerfile)
 			// ファイル読み取り失敗
 			if err != nil {

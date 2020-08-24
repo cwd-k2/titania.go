@@ -5,27 +5,27 @@ import (
 )
 
 func Exec(directories, languages []string, async bool) []*Outcome {
-	testTopics := MakeTestTopics(directories, languages)
+	testMatters := MakeTestMatters(directories, languages)
 
-	if len(testTopics) == 0 {
+	if len(testMatters) == 0 {
 		return nil
 	}
 
-	outcomes := make([]*Outcome, len(testTopics))
+	outcomes := make([]*Outcome, len(testMatters))
 
 	if async {
 
 		wg := new(sync.WaitGroup)
 
-		for i, testTopic := range testTopics {
+		for i, testMatter := range testMatters {
 			wg.Add(1)
 
-			go func(i int, testTopic *TestTopic) {
+			go func(i int, testMatter *TestMatter) {
 				defer wg.Done()
-				view := testTopic.InitView(true)
-				outcome := testTopic.Exec(view)
+				view := testMatter.InitView(true)
+				outcome := testMatter.Exec(view)
 				outcomes[i] = outcome
-			}(i, testTopic)
+			}(i, testMatter)
 
 		}
 
@@ -33,9 +33,9 @@ func Exec(directories, languages []string, async bool) []*Outcome {
 
 	} else {
 
-		for i, testTopic := range testTopics {
-			view := testTopic.InitView(false)
-			outcome := testTopic.Exec(view)
+		for i, testMatter := range testMatters {
+			view := testMatter.InitView(false)
+			outcome := testMatter.Exec(view)
 			outcomes[i] = outcome
 		}
 
