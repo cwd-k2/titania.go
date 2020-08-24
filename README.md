@@ -124,7 +124,7 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
 ```json
 [
   {
-    "test_topic": "example_01",
+    "test_matter": "example_01",
     "test_method": "default",
     "fruits": [
       {
