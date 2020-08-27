@@ -78,7 +78,10 @@ func MakeTestMatters(directories, languages []string) []*TestMatter {
 }
 
 func (testMatter *TestMatter) Exec(view View) *Outcome {
-	ch := make(chan int)
+	curr := 0
+	stop := len(testMatter.TestTargets) * len(testMatter.TestCases)
+
+	ch := make(chan int, stop)
 	fruits := make([]*Fruit, len(testMatter.TestTargets))
 
 	outcome := new(Outcome)
@@ -88,9 +91,6 @@ func (testMatter *TestMatter) Exec(view View) *Outcome {
 	} else {
 		outcome.TestMethod = "default"
 	}
-
-	curr := 0
-	stop := len(testMatter.TestTargets) * len(testMatter.TestCases)
 
 	for i, testTarget := range testMatter.TestTargets {
 		fruit := new(Fruit)
@@ -104,8 +104,7 @@ func (testMatter *TestMatter) Exec(view View) *Outcome {
 	view.Draw()
 
 	testMatter.goEach(func(i, j int, testTarget *TestTarget, testCase *TestCase) {
-		detail := testMatter.exec(testTarget, testCase)
-		fruits[i].Details[j] = detail
+		fruits[i].Details[j] = testMatter.exec(testTarget, testCase)
 		ch <- i
 	})
 
