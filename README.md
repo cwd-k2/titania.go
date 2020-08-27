@@ -63,13 +63,13 @@ $ titania.go --lang=ruby,haskell > /dev/null
 
 ### Source codes; Languages
 
-`titania.go` detects source codes' languages by thier extensions.
+`titania.go` detects source codes' languages by their extensions.
 
 ### Input and Answer
 
 For test cases to run, `titania.go` requires both input and expected output files.
 
-Correspoiding input and answer files should have same **names**, except thier extensions.
+Correspoiding input and answer files should have same **names**, except their extensions.
 
 ### Additional testing method
 
