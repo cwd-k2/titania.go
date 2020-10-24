@@ -2,7 +2,7 @@
 
 Just a code-testing/judging tool, using [paiza.io](https://paiza.io) API. Intended to replace other local judgment tools.
 
-**This program is still in a WIP state, so big changes may be introducd. Be careful.**
+**This program is still in a WIP state, so big changes may be introduced. Be careful.**
 
 ## What is this for?
 
@@ -20,9 +20,9 @@ The prerequisites will be like below.
 - There is some expected output/answer for each input.
 - A submitted code will be a single file.
 
-### What is not for
+### What it is not for
 
-This program is **NOT** for the situations like: when you're working with a great and fancy project and you want to test your method or class implementation is right or not.
+`titania.go` is **NOT** for the developing situations: when you're working with a great and fancy project and you want to test your method or class implementation is right or not.
 
 If you cut out the logic or implementation into a single file, this tool can be applied somehow, but uh not so suitable I guess.
 
@@ -103,7 +103,7 @@ Correspoiding input and answer files should have same **names**, except their ex
 
 Sometimes you want to do a specialized judgement. When the problem goes like '...print one of the possible answers', just comparing the output and the expected one is not enough.
 
-`titania.go` just compares the execution STDOUT and expected output/answer by default (simply check the equality), but you can set another testing method, by setting `test_method`. It means, you can also write an additional code to check if the answer was right, or partially-right, or wrong-but-the-quality-is-worth-to-be-praised.
+`titania.go` just compares the STDOUT of the submitted code and expected output/answer by default (simply check the equality), but you can set another testing method, by setting `test_method`. It means, you can also write an additional code to check if the answer was right, or partially-right, or wrong-but-the-quality-is-worth-to-be-praised.
 
 ```json
 {
