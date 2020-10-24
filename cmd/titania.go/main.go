@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/cwd-k2/titania.go/tester"
+	"github.com/cwd-k2/titania.go/internal/tester"
 )
 
-const VERSION = "v0.2.0"
+const VERSION = "v0.2.1"
 
 func main() {
 	// ターゲットのディレクトリと言語，async

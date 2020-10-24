@@ -46,7 +46,7 @@ func NewClient(config Config) *Client {
 	return client
 }
 
-func (c *Client) api(method, endpoint string, params map[string]string, target interface{}) *TitaniaClientError {
+func (c *Client) Api(method, endpoint string, params map[string]string, target interface{}) *TitaniaClientError {
 
 	params["api_key"] = c.APIKey
 
@@ -99,7 +99,7 @@ func (c *Client) RunnersCreate(sourceCode, language, input string) (*RunnersCrea
 	args["longpoll"] = "true"
 	args["longpoll_timeout"] = "30"
 
-	if err := c.api("POST", "/runners/create", args, runnersCreateResponse); err != nil {
+	if err := c.Api("POST", "/runners/create", args, runnersCreateResponse); err != nil {
 		return nil, err
 	}
 
@@ -117,7 +117,7 @@ func (c *Client) RunnersGetDetails(id string) (*RunnersGetDetailsResponse, *Tita
 	args := make(map[string]string)
 	args["id"] = id
 
-	if err := c.api("GET", "/runners/get_details", args, runnersGetDetailsResponse); err != nil {
+	if err := c.Api("GET", "/runners/get_details", args, runnersGetDetailsResponse); err != nil {
 		return nil, err
 	}
 
