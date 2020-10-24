@@ -7,7 +7,7 @@ Just a testing tool, using paiza.io API.
 It's simple. Just run `go get`.
 
 ```bash
-$ go get -u github.com/cwd-k2/titania.go
+$ go get -u github.com/cwd-k2/titania.go/cmd/titania.go
 ```
 
 ## Usage

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cwd-k2/titania.go/pretty"
+	"github.com/cwd-k2/titania.go/pkg/pretty"
 )
 
 func version() {

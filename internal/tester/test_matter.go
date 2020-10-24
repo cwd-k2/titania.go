@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cwd-k2/titania.go/client"
+	"github.com/cwd-k2/titania.go/internal/client"
 )
 
 // TestMatter
