@@ -48,8 +48,6 @@ func NewClient(config Config) *Client {
 
 func (c *Client) Api(method, endpoint string, params map[string]string, target interface{}) *TitaniaClientError {
 
-	params["api_key"] = c.APIKey
-
 	body, err := json.Marshal(params)
 	if err != nil {
 		return &TitaniaClientError{-1, err}
@@ -89,15 +87,16 @@ func (c *Client) Api(method, endpoint string, params map[string]string, target i
 }
 
 func (c *Client) RunnersCreate(sourceCode, language, input string) (*RunnersCreateResponse, *TitaniaClientError) {
+	args := map[string]string{
+		"api_key":          c.APIKey,
+		"source_code":      sourceCode,
+		"language":         language,
+		"input":            input,
+		"longpoll":         "true",
+		"longpoll_timeout": "30",
+	}
 
 	runnersCreateResponse := new(RunnersCreateResponse)
-
-	args := make(map[string]string)
-	args["source_code"] = sourceCode
-	args["language"] = language
-	args["input"] = input
-	args["longpoll"] = "true"
-	args["longpoll_timeout"] = "30"
 
 	if err := c.Api("POST", "/runners/create", args, runnersCreateResponse); err != nil {
 		return nil, err
@@ -111,11 +110,12 @@ func (c *Client) RunnersCreate(sourceCode, language, input string) (*RunnersCrea
 }
 
 func (c *Client) RunnersGetDetails(id string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
+	args := map[string]string{
+		"api_key": c.APIKey,
+		"id":      id,
+	}
 
 	runnersGetDetailsResponse := new(RunnersGetDetailsResponse)
-
-	args := make(map[string]string)
-	args["id"] = id
 
 	if err := c.Api("GET", "/runners/get_details", args, runnersGetDetailsResponse); err != nil {
 		return nil, err

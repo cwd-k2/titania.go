@@ -97,17 +97,15 @@ For test method execution, a single case's execution output, test case's input a
 
 Simply, goes like this.
 
-`<STDOUT>\0<STDIN>\0<ANSWER>\0`
+`<STDOUT>\0<STDIN>\0<ANSWER>`
 
 Okay, let's see an example.
 
 ```ruby
 # output, input, answer can be separated by null charactor.
 # ruby's `gets` will read until the argument.
-# note that all below have \0 on their end.
-output = gets "\0"
-input  = gets "\0"
-answer = gets "\0"
+# so, gets nil means read all from stdin.
+output, input, answer = gets(nil).split("\0")
 
 # and test method should output PASS or FAIL
 STDOUT.puts output == answer ? "FAIL" : "PASS"

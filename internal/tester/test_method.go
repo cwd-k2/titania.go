@@ -54,17 +54,8 @@ func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 func (testMethod *TestMethod) Exec(client *client.Client, testCase *TestCase, detail *Detail) (string, string) {
 
 	// input for test_method goes in this format.
-	// output + "\0" + input + "\0" + answer + "\0"
-	elems := []string{
-		detail.Output,
-		"\000",
-		testCase.Input,
-		"\000",
-		testCase.Answer,
-		"\000",
-	}
-
-	input := strings.Join(elems, "")
+	// output + "\0" + input + "\0" + answer
+	input := strings.Join([]string{detail.Output, testCase.Input, testCase.Answer}, "\000")
 
 	// 実際に paiza.io の API を利用して実行結果をもらう
 	resp, err := client.Do(testMethod.SourceCode, testMethod.Language, input)

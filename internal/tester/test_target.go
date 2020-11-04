@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/cwd-k2/titania.go/internal/client"
 )
@@ -25,59 +26,78 @@ type TestTargetConfig struct {
 
 // returns []*TestTarget
 func MakeTestTargets(basepath string, languages []string, configs []TestTargetConfig) []*TestTarget {
-
-	tmp0 := make([][]*TestTarget, 0, len(configs))
 	length := 0
 
-	for _, config := range configs {
+	wg0 := &sync.WaitGroup{}
+	tmp0 := make([][]*TestTarget, len(configs))
+
+	for i, config := range configs {
+		wg0.Add(1)
 		// ソースファイル
-		pattern := filepath.Join(basepath, config.Pattern)
-		filenames, err := filepath.Glob(pattern)
-		// ここのエラーは bad pattern
-		if err != nil {
-			println(err.Error())
-			continue
-		}
+		go func(i int, config TestTargetConfig) {
+			defer wg0.Done()
 
-		var expect string
-		if config.Expect != "" {
-			expect = config.Expect
-		} else {
-			expect = "PASS"
-		}
-
-		tmp1 := make([]*TestTarget, 0, len(filenames))
-		for _, filename := range filenames {
-			name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
-
-			sourceCodeRaw, err := ioutil.ReadFile(filename)
-			// ファイル読み取り失敗
+			pattern := filepath.Join(basepath, config.Pattern)
+			filenames, err := filepath.Glob(pattern)
+			// ここのエラーは bad pattern
 			if err != nil {
 				println(err.Error())
-				continue
+				return
 			}
 
-			language := LanguageType(filename)
-			if language == "plain" || !accepted(languages, language) {
-				continue
+			var expect string
+			if config.Expect != "" {
+				expect = config.Expect
+			} else {
+				expect = "PASS"
 			}
 
-			testTarget := new(TestTarget)
-			testTarget.Name = name
-			testTarget.Language = language
-			testTarget.SourceCode = string(sourceCodeRaw)
-			testTarget.Expect = expect
+			wg1 := &sync.WaitGroup{}
+			tmp1 := make([]*TestTarget, len(filenames))
+			for j, filename := range filenames {
+				wg1.Add(1)
 
-			length++
-			tmp1 = append(tmp1, testTarget)
-		}
-		tmp0 = append(tmp0, tmp1)
+				go func(j int, filename string) {
+					defer wg1.Done()
+
+					name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
+
+					sourceCodeRaw, err := ioutil.ReadFile(filename)
+					// ファイル読み取り失敗
+					if err != nil {
+						println(err.Error())
+						return
+					}
+
+					language := LanguageType(filename)
+					if language == "plain" || !accepted(languages, language) {
+						return
+					}
+
+					testTarget := new(TestTarget)
+					testTarget.Name = name
+					testTarget.Language = language
+					testTarget.SourceCode = string(sourceCodeRaw)
+					testTarget.Expect = expect
+
+					length++
+					tmp1[j] = testTarget
+				}(j, filename)
+			}
+			wg1.Wait()
+			tmp0[i] = tmp1
+		}(i, config)
 	}
+	wg0.Wait()
 
 	// flatten
 	testTargets := make([]*TestTarget, 0, length)
 	for _, tmp := range tmp0 {
-		testTargets = append(testTargets, tmp...)
+		for _, t := range tmp {
+			if t != nil {
+				testTargets = append(testTargets, t)
+			}
+		}
 	}
 
 	return testTargets

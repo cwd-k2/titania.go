@@ -103,10 +103,14 @@ func (testMatter *TestMatter) Exec(view View) *Outcome {
 
 	view.Draw()
 
-	testMatter.goEach(func(i, j int, testTarget *TestTarget, testCase *TestCase) {
-		fruits[i].Details[j] = testMatter.exec(testTarget, testCase)
-		ch <- i
-	})
+	for i, testTarget := range testMatter.TestTargets {
+		for j, testCase := range testMatter.TestCases {
+			go func(i, j int, testTarget *TestTarget, testCase *TestCase) {
+				fruits[i].Details[j] = testMatter.exec(testTarget, testCase)
+				ch <- i
+			}(i, j, testTarget, testCase)
+		}
+	}
 
 	for i := range ch {
 		curr++
@@ -122,7 +126,6 @@ func (testMatter *TestMatter) Exec(view View) *Outcome {
 }
 
 func (testMatter *TestMatter) exec(testTarget *TestTarget, testCase *TestCase) *Detail {
-
 	detail := testTarget.Exec(testMatter.Client, testCase)
 
 	// if result not set (this means execution was successful).
@@ -147,13 +150,4 @@ func (testMatter *TestMatter) exec(testTarget *TestTarget, testCase *TestCase) *
 	detail.IsExpected = detail.Result == testTarget.Expect
 
 	return detail
-
-}
-
-func (testMatter *TestMatter) goEach(delegateFunc func(int, int, *TestTarget, *TestCase)) {
-	for i, testTarget := range testMatter.TestTargets {
-		for j, testCase := range testMatter.TestCases {
-			go delegateFunc(i, j, testTarget, testCase)
-		}
-	}
 }

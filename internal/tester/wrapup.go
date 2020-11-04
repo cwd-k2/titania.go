@@ -85,5 +85,5 @@ func Print(outcomes []*Outcome) {
 	}
 
 	// 実行結果を JSON 形式で出力
-	fmt.Println(string(output))
+	fmt.Println(output)
 }
