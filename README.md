@@ -127,17 +127,15 @@ For test method execution, the code's output, the test case's input and expected
 
 Simply, goes like this.
 
-`<STDOUT>\0<STDIN>\0<ANSWER>\0`
+`<STDOUT>\0<STDIN>\0<ANSWER>`
 
 Okay, let's see an example.
 
 ```ruby
 # output, input, answer can be separated by null charactor.
 # ruby's `gets` will read until the argument.
-# note that all below have \0 on their end.
-output = gets "\0"
-input  = gets "\0"
-answer = gets "\0"
+# so, gets nil means read all from stdin.
+output, input, answer = gets(nil).split("\0")
 
 # and test method should output PASS or FAIL
 STDOUT.puts output == answer ? "FAIL" : "PASS"
@@ -150,12 +148,10 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
 
 **Test results' details** will be written to **STDOUT**, in JSON format. Like below.
 
-Here you can see some parts of this result output are awfully named (`test_matter`??? what???). Yes, it is my fault, and if you have a good idea then please tell me, I will totally appreciate it.
-
 ```json
 [
   {
-    "test_matter": "example_01",
+    "name": "example_01",
     "test_method": "default",
     "fruits": [
       {

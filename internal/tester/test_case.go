@@ -1,17 +1,20 @@
 package tester
 
 import (
-	"io/ioutil"
+	"bytes"
+	"io"
+	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // TestCase
 // contains input and output texts
 type TestCase struct {
 	Name   string
-	Input  string
-	Answer string
+	Input  *bytes.Buffer
+	Answer *bytes.Buffer
 }
 
 type TestCaseConfig struct {
@@ -22,61 +25,76 @@ type TestCaseConfig struct {
 
 // returns []*TestCases
 func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
-
-	tmp0 := make([][]*TestCase, 0, len(configs))
 	length := 0
 
-	for _, config := range configs {
-		// 出力(正解)ファイル
-		pattern := filepath.Join(basepath, config.Directory, "*"+config.OutputExtention)
-		filenames, err := filepath.Glob(pattern)
-		// ここのエラーは bad pattern
-		if err != nil {
-			println(err.Error())
-			continue
-		}
-
-		tmp1 := make([]*TestCase, 0, len(filenames))
-		for _, answerfile := range filenames {
-			name := mkCaseName(basepath, answerfile, config.OutputExtention)
-
-			// 想定する出力があるものに対してして入力を設定する
-			// 出力から先に決める
-			answer, err := ioutil.ReadFile(answerfile)
-			// ファイル読み取り失敗
+	wg0 := &sync.WaitGroup{}
+	tmp0 := make([][]*TestCase, len(configs))
+	for i, config := range configs {
+		wg0.Add(1)
+		go func(i int, config TestCaseConfig) {
+			defer wg0.Done()
+			// 出力(正解)ファイル
+			pattern := filepath.Join(basepath, config.Directory, "*"+config.OutputExtention)
+			filenames, err := filepath.Glob(pattern)
+			// ここのエラーは bad pattern
 			if err != nil {
 				println(err.Error())
-				continue
+				return
 			}
 
-			// 入力ファイル
-			inputfile := filepath.Join(basepath, name+config.InputExtention)
+			wg1 := &sync.WaitGroup{}
+			tmp1 := make([]*TestCase, len(filenames))
+			for j, answerfile := range filenames {
+				wg1.Add(1)
+				go func(j int, answerfile string) {
+					defer wg1.Done()
+					name := mkCaseName(basepath, answerfile, config.OutputExtention)
+					// 想定する出力があるものに対してして入力を設定する
+					// 出力から先に決める
+					answerFD, err := os.Open(answerfile)
+					// ファイル読み取り失敗
+					if err != nil {
+						println(err.Error())
+						return
+					}
+					defer answerFD.Close()
 
-			input, err := ioutil.ReadFile(inputfile)
-			if err != nil {
-				println(err.Error())
-				continue
+					// 入力ファイル
+					inputfile := filepath.Join(basepath, name+config.InputExtention)
+
+					inputFD, err := os.Open(inputfile)
+					if err != nil {
+						println(err.Error())
+						return
+					}
+					defer inputFD.Close()
+
+					input := bytes.NewBuffer(nil)
+					answer := bytes.NewBuffer(nil)
+					io.Copy(input, inputFD)
+					io.Copy(answer, answerFD)
+
+					length++
+					tmp1[j] = &TestCase{name, input, answer}
+				}(j, answerfile)
 			}
-
-			testCase := new(TestCase)
-			testCase.Name = name
-			testCase.Input = string(input)
-			testCase.Answer = string(answer)
-
-			length++
-			tmp1 = append(tmp1, testCase)
-		}
-		tmp0 = append(tmp0, tmp1)
+			wg1.Wait()
+			tmp0[i] = tmp1
+		}(i, config)
 	}
+	wg0.Wait()
 
 	// flatten
 	testCases := make([]*TestCase, 0, length)
 	for _, tmp := range tmp0 {
-		testCases = append(testCases, tmp...)
+		for _, t := range tmp {
+			if t != nil {
+				testCases = append(testCases, t)
+			}
+		}
 	}
 
 	return testCases
-
 }
 
 // helper function

@@ -20,37 +20,26 @@ type FancyView struct {
 	codes   int
 	cases   int
 	counts  []int
-	indexes []string
+	indices []string
 }
 
-func (testMatter *TestMatter) InitView(quiet bool) View {
+func InitView(tester *Tester, quiet bool) View {
 
 	if quiet {
-		view := new(QuietView)
-
-		view.name = testMatter.Name
-		view.total = len(testMatter.TestTargets) * len(testMatter.TestCases)
-
-		return view
+		return &QuietView{tester.Name, len(tester.TestTargets) * len(tester.TestCases), 0}
 
 	} else {
-
-		view := new(FancyView)
-
-		view.name = testMatter.Name
-		view.codes = len(testMatter.TestTargets)
-		view.cases = len(testMatter.TestCases)
-
-		view.counts = make([]int, len(testMatter.TestTargets))
-
-		indexes := make([]string, 0, len(testMatter.TestTargets))
-		for _, testTarget := range testMatter.TestTargets {
-			indexes = append(indexes, testTarget.Name)
+		indices := make([]string, len(tester.TestTargets))
+		for i, testTarget := range tester.TestTargets {
+			indices[i] = testTarget.Name
 		}
-
-		view.indexes = indexes
-
-		return view
+		return &FancyView{
+			tester.Name,
+			len(tester.TestTargets),
+			len(tester.TestCases),
+			make([]int, len(tester.TestTargets)),
+			indices,
+		}
 	}
 
 }
@@ -59,7 +48,7 @@ func (view *FancyView) Draw() {
 
 	pretty.Printf("%s\n", pretty.Bold(pretty.Cyan(view.name)))
 
-	for _, index := range view.indexes {
+	for _, index := range view.indices {
 		pretty.Printf("[%s] %s %s\n", pretty.Yellow("WAIT"), "START", pretty.Bold(pretty.Blue(index)))
 	}
 
@@ -76,7 +65,7 @@ func (view *FancyView) Update(position int) {
 	} else {
 		pretty.Printf("[%s] ", pretty.Yellow("WAIT"))
 	}
-	pretty.Printf("%02d/%02d %s", view.counts[position], view.cases, pretty.Bold(pretty.Blue(view.indexes[position])))
+	pretty.Printf("%02d/%02d %s", view.counts[position], view.cases, pretty.Bold(pretty.Blue(view.indices[position])))
 
 	pretty.Down(view.codes - position)
 	pretty.Beginning()
