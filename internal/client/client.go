@@ -40,15 +40,10 @@ type Client struct {
 }
 
 func NewClient(config Config) *Client {
-	client := new(Client)
-	client.Host = config.Host
-	client.APIKey = config.APIKey
-	return client
+	return &Client{config.Host, config.APIKey}
 }
 
 func (c *Client) Api(method, endpoint string, params map[string]string, target interface{}) *TitaniaClientError {
-
-	params["api_key"] = c.APIKey
 
 	body, err := json.Marshal(params)
 	if err != nil {
@@ -88,16 +83,17 @@ func (c *Client) Api(method, endpoint string, params map[string]string, target i
 
 }
 
-func (c *Client) RunnersCreate(sourceCode, language, input string) (*RunnersCreateResponse, *TitaniaClientError) {
+func (c *Client) RunnersCreate(language string, sourceCode, input *bytes.Buffer) (*RunnersCreateResponse, *TitaniaClientError) {
+	args := map[string]string{
+		"api_key":          c.APIKey,
+		"language":         language,
+		"source_code":      sourceCode.String(),
+		"input":            input.String(),
+		"longpoll":         "true",
+		"longpoll_timeout": "30",
+	}
 
 	runnersCreateResponse := new(RunnersCreateResponse)
-
-	args := make(map[string]string)
-	args["source_code"] = sourceCode
-	args["language"] = language
-	args["input"] = input
-	args["longpoll"] = "true"
-	args["longpoll_timeout"] = "30"
 
 	if err := c.Api("POST", "/runners/create", args, runnersCreateResponse); err != nil {
 		return nil, err
@@ -111,28 +107,14 @@ func (c *Client) RunnersCreate(sourceCode, language, input string) (*RunnersCrea
 }
 
 func (c *Client) RunnersGetDetails(id string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
+	args := map[string]string{
+		"api_key": c.APIKey,
+		"id":      id,
+	}
 
 	runnersGetDetailsResponse := new(RunnersGetDetailsResponse)
 
-	args := make(map[string]string)
-	args["id"] = id
-
 	if err := c.Api("GET", "/runners/get_details", args, runnersGetDetailsResponse); err != nil {
-		return nil, err
-	}
-
-	return runnersGetDetailsResponse, nil
-}
-
-func (c *Client) Do(sourceCode, language, input string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
-
-	runnersCreateResponse, err := c.RunnersCreate(sourceCode, language, input)
-	if err != nil {
-		return nil, err
-	}
-
-	runnersGetDetailsResponse, err := c.RunnersGetDetails(runnersCreateResponse.ID)
-	if err != nil {
 		return nil, err
 	}
 
