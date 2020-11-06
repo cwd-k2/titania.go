@@ -1,6 +1,8 @@
 package tester
 
 import (
+	"bytes"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -33,22 +35,17 @@ func NewTestMatter(dirname string, languages []string) *TestMatter {
 	if config == nil {
 		return nil
 	}
-
 	// paiza.io API クライアント
 	client := client.NewClient(config.ClientConfig)
 
 	// ソースコード
 	testTargets := MakeTestTargets(basepath, languages, config.TestTarget)
-
-	// ソースコードがなければ実行しない
 	if len(testTargets) == 0 {
 		return nil
 	}
 
 	// テストケース
 	testCases := MakeTestCases(basepath, config.TestCase)
-
-	// テストケースがなければ実行しない
 	if len(testCases) == 0 {
 		return nil
 	}
@@ -56,14 +53,7 @@ func NewTestMatter(dirname string, languages []string) *TestMatter {
 	// テストメソッド
 	testMethod := NewTestMethod(basepath, config.TestMethod)
 
-	testMatter := new(TestMatter)
-	testMatter.Name = dirname
-	testMatter.Client = client
-	testMatter.TestTargets = testTargets
-	testMatter.TestCases = testCases
-	testMatter.TestMethod = testMethod
-
-	return testMatter
+	return &TestMatter{dirname, client, testMethod, testTargets, testCases}
 }
 
 func MakeTestMatters(directories, languages []string) []*TestMatter {
@@ -126,28 +116,66 @@ func (testMatter *TestMatter) Exec(view View) *Outcome {
 }
 
 func (testMatter *TestMatter) exec(testTarget *TestTarget, testCase *TestCase) *Detail {
-	detail := testTarget.Exec(testMatter.Client, testCase)
+	result, time, output, e := testMatter.do(testTarget.Language, testTarget.SourceCode, testCase.Input)
 
-	// if result not set (this means execution was successful).
-	if detail.Result == "" {
-
+	if result == "" {
+		// input for test_method goes in this format.
+		// output + "\0" + input + "\0" + answer
+		input := strings.Join([]string{output, testCase.Input.String(), testCase.Answer.String()}, "\000")
 		if testMatter.TestMethod != nil {
-			// use custom testing method.
-			res, ers := testMatter.TestMethod.Exec(testMatter.Client, testCase, detail)
-			detail.Result = strings.TrimRight(res, "\n")
-			detail.Error += ers
-		} else {
-			// just compare ouput and expected answer.
-			if detail.Output == testCase.Answer {
-				detail.Result = "PASS"
+			res, _, out, ers := testMatter.do(testMatter.TestMethod.Language, testMatter.TestMethod.SourceCode, bytes.NewBufferString(input))
+			if res == "" {
+				result = strings.TrimRight(out, "\n")
+				e += ers
 			} else {
-				detail.Result = "FAIL"
+				result = fmt.Sprintf("METHOD %s", res)
+				e += ers
+			}
+		} else {
+			if output == testCase.Answer.String() {
+				result = "PASS"
+			} else {
+				result = "FAIL"
 			}
 		}
-
 	}
 
-	detail.IsExpected = detail.Result == testTarget.Expect
+	isExpected := result == testTarget.Expect
 
-	return detail
+	return &Detail{testCase.Name, result, isExpected, time, output, e}
+}
+
+func (testMatter *TestMatter) do(language string, sourceCode, input *bytes.Buffer) (string, string, string, string) {
+
+	res1, err := testMatter.Client.RunnersCreate(language, sourceCode, input)
+	if err != nil {
+		if err.Code >= 500 {
+			return "SERVER ERROR", "", "", err.Error()
+		} else if err.Code >= 400 {
+			return "CLIENT ERROR", "", "", err.Error()
+		} else {
+			return "TESTER ERROR", "", "", err.Error()
+		}
+	}
+
+	res2, err := testMatter.Client.RunnersGetDetails(res1.ID)
+	if err != nil {
+		if err.Code >= 500 {
+			return "SERVER ERROR", "", "", err.Error()
+		} else if err.Code >= 400 {
+			return "CLIENT ERROR", "", "", err.Error()
+		} else {
+			return "TESTER ERROR", "", "", err.Error()
+		}
+	}
+
+	if !(res2.BuildResult == "" || res2.BuildResult == "success") {
+		return fmt.Sprintf("BUILD %s", strings.ToUpper(res2.BuildResult)), "", "", res2.BuildSTDERR
+	}
+
+	if res2.Result != "success" {
+		return fmt.Sprintf("EXECUTION %s", strings.ToUpper(res2.Result)), "", "", res2.STDERR
+	}
+
+	return "", res2.Time, res2.STDOUT, res2.STDERR
 }

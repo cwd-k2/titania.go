@@ -38,7 +38,6 @@ func Final(outcomes []*Outcome) {
 		pretty.Printf("\n%s\n", pretty.Bold(pretty.Cyan(outcome.TestMatter)))
 
 		for _, fruit := range outcome.Fruits {
-
 			pretty.Printf("%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.TestTarget)))
 
 			for _, detail := range fruit.Details {

@@ -40,10 +40,7 @@ type Client struct {
 }
 
 func NewClient(config Config) *Client {
-	client := new(Client)
-	client.Host = config.Host
-	client.APIKey = config.APIKey
-	return client
+	return &Client{config.Host, config.APIKey}
 }
 
 func (c *Client) Api(method, endpoint string, params map[string]string, target interface{}) *TitaniaClientError {
@@ -86,12 +83,12 @@ func (c *Client) Api(method, endpoint string, params map[string]string, target i
 
 }
 
-func (c *Client) RunnersCreate(sourceCode, language, input string) (*RunnersCreateResponse, *TitaniaClientError) {
+func (c *Client) RunnersCreate(language string, sourceCode, input *bytes.Buffer) (*RunnersCreateResponse, *TitaniaClientError) {
 	args := map[string]string{
 		"api_key":          c.APIKey,
-		"source_code":      sourceCode,
 		"language":         language,
-		"input":            input,
+		"source_code":      sourceCode.String(),
+		"input":            input.String(),
 		"longpoll":         "true",
 		"longpoll_timeout": "30",
 	}
@@ -118,21 +115,6 @@ func (c *Client) RunnersGetDetails(id string) (*RunnersGetDetailsResponse, *Tita
 	runnersGetDetailsResponse := new(RunnersGetDetailsResponse)
 
 	if err := c.Api("GET", "/runners/get_details", args, runnersGetDetailsResponse); err != nil {
-		return nil, err
-	}
-
-	return runnersGetDetailsResponse, nil
-}
-
-func (c *Client) Do(sourceCode, language, input string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
-
-	runnersCreateResponse, err := c.RunnersCreate(sourceCode, language, input)
-	if err != nil {
-		return nil, err
-	}
-
-	runnersGetDetailsResponse, err := c.RunnersGetDetails(runnersCreateResponse.ID)
-	if err != nil {
 		return nil, err
 	}
 

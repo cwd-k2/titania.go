@@ -1,7 +1,9 @@
 package tester
 
 import (
-	"io/ioutil"
+	"bytes"
+	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -11,8 +13,8 @@ import (
 // contains input and output texts
 type TestCase struct {
 	Name   string
-	Input  string
-	Answer string
+	Input  *bytes.Buffer
+	Answer *bytes.Buffer
 }
 
 type TestCaseConfig struct {
@@ -27,7 +29,6 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 
 	wg0 := &sync.WaitGroup{}
 	tmp0 := make([][]*TestCase, len(configs))
-
 	for i, config := range configs {
 		wg0.Add(1)
 		go func(i int, config TestCaseConfig) {
@@ -50,34 +51,35 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 					name := mkCaseName(basepath, answerfile, config.OutputExtention)
 					// 想定する出力があるものに対してして入力を設定する
 					// 出力から先に決める
-					answer, err := ioutil.ReadFile(answerfile)
+					answerFD, err := os.Open(answerfile)
 					// ファイル読み取り失敗
 					if err != nil {
 						println(err.Error())
 						return
 					}
+					defer answerFD.Close()
 
 					// 入力ファイル
 					inputfile := filepath.Join(basepath, name+config.InputExtention)
 
-					input, err := ioutil.ReadFile(inputfile)
+					inputFD, err := os.Open(inputfile)
 					if err != nil {
 						println(err.Error())
 						return
 					}
+					defer inputFD.Close()
 
-					testCase := new(TestCase)
-					testCase.Name = name
-					testCase.Input = string(input)
-					testCase.Answer = string(answer)
+					input := bytes.NewBuffer(nil)
+					answer := bytes.NewBuffer(nil)
+					io.Copy(input, inputFD)
+					io.Copy(answer, answerFD)
 
 					length++
-					tmp1[j] = testCase
+					tmp1[j] = &TestCase{name, input, answer}
 				}(j, answerfile)
 			}
 			wg1.Wait()
 			tmp0[i] = tmp1
-
 		}(i, config)
 	}
 	wg0.Wait()
@@ -93,7 +95,6 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 	}
 
 	return testCases
-
 }
 
 // helper function

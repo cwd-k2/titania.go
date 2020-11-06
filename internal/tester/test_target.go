@@ -1,13 +1,12 @@
 package tester
 
 import (
-	"fmt"
-	"io/ioutil"
+	"bytes"
+	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
-
-	"github.com/cwd-k2/titania.go/internal/client"
 )
 
 // TestTarget
@@ -15,7 +14,7 @@ import (
 type TestTarget struct {
 	Name       string
 	Language   string
-	SourceCode string
+	SourceCode *bytes.Buffer
 	Expect     string
 }
 
@@ -30,7 +29,6 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 
 	wg0 := &sync.WaitGroup{}
 	tmp0 := make([][]*TestTarget, len(configs))
-
 	for i, config := range configs {
 		wg0.Add(1)
 		// ソースファイル
@@ -59,29 +57,25 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 
 				go func(j int, filename string) {
 					defer wg1.Done()
-
 					name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
 
-					sourceCodeRaw, err := ioutil.ReadFile(filename)
+					sourceCodeFD, err := os.Open(filename)
 					// ファイル読み取り失敗
 					if err != nil {
 						println(err.Error())
 						return
 					}
+					defer sourceCodeFD.Close()
+					sourceCode := bytes.NewBuffer(nil)
+					io.Copy(sourceCode, sourceCodeFD)
 
 					language := LanguageType(filename)
 					if language == "plain" || !accepted(languages, language) {
 						return
 					}
 
-					testTarget := new(TestTarget)
-					testTarget.Name = name
-					testTarget.Language = language
-					testTarget.SourceCode = string(sourceCodeRaw)
-					testTarget.Expect = expect
-
 					length++
-					tmp1[j] = testTarget
+					tmp1[j] = &TestTarget{name, language, sourceCode, expect}
 				}(j, filename)
 			}
 			wg1.Wait()
@@ -101,47 +95,6 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 	}
 
 	return testTargets
-}
-
-func (testTarget *TestTarget) Exec(client *client.Client, testCase *TestCase) *Detail {
-	detail := new(Detail)
-	detail.TestCase = testCase.Name
-
-	// 実際に paiza.io の API を利用して実行結果をもらう
-	resp, err := client.Do(testTarget.SourceCode, testTarget.Language, testCase.Input)
-
-	// Errors that are not related to source_code
-	if err != nil {
-		if err.Code >= 500 {
-			detail.Result = "SERVER ERROR"
-		} else if err.Code >= 400 {
-			detail.Result = "CLIENT ERROR"
-		} else {
-			detail.Result = "TESTER ERROR"
-		}
-		detail.Error = err.Error()
-		return detail
-	}
-
-	// ビルドエラー
-	if !(resp.BuildResult == "success" || resp.BuildResult == "") {
-		detail.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(resp.BuildResult))
-		detail.Error = resp.BuildSTDERR
-		return detail
-	}
-
-	// 実行時エラー
-	if resp.Result != "success" {
-		detail.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(resp.Result))
-		detail.Error = resp.STDERR
-		return detail
-	}
-
-	detail.Time = resp.Time
-	detail.Error = resp.STDERR
-	detail.Output = resp.STDOUT
-
-	return detail
 }
 
 func accepted(array []string, element string) bool {
