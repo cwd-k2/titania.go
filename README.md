@@ -148,12 +148,10 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
 
 **Test results' details** will be written to **STDOUT**, in JSON format. Like below.
 
-Here you can see some parts of this result output are awfully named (`test_matter`??? what???). Yes, it is my fault, and if you have a good idea then please tell me, I will totally appreciate it.
-
 ```json
 [
   {
-    "test_matter": "example_01",
+    "name": "example_01",
     "test_method": "default",
     "fruits": [
       {
