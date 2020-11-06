@@ -10,7 +10,7 @@ import (
 )
 
 type Outcome struct {
-	TestMatter string   `json:"test_matter"`
+	Name       string   `json:"name"`
 	TestMethod string   `json:"test_method"`
 	Fruits     []*Fruit `json:"fruits"`
 }
@@ -35,7 +35,7 @@ func Final(outcomes []*Outcome) {
 	pretty.Printf("\n%s\n", pretty.Bold("ALL DONE"))
 
 	for _, outcome := range outcomes {
-		pretty.Printf("\n%s\n", pretty.Bold(pretty.Cyan(outcome.TestMatter)))
+		pretty.Printf("\n%s\n", pretty.Bold(pretty.Cyan(outcome.Name)))
 
 		for _, fruit := range outcome.Fruits {
 			pretty.Printf("%s: %s\n", pretty.Bold(fruit.Language), pretty.Bold(pretty.Blue(fruit.TestTarget)))
