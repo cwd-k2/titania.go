@@ -28,9 +28,9 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 	length := 0
 
 	wg0 := &sync.WaitGroup{}
+	wg0.Add(len(configs))
 	tmp0 := make([][]*TestTarget, len(configs))
 	for i, config := range configs {
-		wg0.Add(1)
 		// ソースファイル
 		go func(i int, config TestTargetConfig) {
 			defer wg0.Done()
@@ -51,10 +51,9 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 			}
 
 			wg1 := &sync.WaitGroup{}
+			wg1.Add(len(filenames))
 			tmp1 := make([]*TestTarget, len(filenames))
 			for j, filename := range filenames {
-				wg1.Add(1)
-
 				go func(j int, filename string) {
 					defer wg1.Done()
 					name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)

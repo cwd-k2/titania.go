@@ -28,9 +28,9 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 	length := 0
 
 	wg0 := &sync.WaitGroup{}
+	wg0.Add(len(configs))
 	tmp0 := make([][]*TestCase, len(configs))
 	for i, config := range configs {
-		wg0.Add(1)
 		go func(i int, config TestCaseConfig) {
 			defer wg0.Done()
 			// 出力(正解)ファイル
@@ -43,9 +43,9 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 			}
 
 			wg1 := &sync.WaitGroup{}
+			wg1.Add(len(filenames))
 			tmp1 := make([]*TestCase, len(filenames))
 			for j, answerfile := range filenames {
-				wg1.Add(1)
 				go func(j int, answerfile string) {
 					defer wg1.Done()
 					name := mkCaseName(basepath, answerfile, config.OutputExtention)
