@@ -1,10 +1,10 @@
-package tester
+package viewer
 
 import (
 	"github.com/cwd-k2/titania.go/pkg/pretty"
 )
 
-type View interface {
+type Viewer interface {
 	Draw()
 	Update(int)
 }
@@ -23,27 +23,12 @@ type FancyView struct {
 	indices []string
 }
 
-func InitView(testUnit *TestUnit, quiet bool) View {
+func NewFancyView(name string, codes, cases int, indices []string) *FancyView {
+	return &FancyView{name, codes, cases, make([]int, codes), indices}
+}
 
-	if quiet {
-		return &QuietView{testUnit.Name, len(testUnit.TestTargets) * len(testUnit.TestCases), 0}
-	} else {
-
-		indices := make([]string, len(testUnit.TestTargets))
-
-		for i, testTarget := range testUnit.TestTargets {
-			indices[i] = testTarget.Name
-		}
-
-		return &FancyView{
-			testUnit.Name,
-			len(testUnit.TestTargets),
-			len(testUnit.TestCases),
-			make([]int, len(testUnit.TestTargets)),
-			indices,
-		}
-	}
-
+func NewQuietView(name string, total int) *QuietView {
+	return &QuietView{name, total, 0}
 }
 
 func (view *FancyView) Draw() {

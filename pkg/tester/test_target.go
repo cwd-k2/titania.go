@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/cwd-k2/titania.go/internal/pkg/langtype"
 )
 
 // TestTarget
@@ -67,8 +69,8 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 						return
 					}
 
-					language := LanguageType(filename)
-					if language == "plain" || !accepted(languages, language) {
+					language := langtype.LangType(filename)
+					if language == "plain" || !acceptable(languages, language) {
 						return
 					}
 
@@ -90,17 +92,13 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 	// flatten
 	testTargets := make([]*TestTarget, 0, length)
 	for _, tmp := range tmp0 {
-		for _, t := range tmp {
-			if t != nil {
-				testTargets = append(testTargets, t)
-			}
-		}
+		testTargets = append(testTargets, tmp...)
 	}
 
 	return testTargets
 }
 
-func accepted(array []string, element string) bool {
+func acceptable(array []string, element string) bool {
 	if len(array) == 0 {
 		return true
 	}

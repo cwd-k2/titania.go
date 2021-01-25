@@ -5,7 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cwd-k2/titania.go/internal/client"
+	"github.com/cwd-k2/titania.go/pkg/paizaio"
+	"github.com/cwd-k2/titania.go/pkg/viewer"
 )
 
 // TestUnit
@@ -13,7 +14,7 @@ import (
 // physically, this stands for a directory.
 type TestUnit struct {
 	Name        string
-	Client      *client.Client
+	Client      *paizaio.Client
 	TestMethod  *TestMethod
 	TestTargets []*TestTarget
 	TestCases   []*TestCase
@@ -34,7 +35,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 		return nil
 	}
 	// paiza.io API クライアント
-	client := client.NewClient(config.ClientConfig)
+	client := paizaio.NewClient(config.ClientConfig)
 
 	// ソースコード
 	testTargets := MakeTestTargets(basepath, languages, config.TestTarget)
@@ -65,7 +66,7 @@ func MakeTestUnits(directories, languages []string) []*TestUnit {
 	return ts
 }
 
-func (t *TestUnit) Exec(view View) *Outcome {
+func (t *TestUnit) Exec(view viewer.Viewer) *Outcome {
 	curr := 0
 	stop := len(t.TestTargets) * len(t.TestCases)
 
@@ -153,9 +154,9 @@ func (t *TestUnit) do(language string, sourceCode, input string) (string, string
 	res1, err := t.Client.RunnersCreate(language, sourceCode, input)
 	if err != nil {
 		switch err := err.(type) {
-		case client.ServerError:
+		case paizaio.ServerError:
 			return "SERVER ERROR", "", "", err.Error()
-		case client.ClientError:
+		case paizaio.ClientError:
 			return "CLIENT ERROR", "", "", err.Error()
 		default:
 			return "TESTER ERROR", "", "", err.Error()
@@ -165,9 +166,9 @@ func (t *TestUnit) do(language string, sourceCode, input string) (string, string
 	res2, err := t.Client.RunnersGetDetails(res1.ID)
 	if err != nil {
 		switch err := err.(type) {
-		case client.ServerError:
+		case paizaio.ServerError:
 			return "SERVER ERROR", "", "", err.Error()
-		case client.ClientError:
+		case paizaio.ClientError:
 			return "CLIENT ERROR", "", "", err.Error()
 		default:
 			return "TESTER ERROR", "", "", err.Error()

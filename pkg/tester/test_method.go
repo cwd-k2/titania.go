@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/cwd-k2/titania.go/internal/pkg/langtype"
 )
 
 type TestMethod struct {
@@ -31,7 +33,7 @@ func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 		return nil
 	}
 
-	language := LanguageType(filename)
+	language := langtype.LangType(filename)
 	if language == "plain" {
 		println("Invalid test method.")
 		return nil

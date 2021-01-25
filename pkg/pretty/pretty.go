@@ -2,11 +2,16 @@ package pretty
 
 import (
 	"fmt"
+	"io"
 	"os"
 )
 
+func Fprintf(w io.Writer, format string, a ...interface{}) {
+	fmt.Fprintf(w, format, a...)
+}
+
 func Printf(format string, a ...interface{}) {
-	fmt.Fprintf(os.Stderr, format, a...)
+	Fprintf(os.Stderr, format, a...)
 }
 
 func Up(n int) {

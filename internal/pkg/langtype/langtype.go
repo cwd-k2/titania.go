@@ -1,10 +1,10 @@
-package tester
+package langtype
 
 import "path/filepath"
 
 // アホ長い関数
 // 拡張子から言語を判別する
-func LanguageType(filename string) string {
+func LangType(filename string) string {
 	switch filepath.Ext(filename) {
 	case ".c":
 		return "c"

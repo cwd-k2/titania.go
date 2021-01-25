@@ -1,4 +1,4 @@
-package client
+package paizaio
 
 type Config struct {
 	Host   string `json:"host"`

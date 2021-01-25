@@ -1,4 +1,4 @@
-package client
+package paizaio
 
 import (
 	"bytes"
@@ -22,7 +22,7 @@ type RunnersGetDetailsResponse struct {
 	BuildSTDOUT   string `json:"build_stdout"`
 	BuildSTDERR   string `json:"build_stderr"`
 	BuildExitCode uint   `json:"build_exit_code"`
-	BuildTime     string `json:"bulid_time"`
+	BuildTime     string `json:"build_time"`
 	BuildMemory   uint   `json:"build_memory"`
 	BuildResult   string `json:"build_result"`
 	STDOUT        string `json:"stdout"`
