@@ -37,86 +37,89 @@ type RunnersGetDetailsResponse struct {
 type Client struct {
 	Host   string
 	APIKey string
+	http   http.Client
 }
 
 func NewClient(config Config) *Client {
-	return &Client{config.Host, config.APIKey}
+	return &Client{config.Host, config.APIKey, http.Client{}}
 }
 
-func (c *Client) Api(method, endpoint string, params map[string]string, target interface{}) *TitaniaClientError {
+func (c *Client) Api(method, endpoint string, params map[string]string, target interface{}) error {
 
-	body, err := json.Marshal(params)
-	if err != nil {
-		return &TitaniaClientError{-1, err}
+	buf := bytes.NewBuffer([]byte{})
+	if err := json.NewEncoder(buf).Encode(params); err != nil {
+		return nil
 	}
 
-	request, err := http.NewRequest(method, c.Host+endpoint, bytes.NewReader(body))
+	req, err := http.NewRequest(method, c.Host+endpoint, buf)
 	if err != nil {
-		return &TitaniaClientError{-1, err}
+		return err
 	}
 
-	request.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 
-	httpClient := new(http.Client)
-	response, err := httpClient.Do(request)
+	res, err := c.http.Do(req)
 	if err != nil {
-		return &TitaniaClientError{-1, err}
+		return err
 	}
 
-	defer response.Body.Close()
+	defer res.Body.Close()
 
-	if response.StatusCode >= 400 {
-		byteArray, err := ioutil.ReadAll(response.Body)
-
+	if res.StatusCode >= 400 {
+		byteArray, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			return &TitaniaClientError{-1, err}
+			return err
 		}
 
-		return &TitaniaClientError{response.StatusCode, errors.New(string(byteArray))}
+		if res.StatusCode >= 500 {
+			return &ClientError{res.StatusCode, string(byteArray)}
+		} else {
+			return &ServerError{res.StatusCode, string(byteArray)}
+		}
 	}
 
-	if err := json.NewDecoder(response.Body).Decode(target); err != nil {
-		return &TitaniaClientError{-1, err}
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return err
 	}
 
 	return nil
 
 }
 
-func (c *Client) RunnersCreate(language string, sourceCode, input *bytes.Buffer) (*RunnersCreateResponse, *TitaniaClientError) {
+func (c *Client) RunnersCreate(language string, sourceCode, input string) (RunnersCreateResponse, error) {
 	args := map[string]string{
 		"api_key":          c.APIKey,
 		"language":         language,
-		"source_code":      sourceCode.String(),
-		"input":            input.String(),
+		"source_code":      sourceCode,
+		"input":            input,
 		"longpoll":         "true",
 		"longpoll_timeout": "30",
 	}
 
-	runnersCreateResponse := new(RunnersCreateResponse)
+	var res RunnersCreateResponse
 
-	if err := c.Api("POST", "/runners/create", args, runnersCreateResponse); err != nil {
-		return nil, err
+	if err := c.Api("POST", "/runners/create", args, &res); err != nil {
+		return res, err
 	}
 
-	if runnersCreateResponse.ID == "" {
-		return nil, &TitaniaClientError{-1, errors.New(runnersCreateResponse.Error)}
+	if res.ID == "" {
+		return res, errors.New(res.Error)
 	}
 
-	return runnersCreateResponse, nil
+	return res, nil
 }
 
-func (c *Client) RunnersGetDetails(id string) (*RunnersGetDetailsResponse, *TitaniaClientError) {
+func (c *Client) RunnersGetDetails(id string) (RunnersGetDetailsResponse, error) {
 	args := map[string]string{
 		"api_key": c.APIKey,
 		"id":      id,
 	}
 
-	runnersGetDetailsResponse := new(RunnersGetDetailsResponse)
+	var res RunnersGetDetailsResponse
 
-	if err := c.Api("GET", "/runners/get_details", args, runnersGetDetailsResponse); err != nil {
-		return nil, err
+	if err := c.Api("GET", "/runners/get_details", args, &res); err != nil {
+		return res, err
 	}
 
-	return runnersGetDetailsResponse, nil
+	return res, nil
 }

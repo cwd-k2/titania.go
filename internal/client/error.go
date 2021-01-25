@@ -1,10 +1,19 @@
 package client
 
-type TitaniaClientError struct {
+type ClientError struct {
 	Code int
-	Err  error
+	msg  string
 }
 
-func (e TitaniaClientError) Error() string {
-	return e.Err.Error()
+type ServerError struct {
+	Code int
+	msg  string
+}
+
+func (e ClientError) Error() string {
+	return e.msg
+}
+
+func (e ServerError) Error() string {
+	return e.msg
 }

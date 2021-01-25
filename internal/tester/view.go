@@ -23,21 +23,23 @@ type FancyView struct {
 	indices []string
 }
 
-func InitView(tester *Tester, quiet bool) View {
+func InitView(testUnit *TestUnit, quiet bool) View {
 
 	if quiet {
-		return &QuietView{tester.Name, len(tester.TestTargets) * len(tester.TestCases), 0}
-
+		return &QuietView{testUnit.Name, len(testUnit.TestTargets) * len(testUnit.TestCases), 0}
 	} else {
-		indices := make([]string, len(tester.TestTargets))
-		for i, testTarget := range tester.TestTargets {
+
+		indices := make([]string, len(testUnit.TestTargets))
+
+		for i, testTarget := range testUnit.TestTargets {
 			indices[i] = testTarget.Name
 		}
+
 		return &FancyView{
-			tester.Name,
-			len(tester.TestTargets),
-			len(tester.TestCases),
-			make([]int, len(tester.TestTargets)),
+			testUnit.Name,
+			len(testUnit.TestTargets),
+			len(testUnit.TestCases),
+			make([]int, len(testUnit.TestTargets)),
 			indices,
 		}
 	}

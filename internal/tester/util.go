@@ -5,8 +5,7 @@ import "path/filepath"
 // アホ長い関数
 // 拡張子から言語を判別する
 func LanguageType(filename string) string {
-	extension := filepath.Ext(filename)
-	switch extension {
+	switch filepath.Ext(filename) {
 	case ".c":
 		return "c"
 	case ".cc":

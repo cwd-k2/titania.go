@@ -1,9 +1,7 @@
 package tester
 
 import (
-	"bytes"
-	"io"
-	"os"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -14,7 +12,7 @@ import (
 type TestTarget struct {
 	Name       string
 	Language   string
-	SourceCode *bytes.Buffer
+	SourceCode string
 	Expect     string
 }
 
@@ -29,7 +27,9 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 
 	wg0 := &sync.WaitGroup{}
 	wg0.Add(len(configs))
+
 	tmp0 := make([][]*TestTarget, len(configs))
+
 	for i, config := range configs {
 		// ソースファイル
 		go func(i int, config TestTargetConfig) {
@@ -52,21 +52,20 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 
 			wg1 := &sync.WaitGroup{}
 			wg1.Add(len(filenames))
+
 			tmp1 := make([]*TestTarget, len(filenames))
+
 			for j, filename := range filenames {
 				go func(j int, filename string) {
 					defer wg1.Done()
 					name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
 
-					sourceCodeFD, err := os.Open(filename)
+					sourceCodeBS, err := ioutil.ReadFile(filename)
 					// ファイル読み取り失敗
 					if err != nil {
 						println(err.Error())
 						return
 					}
-					defer sourceCodeFD.Close()
-					sourceCode := bytes.NewBuffer(nil)
-					io.Copy(sourceCode, sourceCodeFD)
 
 					language := LanguageType(filename)
 					if language == "plain" || !accepted(languages, language) {
@@ -74,13 +73,18 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 					}
 
 					length++
-					tmp1[j] = &TestTarget{name, language, sourceCode, expect}
+					tmp1[j] = &TestTarget{name, language, string(sourceCodeBS), expect}
 				}(j, filename)
 			}
+
 			wg1.Wait()
+
 			tmp0[i] = tmp1
+
 		}(i, config)
+
 	}
+
 	wg0.Wait()
 
 	// flatten
