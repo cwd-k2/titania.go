@@ -17,25 +17,22 @@ const (
 )
 
 var opts struct {
-	STDIN     bool   `long:"stdin"`
-	Detail    bool   `long:"detail"`
-	InputFile string `long:"input" value-name:"FILE"`
-	Language  string `long:"language" value-name:"LANGUAGE"`
+	STDIN     bool   `long:"stdin" description:"read input from STDIN (overwritten by --file)"`
+	Detail    bool   `long:"detail" description:"show detail"`
+	InputFile string `long:"input" value-name:"FILE" description:"read input from specified FILE"`
+	Language  string `long:"language" value-name:"LANGUAGE" description:"executed program's language"`
+	Args      struct {
+		File string
+	} `positional-args:"yes" required:"yes"`
 }
 
 func main() {
-	args, err := flags.ParseArgs(&opts, os.Args)
+	_, err := flags.Parse(&opts)
 	if err != nil {
-		println(err.Error())
 		return
 	}
 
-	if len(args) != 2 {
-		println("You should specify a single file program to run.")
-		return
-	}
-
-	filename := args[1]
+	filename := opts.Args.File
 
 	sourceBS, err := ioutil.ReadFile(filename)
 	if err != nil {
