@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 )
 
@@ -8,15 +9,21 @@ const VERSION = "v0.3.0-alpha"
 
 func main() {
 	// ターゲットのディレクトリと言語，async
-	dirnames, languages, async := OptParse()
-	outcomes := Exec(dirnames, languages, async)
+	dirnames, languages, async := optparse()
+	outcomes := exec(dirnames, languages, async)
 
 	// 何もテストが実行されなかった場合
 	if outcomes == nil {
-		println("Uh, OK, there's no test.")
+		println("There's no test in this subdirectories.")
 		os.Exit(1)
 	}
 
-	Final(outcomes)
-	Print(outcomes)
+	final(outcomes)
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(outcomes); err != nil {
+		panic(err)
+	}
 }

@@ -1,17 +1,11 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"strconv"
-	"strings"
-
 	"github.com/cwd-k2/titania.go/internal/pkg/pretty"
 	"github.com/cwd-k2/titania.go/pkg/tester"
 )
 
-func Final(outcomes []*tester.Outcome) {
+func final(outcomes []*tester.Outcome) {
 	pretty.Printf("\n%s\n", pretty.Bold("ALL DONE"))
 
 	for _, outcome := range outcomes {
@@ -46,21 +40,4 @@ func Final(outcomes []*tester.Outcome) {
 			}
 		}
 	}
-}
-
-func Print(outcomes []*tester.Outcome) {
-	// JSON 形式に変換
-	rawout, err := json.MarshalIndent(outcomes, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-
-	// エスケープされた文字を戻す
-	output, err := strconv.Unquote(strings.Replace(strconv.Quote(string(rawout)), `\\u`, `\u`, -1))
-	if err != nil {
-		panic(err)
-	}
-
-	// 実行結果を JSON 形式で出力
-	fmt.Fprintln(os.Stdout, output)
 }

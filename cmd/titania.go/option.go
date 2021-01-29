@@ -30,7 +30,7 @@ options:
 }
 
 // パスを相対パスとして綺麗な形に
-func cleanerPath(pwd, directory string) (string, error) {
+func cleanerpath(pwd, directory string) (string, error) {
 	if filepath.IsAbs(directory) {
 		return filepath.Rel(pwd, directory)
 	} else {
@@ -39,7 +39,7 @@ func cleanerPath(pwd, directory string) (string, error) {
 }
 
 // オプション解析
-func OptParse() ([]string, []string, bool) {
+func optparse() ([]string, []string, bool) {
 	var (
 		args     []string
 		langs    []string
@@ -84,7 +84,7 @@ func OptParse() ([]string, []string, bool) {
 	} else {
 
 		for _, directory := range args {
-			dirname, err := cleanerPath(pwd, directory)
+			dirname, err := cleanerpath(pwd, directory)
 			if err != nil {
 				panic(err)
 			}

@@ -6,7 +6,7 @@ import (
 	"github.com/cwd-k2/titania.go/pkg/tester"
 )
 
-func Exec(directories, languages []string, async bool) []*tester.Outcome {
+func exec(directories, languages []string, async bool) []*tester.Outcome {
 
 	if async {
 		var (
