@@ -17,7 +17,7 @@ const (
 )
 
 var opts struct {
-	STDIN     bool   `long:"stdin" description:"read input from STDIN (overwritten by --file)"`
+	STDIN     bool   `long:"stdin" description:"read input from STDIN (overwritten by --input)"`
 	Detail    bool   `long:"detail" description:"show detail"`
 	InputFile string `long:"input" value-name:"FILE" description:"read input from specified FILE"`
 	Language  string `long:"language" value-name:"LANGUAGE" description:"executed program's language"`
