@@ -98,13 +98,9 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 	return testTargets
 }
 
-func acceptable(array []string, element string) bool {
-	if len(array) == 0 {
-		return true
-	}
-
-	for _, e := range array {
-		if e == element {
+func acceptable(languages []string, language string) bool {
+	for _, e := range languages {
+		if e == language {
 			return true
 		}
 	}

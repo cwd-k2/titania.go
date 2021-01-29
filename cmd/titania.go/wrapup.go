@@ -1,4 +1,4 @@
-package tester
+package main
 
 import (
 	"encoding/json"
@@ -7,32 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cwd-k2/titania.go/pkg/pretty"
+	"github.com/cwd-k2/titania.go/internal/pkg/pretty"
+	"github.com/cwd-k2/titania.go/pkg/tester"
 )
 
-type Outcome struct {
-	Name       string   `json:"name"`
-	TestMethod string   `json:"test_method"`
-	Fruits     []*Fruit `json:"fruits"`
-}
-
-type Fruit struct {
-	TestTarget string    `json:"test_target"`
-	Language   string    `json:"language"`
-	Expect     string    `json:"expect"`
-	Details    []*Detail `json:"details"`
-}
-
-type Detail struct {
-	TestCase   string `json:"test_case"`
-	Result     string `json:"result"`
-	IsExpected bool   `json:"is_expected"`
-	Time       string `json:"time"`
-	Output     string `json:"output"`
-	Error      string `json:"error"`
-}
-
-func Final(outcomes []*Outcome) {
+func Final(outcomes []*tester.Outcome) {
 	pretty.Printf("\n%s\n", pretty.Bold("ALL DONE"))
 
 	for _, outcome := range outcomes {
@@ -69,17 +48,15 @@ func Final(outcomes []*Outcome) {
 	}
 }
 
-func Print(outcomes []*Outcome) {
+func Print(outcomes []*tester.Outcome) {
 	// JSON 形式に変換
 	rawout, err := json.MarshalIndent(outcomes, "", "  ")
-	// JSON パース失敗
 	if err != nil {
 		panic(err)
 	}
 
 	// エスケープされた文字を戻す
 	output, err := strconv.Unquote(strings.Replace(strconv.Quote(string(rawout)), `\\u`, `\u`, -1))
-	// 変換失敗
 	if err != nil {
 		panic(err)
 	}

@@ -6,8 +6,8 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/cwd-k2/titania.go/internal/pkg/pretty"
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
-	"github.com/cwd-k2/titania.go/pkg/pretty"
 )
 
 // Config

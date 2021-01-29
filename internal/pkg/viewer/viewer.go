@@ -1,7 +1,7 @@
 package viewer
 
 import (
-	"github.com/cwd-k2/titania.go/pkg/pretty"
+	"github.com/cwd-k2/titania.go/internal/pkg/pretty"
 )
 
 type Viewer interface {

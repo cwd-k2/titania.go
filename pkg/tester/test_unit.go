@@ -5,12 +5,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cwd-k2/titania.go/internal/pkg/viewer"
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
-	"github.com/cwd-k2/titania.go/pkg/viewer"
 )
 
 // TestUnit
-// contains paiza.io API client, SourceCodes, and TestCases
 // physically, this stands for a directory.
 type TestUnit struct {
 	Name        string
@@ -18,11 +17,11 @@ type TestUnit struct {
 	TestMethod  *TestMethod
 	TestTargets []*TestTarget
 	TestCases   []*TestCase
+	view        viewer.Viewer
 }
 
-// NewTestUnit
-// returns *tester
-func NewTestUnit(dirname string, languages []string) *TestUnit {
+// returns *TestUnit
+func NewTestUnit(dirname string, languages []string, quiet bool) *TestUnit {
 	basepath, err := filepath.Abs(dirname)
 	if err != nil {
 		println(err)
@@ -34,6 +33,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	if config == nil {
 		return nil
 	}
+
 	// paiza.io API クライアント
 	client := paizaio.NewClient(config.ClientConfig)
 
@@ -52,21 +52,35 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	// テストメソッド
 	testMethod := NewTestMethod(basepath, config.TestMethod)
 
-	return &TestUnit{dirname, client, testMethod, testTargets, testCases}
+	// Viewer
+	var view viewer.Viewer
+	if quiet {
+		view = viewer.NewQuietView(dirname, len(testTargets)*len(testCases))
+	} else {
+		indices := make([]string, 0)
+		for _, testTarget := range testTargets {
+			indices = append(indices, testTarget.Name)
+		}
+		view = viewer.NewFancyView(dirname, len(testTargets), len(testCases), indices)
+	}
+
+	return &TestUnit{dirname, client, testMethod, testTargets, testCases, view}
 }
 
-func MakeTestUnits(directories, languages []string) []*TestUnit {
-	ts := make([]*TestUnit, 0, len(directories))
+func MakeTestUnits(directories, languages []string, quiet bool) []*TestUnit {
+	ts := make([]*TestUnit, 0)
+
 	for _, dirname := range directories {
-		t := NewTestUnit(dirname, languages)
+		t := NewTestUnit(dirname, languages, quiet)
 		if t != nil {
 			ts = append(ts, t)
 		}
 	}
+
 	return ts
 }
 
-func (t *TestUnit) Exec(view viewer.Viewer) *Outcome {
+func (t *TestUnit) Exec() *Outcome {
 	curr := 0
 	stop := len(t.TestTargets) * len(t.TestCases)
 
@@ -90,7 +104,7 @@ func (t *TestUnit) Exec(view viewer.Viewer) *Outcome {
 		}
 	}
 
-	view.Draw()
+	t.view.Draw()
 
 	for i, testTarget := range t.TestTargets {
 		for j, testCase := range t.TestCases {
@@ -103,7 +117,7 @@ func (t *TestUnit) Exec(view viewer.Viewer) *Outcome {
 
 	for i := range ch {
 		curr++
-		view.Update(i)
+		t.view.Update(i)
 		if curr == stop {
 			close(ch)
 		}

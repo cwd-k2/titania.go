@@ -2,16 +2,14 @@ package main
 
 import (
 	"os"
-
-	"github.com/cwd-k2/titania.go/pkg/tester"
 )
 
 const VERSION = "v0.2.3-beta"
 
 func main() {
 	// ターゲットのディレクトリと言語，async
-	directories, languages, async := OptParse()
-	outcomes := tester.Exec(directories, languages, async)
+	dirnames, languages, async := OptParse()
+	outcomes := Exec(dirnames, languages, async)
 
 	// 何もテストが実行されなかった場合
 	if outcomes == nil {
@@ -19,6 +17,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	tester.Final(outcomes)
-	tester.Print(outcomes)
+	Final(outcomes)
+	Print(outcomes)
 }
