@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,7 +11,7 @@ import (
 )
 
 func version() {
-	pretty.Printf("titania.go %s\n", VERSION)
+	fmt.Printf("titania.go %s\n", VERSION)
 	os.Exit(1)
 }
 

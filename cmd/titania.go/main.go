@@ -10,10 +10,11 @@ const VERSION = "v0.3.0-alpha"
 func main() {
 	// ターゲットのディレクトリと言語，async
 	dirnames, languages, async := optparse()
+
 	outcomes := exec(dirnames, languages, async)
 
 	// 何もテストが実行されなかった場合
-	if outcomes == nil {
+	if len(outcomes) == 0 {
 		println("There's no test in this subdirectories.")
 		os.Exit(1)
 	}
