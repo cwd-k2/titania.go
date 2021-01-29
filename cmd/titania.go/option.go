@@ -1,16 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/cwd-k2/titania.go/pkg/pretty"
+	"github.com/cwd-k2/titania.go/internal/pkg/pretty"
 )
 
 func version() {
-	pretty.Printf("titania.go %s\n", VERSION)
+	fmt.Printf("titania.go %s\n", VERSION)
 	os.Exit(1)
 }
 
@@ -30,7 +31,7 @@ options:
 }
 
 // パスを相対パスとして綺麗な形に
-func cleanerPath(pwd, directory string) (string, error) {
+func cleanerpath(pwd, directory string) (string, error) {
 	if filepath.IsAbs(directory) {
 		return filepath.Rel(pwd, directory)
 	} else {
@@ -39,11 +40,13 @@ func cleanerPath(pwd, directory string) (string, error) {
 }
 
 // オプション解析
-func OptParse() ([]string, []string, bool) {
-	var args []string
-	var async bool = false
-	var languages []string
-	var directories []string
+func optparse() ([]string, []string, bool) {
+	var (
+		args     []string
+		langs    []string
+		dirnames []string
+		async    bool = false
+	)
 
 	for _, arg := range os.Args[1:] {
 		if arg == "--help" || arg == "-h" {
@@ -51,7 +54,7 @@ func OptParse() ([]string, []string, bool) {
 		} else if arg == "--version" || arg == "-v" {
 			version()
 		} else if strings.HasPrefix(arg, "--lang=") {
-			languages = strings.Split(strings.Replace(arg, "--lang=", "", 1), ",")
+			langs = strings.Split(strings.Replace(arg, "--lang=", "", 1), ",")
 		} else if strings.HasPrefix(arg, "--async") {
 			async = true
 		} else if strings.HasPrefix(arg, "-") {
@@ -75,21 +78,21 @@ func OptParse() ([]string, []string, bool) {
 
 		for _, entry := range entries {
 			if entry.IsDir() {
-				directories = append(directories, entry.Name())
+				dirnames = append(dirnames, entry.Name())
 			}
 		}
 
 	} else {
 
 		for _, directory := range args {
-			dirname, err := cleanerPath(pwd, directory)
+			dirname, err := cleanerpath(pwd, directory)
 			if err != nil {
 				panic(err)
 			}
-			directories = append(directories, dirname)
+			dirnames = append(dirnames, dirname)
 		}
 
 	}
 
-	return directories, languages, async
+	return dirnames, langs, async
 }

@@ -6,14 +6,14 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/cwd-k2/titania.go/internal/client"
-	"github.com/cwd-k2/titania.go/pkg/pretty"
+	"github.com/cwd-k2/titania.go/internal/pkg/pretty"
+	"github.com/cwd-k2/titania.go/pkg/paizaio"
 )
 
 // Config
 // test configs
 type Config struct {
-	ClientConfig client.Config      `json:"client"`
+	ClientConfig paizaio.Config     `json:"client"`
 	TestTarget   []TestTargetConfig `json:"test_target"`
 	TestCase     []TestCaseConfig   `json:"test_case"`
 	TestMethod   TestMethodConfig   `json:"test_method"`

@@ -9,12 +9,14 @@ Just a code-testing/judging tool, using [paiza.io](https://paiza.io) API. Intend
 ### Expected situation
 
 This program is intended to be used for the situations like below.
+
 - Programming contests || Judging your codes locally
 - Coding tests
 - Just testing your algorithm/logic is sutable for any possible situations
 - When you came up with an excellent programming/algorithm problem and wanna have a small contest with your friends, and they use different languages, say, A uses `C++`, B uses `Haskell` while C uses `Scala`..., but you don't have all those runtime environment
 
 The prerequisites will be like below.
+
 - A topic/problem is provided.
 - A few or many inputs are provided.
 - There is some expected output/answer for each input.
@@ -111,11 +113,13 @@ Sometimes you want to do a specialized judgement. When the problem goes like '..
     "host": "http://api.paiza.io:80",
     "api_key": "guest"
   },
-  "test_target": [
-    { "pattern": "./source_*/*.*" }
-  ],
+  "test_target": [{ "pattern": "./source_*/*.*" }],
   "test_case": [
-    { "directory": "./test_case", "input_extension": ".in", "output_extension": ".out" }
+    {
+      "directory": "./test_case",
+      "input_extension": ".in",
+      "output_extension": ".out"
+    }
   ],
   "test_method": {
     "file_name": "./test_method.rb"

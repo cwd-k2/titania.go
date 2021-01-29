@@ -1,17 +1,17 @@
 package tester
 
 import (
-	"bytes"
-	"io"
-	"os"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/cwd-k2/titania.go/internal/pkg/langtype"
 )
 
 type TestMethod struct {
 	Name       string
 	Language   string
-	SourceCode *bytes.Buffer
+	SourceCode string
 }
 
 type TestMethodConfig struct {
@@ -27,20 +27,17 @@ func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 
 	name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
 
-	sourceCodeFD, err := os.Open(filename)
+	sourceCodeBS, err := ioutil.ReadFile(filename)
 	if err != nil {
 		println(err.Error())
 		return nil
 	}
-	defer sourceCodeFD.Close()
-	sourceCode := bytes.NewBuffer(nil)
-	io.Copy(sourceCode, sourceCodeFD)
 
-	language := LanguageType(filename)
+	language := langtype.LangType(filename)
 	if language == "plain" {
 		println("Invalid test method.")
 		return nil
 	}
 
-	return &TestMethod{name, language, sourceCode}
+	return &TestMethod{name, language, string(sourceCodeBS)}
 }

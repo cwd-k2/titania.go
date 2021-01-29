@@ -1,24 +1,30 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
-
-	"github.com/cwd-k2/titania.go/internal/tester"
 )
 
-const VERSION = "v0.2.2"
+const VERSION = "v0.3.0-alpha"
 
 func main() {
 	// ターゲットのディレクトリと言語，async
-	directories, languages, async := OptParse()
-	outcomes := tester.Exec(directories, languages, async)
+	dirnames, languages, async := optparse()
+
+	outcomes := exec(dirnames, languages, async)
 
 	// 何もテストが実行されなかった場合
-	if outcomes == nil {
-		println("Uh, OK, there's no test.")
+	if len(outcomes) == 0 {
+		println("There's no test in this subdirectories.")
 		os.Exit(1)
 	}
 
-	tester.Final(outcomes)
-	tester.Print(outcomes)
+	final(outcomes)
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(outcomes); err != nil {
+		panic(err)
+	}
 }
