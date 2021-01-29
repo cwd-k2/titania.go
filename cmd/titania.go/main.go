@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-const VERSION = "v0.3.0-alpha"
+const VERSION = "v0.3.0"
 
 func main() {
 	// ターゲットのディレクトリと言語，async
