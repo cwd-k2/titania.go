@@ -3,8 +3,6 @@ package tester
 import (
 	"io/ioutil"
 	"path/filepath"
-	"strings"
-	"sync"
 
 	"github.com/cwd-k2/titania.go/internal/pkg/langtype"
 )
@@ -25,77 +23,43 @@ type TestTargetConfig struct {
 
 // returns []*TestTarget
 func MakeTestTargets(basepath string, languages []string, configs []TestTargetConfig) []*TestTarget {
-	length := 0
 
-	wg0 := &sync.WaitGroup{}
-	wg0.Add(len(configs))
+	targets := make([]*TestTarget, 0)
 
-	tmp0 := make([][]*TestTarget, len(configs))
+	for _, config := range configs {
+		filenames, err := filepath.Glob(filepath.Join(basepath, config.Pattern))
+		if err != nil {
+			println(err.Error())
+			continue
+		}
 
-	for i, config := range configs {
-		// ソースファイル
-		go func(i int, config TestTargetConfig) {
-			defer wg0.Done()
+		expect := config.Expect
+		if len(expect) == 0 {
+			expect = "PASS"
+		}
 
-			pattern := filepath.Join(basepath, config.Pattern)
-			filenames, err := filepath.Glob(pattern)
-			// ここのエラーは bad pattern
+		for _, filename := range filenames {
+			language := langtype.LangType(filename)
+			if language == "plain" || len(languages) > 0 && !acceptable(languages, language) {
+				continue
+			}
+
+			sourceCodeBS, err := ioutil.ReadFile(filename)
 			if err != nil {
 				println(err.Error())
-				return
+				continue
 			}
 
-			var expect string
-			if config.Expect != "" {
-				expect = config.Expect
-			} else {
-				expect = "PASS"
+			name, err := filepath.Rel(basepath, filename)
+			if err != nil {
+				name = filename
 			}
 
-			wg1 := &sync.WaitGroup{}
-			wg1.Add(len(filenames))
-
-			tmp1 := make([]*TestTarget, len(filenames))
-
-			for j, filename := range filenames {
-				go func(j int, filename string) {
-					defer wg1.Done()
-					name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
-
-					sourceCodeBS, err := ioutil.ReadFile(filename)
-					// ファイル読み取り失敗
-					if err != nil {
-						println(err.Error())
-						return
-					}
-
-					language := langtype.LangType(filename)
-					if language == "plain" || !acceptable(languages, language) {
-						return
-					}
-
-					length++
-					tmp1[j] = &TestTarget{name, language, string(sourceCodeBS), expect}
-				}(j, filename)
-			}
-
-			wg1.Wait()
-
-			tmp0[i] = tmp1
-
-		}(i, config)
-
+			targets = append(targets, &TestTarget{name, language, string(sourceCodeBS), expect})
+		}
 	}
 
-	wg0.Wait()
-
-	// flatten
-	testTargets := make([]*TestTarget, 0, length)
-	for _, tmp := range tmp0 {
-		testTargets = append(testTargets, tmp...)
-	}
-
-	return testTargets
+	return targets
 }
 
 func acceptable(languages []string, language string) bool {

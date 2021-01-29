@@ -7,39 +7,47 @@ import (
 )
 
 func Exec(directories, languages []string, async bool) []*tester.Outcome {
-	testUnits := tester.MakeTestUnits(directories, languages, async)
-
-	if len(testUnits) == 0 {
-		return nil
-	}
-
-	outcomes := make([]*tester.Outcome, len(testUnits))
 
 	if async {
+		var (
+			tunits   = maketestunits(directories, languages)
+			outcomes = make([]*tester.Outcome, len(tunits))
+			wg       = &sync.WaitGroup{}
+		)
 
-		wg := &sync.WaitGroup{}
-
-		for i, testUnit := range testUnits {
+		for i, tunit := range tunits {
 			wg.Add(1)
-
 			go func(i int, testUnit *tester.TestUnit) {
 				defer wg.Done()
 				outcome := testUnit.Exec()
 				outcomes[i] = outcome
-			}(i, testUnit)
-
+			}(i, tunit)
 		}
-
 		wg.Wait()
 
+		return outcomes
 	} else {
+		outcomes := make([]*tester.Outcome, 0)
 
-		for i, testUnit := range testUnits {
-			outcome := testUnit.Exec()
-			outcomes[i] = outcome
+		for _, dirname := range directories {
+			tunit := tester.NewTestUnit(dirname, languages, async)
+			if tunit == nil {
+				continue
+			}
+			outcomes = append(outcomes, tunit.Exec())
 		}
 
+		return outcomes
 	}
+}
 
-	return outcomes
+func maketestunits(directories, languages []string) []*tester.TestUnit {
+	tunits := make([]*tester.TestUnit, 0)
+	for _, dirname := range directories {
+		tunit := tester.NewTestUnit(dirname, languages, true)
+		if tunit != nil {
+			tunits = append(tunits, tunit)
+		}
+	}
+	return tunits
 }

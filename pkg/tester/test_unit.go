@@ -38,103 +38,88 @@ func NewTestUnit(dirname string, languages []string, quiet bool) *TestUnit {
 	client := paizaio.NewClient(config.ClientConfig)
 
 	// ソースコード
-	testTargets := MakeTestTargets(basepath, languages, config.TestTarget)
-	if len(testTargets) == 0 {
+	targets := MakeTestTargets(basepath, languages, config.TestTarget)
+	if len(targets) == 0 {
 		return nil
 	}
 
 	// テストケース
-	testCases := MakeTestCases(basepath, config.TestCase)
-	if len(testCases) == 0 {
+	tcases := MakeTestCases(basepath, config.TestCase)
+	if len(tcases) == 0 {
 		return nil
 	}
 
 	// テストメソッド
-	testMethod := NewTestMethod(basepath, config.TestMethod)
+	tmethod := NewTestMethod(basepath, config.TestMethod)
 
-	// Viewer
-	var view viewer.Viewer
 	if quiet {
-		view = viewer.NewQuietView(dirname, len(testTargets)*len(testCases))
+		// Viewer
+		view := viewer.NewQuietView(dirname, len(targets)*len(tcases))
+		return &TestUnit{dirname, client, tmethod, targets, tcases, view}
 	} else {
+		// Viewer
 		indices := make([]string, 0)
-		for _, testTarget := range testTargets {
-			indices = append(indices, testTarget.Name)
+		for _, target := range targets {
+			indices = append(indices, target.Name)
 		}
-		view = viewer.NewFancyView(dirname, len(testTargets), len(testCases), indices)
+		view := viewer.NewFancyView(dirname, len(targets), len(tcases), indices)
+		return &TestUnit{dirname, client, tmethod, targets, tcases, view}
 	}
 
-	return &TestUnit{dirname, client, testMethod, testTargets, testCases, view}
 }
 
-func MakeTestUnits(directories, languages []string, quiet bool) []*TestUnit {
-	ts := make([]*TestUnit, 0)
-
-	for _, dirname := range directories {
-		t := NewTestUnit(dirname, languages, quiet)
-		if t != nil {
-			ts = append(ts, t)
-		}
-	}
-
-	return ts
+type detailstruct struct {
+	I int
+	J int
+	D *Detail
 }
 
 func (t *TestUnit) Exec() *Outcome {
 	curr := 0
 	stop := len(t.TestTargets) * len(t.TestCases)
 
-	ch := make(chan int, stop)
-	fruits := make([]*Fruit, len(t.TestTargets))
-
-	outcome := new(Outcome)
-	outcome.Name = t.Name
-	if t.TestMethod != nil {
-		outcome.TestMethod = t.TestMethod.Name
-	} else {
-		outcome.TestMethod = "default"
-	}
-
-	for i, testTarget := range t.TestTargets {
-		fruits[i] = &Fruit{
-			testTarget.Name,
-			testTarget.Language,
-			testTarget.Expect,
-			make([]*Detail, len(t.TestCases)),
-		}
+	fruits := make([]*Fruit, 0)
+	for _, target := range t.TestTargets {
+		fruits = append(fruits, &Fruit{target.Name, target.Language, target.Expect, make([]*Detail, len(t.TestCases))})
 	}
 
 	t.view.Draw()
 
-	for i, testTarget := range t.TestTargets {
-		for j, testCase := range t.TestCases {
-			go func(i, j int, testTarget *TestTarget, testCase *TestCase) {
-				fruits[i].Details[j] = t.exec(testTarget, testCase)
-				ch <- i
-			}(i, j, testTarget, testCase)
+	ch := make(chan *detailstruct, stop)
+
+	for i, target := range t.TestTargets {
+		for j, tcase := range t.TestCases {
+			go func(i, j int, target *TestTarget, tcase *TestCase) {
+				ch <- &detailstruct{i, j, t.exec(target, tcase)}
+			}(i, j, target, tcase)
 		}
 	}
 
-	for i := range ch {
-		curr++
-		t.view.Update(i)
-		if curr == stop {
+	for d := range ch {
+		t.view.Update(d.I)
+		fruits[d.I].Details[d.J] = d.D
+
+		if curr++; curr == stop {
 			close(ch)
 		}
 	}
 
-	outcome.Fruits = fruits
+	outcome := &Outcome{t.Name, "default", fruits}
+	if t.TestMethod != nil {
+		outcome.TestMethod = t.TestMethod.Name
+	}
 
 	return outcome
 }
 
-func (t *TestUnit) exec(testTarget *TestTarget, testCase *TestCase) *Detail {
-	result, time, output, e := t.do(testTarget.Language, testTarget.SourceCode, testCase.Input)
+// TODO: refactoring
+func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
+	result, time, output, e := t.do(target.Language, target.SourceCode, tcase.Input)
 
 	if result == "" {
 		// input for test_method goes in this format.
 		// output + "\0" + input + "\0" + answer
-		input := strings.Join([]string{output, testCase.Input, testCase.Answer}, "\000")
+		input := strings.Join([]string{output, tcase.Input, tcase.Answer}, "\000")
 
 		if t.TestMethod != nil {
 			res, _, out, ers := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
@@ -149,7 +134,7 @@ func (t *TestUnit) exec(testTarget *TestTarget, testCase *TestCase) *Detail {
 
 		} else {
 
-			if output == testCase.Answer {
+			if output == tcase.Answer {
 				result = "PASS"
 			} else {
 				result = "FAIL"
@@ -158,11 +143,12 @@ func (t *TestUnit) exec(testTarget *TestTarget, testCase *TestCase) *Detail {
 		}
 	}
 
-	isExpected := result == testTarget.Expect
+	isExpected := result == target.Expect
 
-	return &Detail{testCase.Name, result, isExpected, time, output, e}
+	return &Detail{tcase.Name, result, isExpected, time, output, e}
 }
 
+// TODO: refactoring
 func (t *TestUnit) do(language string, sourceCode, input string) (string, string, string, string) {
 
 	res1, err := t.Client.RunnersCreate(language, sourceCode, input)
