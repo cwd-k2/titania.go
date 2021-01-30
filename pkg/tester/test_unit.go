@@ -151,7 +151,15 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 // TODO: refactoring
 func (t *TestUnit) do(language string, sourceCode, input string) (string, string, string, string) {
 
-	res1, err := t.Client.RunnersCreate(language, sourceCode, input)
+	req1 := &paizaio.RunnersCreateRequest{
+		Language:        language,
+		SourceCode:      sourceCode,
+		Input:           input,
+		Longpoll:        true,
+		LongpollTimeout: 16,
+	}
+
+	res1, err := t.Client.RunnersCreate(req1)
 	if err != nil {
 		switch err := err.(type) {
 		case paizaio.ServerError:
@@ -163,7 +171,11 @@ func (t *TestUnit) do(language string, sourceCode, input string) (string, string
 		}
 	}
 
-	res2, err := t.Client.RunnersGetDetails(res1.ID)
+	req2 := &paizaio.RunnersGetDetailsRequest{
+		ID: res1.ID,
+	}
+
+	res2, err := t.Client.RunnersGetDetails(req2)
 	if err != nil {
 		switch err := err.(type) {
 		case paizaio.ServerError:

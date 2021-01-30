@@ -82,13 +82,25 @@ func main() {
 		APIKey: apikey,
 	})
 
-	res1, err := client.RunnersCreate(language, source, input)
+	req1 := &paizaio.RunnersCreateRequest{
+		Language:        language,
+		SourceCode:      source,
+		Input:           input,
+		Longpoll:        true,
+		LongpollTimeout: 16,
+	}
+
+	res1, err := client.RunnersCreate(req1)
 	if err != nil {
 		println(err.Error())
 		return
 	}
 
-	res2, err := client.RunnersGetDetails(res1.ID)
+	req2 := &paizaio.RunnersGetDetailsRequest{
+		ID: res1.ID,
+	}
+
+	res2, err := client.RunnersGetDetails(req2)
 	if err != nil {
 		println(err.Error())
 		return
