@@ -20,7 +20,7 @@ func NewClient(config Config) *Client {
 	}
 }
 
-func (c *Client) Api(method, endpoint string, body Request, target Response) error {
+func (c *Client) api(method, endpoint string, body Request, target Response) error {
 	url := fmt.Sprintf("%s/%s?api_key=%s", c.Host, endpoint, c.APIKey)
 	req, err := http.NewRequest(method, url, body.Reader())
 	if err != nil {
@@ -59,7 +59,7 @@ func (c *Client) Api(method, endpoint string, body Request, target Response) err
 
 func (c *Client) RunnersCreate(req *RunnersCreateRequest) (*RunnersCreateResponse, error) {
 	res := &RunnersCreateResponse{}
-	if err := c.Api("POST", "/runners/create", req, res); err != nil {
+	if err := c.api("POST", "/runners/create", req, res); err != nil {
 		return res, err
 	}
 
@@ -72,7 +72,7 @@ func (c *Client) RunnersCreate(req *RunnersCreateRequest) (*RunnersCreateRespons
 
 func (c *Client) RunnersGetStatus(req *RunnersGetStatusRequest) (*RunnersGetStatusResponse, error) {
 	res := &RunnersGetStatusResponse{}
-	if err := c.Api("GET", "/runners/get_status", req, res); err != nil {
+	if err := c.api("GET", "/runners/get_status", req, res); err != nil {
 		return res, err
 	}
 
@@ -82,7 +82,7 @@ func (c *Client) RunnersGetStatus(req *RunnersGetStatusRequest) (*RunnersGetStat
 
 func (c *Client) RunnersGetDetails(req *RunnersGetDetailsRequest) (*RunnersGetDetailsResponse, error) {
 	res := &RunnersGetDetailsResponse{}
-	if err := c.Api("GET", "/runners/get_details", req, res); err != nil {
+	if err := c.api("GET", "/runners/get_details", req, res); err != nil {
 		return res, err
 	}
 
