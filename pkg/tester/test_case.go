@@ -21,7 +21,7 @@ type TestCaseConfig struct {
 
 // returns []*TestCases
 func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
-	testCases := make([]*TestCase, 0)
+	tcases := make([]*TestCase, 0)
 
 	for _, config := range configs {
 		// 出力(正解)ファイル
@@ -56,10 +56,10 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 			}
 			name = name[0 : len(name)-len(config.OutputExtention)]
 
-			testCases = append(testCases, &TestCase{name, string(inputBS), string(answerBS)})
+			tcases = append(tcases, &TestCase{name, string(inputBS), string(answerBS)})
 		}
 
 	}
 
-	return testCases
+	return tcases
 }

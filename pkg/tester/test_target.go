@@ -23,7 +23,6 @@ type TestTargetConfig struct {
 
 // returns []*TestTarget
 func MakeTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget {
-
 	targets := make([]*TestTarget, 0)
 
 	for _, config := range configs {

@@ -145,6 +145,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 
 func (t *TestUnit) do(language string, sourceCode, input string) (string, string, string, string) {
 	// TODO: refactoring (returned value's style is ugly)
+	// TODO: build error and build stdout are ignored.
 
 	req1 := &paizaio.RunnersCreateRequest{
 		Language:        language,
