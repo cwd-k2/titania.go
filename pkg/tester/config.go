@@ -3,7 +3,6 @@ package tester
 import (
 	"encoding/json"
 	"io/ioutil"
-	"path"
 	"path/filepath"
 
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
@@ -20,7 +19,7 @@ type Config struct {
 
 func NewConfig(basepath string) *Config {
 	// ディレクトリ直下に titania.json がいるか確認したい
-	filename := path.Join(basepath, "titania.json")
+	filename := filepath.Join(basepath, "titania.json")
 	if match, _ := filepath.Glob(filename); len(match) == 0 {
 		return nil
 	}
