@@ -29,7 +29,7 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 	for _, config := range configs {
 		filenames, err := filepath.Glob(filepath.Join(basepath, config.Pattern))
 		if err != nil {
-			println(err.Error())
+			logger.Printf("%+v\n", err)
 			continue
 		}
 
@@ -46,7 +46,7 @@ func MakeTestTargets(basepath string, languages []string, configs []TestTargetCo
 
 			sourceCodeBS, err := ioutil.ReadFile(filename)
 			if err != nil {
-				println(err.Error())
+				logger.Printf("%+v\n", err)
 				continue
 			}
 

@@ -9,8 +9,6 @@ import (
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
 )
 
-// TestUnit
-// physically, this stands for a directory.
 type TestUnit struct {
 	Name        string
 	Client      *paizaio.Client
@@ -20,11 +18,12 @@ type TestUnit struct {
 	view        viewer.Viewer
 }
 
-// returns *TestUnit
+// Reads given directory and create an instance of TestUnit.
+// if failed to load Config/TestTargets/TestCases, returns nil (no error).
 func NewTestUnit(dirname string, languages []string, quiet bool) *TestUnit {
 	basepath, err := filepath.Abs(dirname)
 	if err != nil {
-		println(err)
+		logger.Printf("%+v\n", err)
 		return nil
 	}
 
@@ -52,12 +51,11 @@ func NewTestUnit(dirname string, languages []string, quiet bool) *TestUnit {
 	// テストメソッド
 	tmethod := NewTestMethod(basepath, config.TestMethod)
 
+	// Viewer
 	if quiet {
-		// Viewer
 		view := viewer.NewQuietView(dirname, len(targets)*len(tcases))
 		return &TestUnit{dirname, client, tmethod, targets, tcases, view}
 	} else {
-		// Viewer
 		indices := make([]string, 0)
 		for _, target := range targets {
 			indices = append(indices, target.Name)
@@ -68,36 +66,38 @@ func NewTestUnit(dirname string, languages []string, quiet bool) *TestUnit {
 
 }
 
-type detailstruct struct {
-	I int
-	J int
-	D *Detail
-}
-
+// Execute test (itself) using paiza.io API.
+// Any errors are included in returning values.
 func (t *TestUnit) Exec() *Outcome {
 	curr := 0
 	stop := len(t.TestTargets) * len(t.TestCases)
 
-	fruits := make([]*Fruit, 0)
-	for _, target := range t.TestTargets {
-		fruits = append(fruits, &Fruit{target.Name, target.Language, target.Expect, make([]*Detail, len(t.TestCases))})
+	fruits := make([]*Fruit, len(t.TestTargets))
+	for i, target := range t.TestTargets {
+		fruits[i] = &Fruit{target.Name, target.Language, target.Expect, make([]*Detail, len(t.TestCases))}
+	}
+
+	// idiom: sending multiple value with a single channel
+	ch := make(chan func() (int, int, *Detail), stop)
+	fn := func(i, j int, target *TestTarget, tcase *TestCase) {
+		detail := t.exec(target, tcase)
+		ch <- func() (int, int, *Detail) { return i, j, detail }
 	}
 
 	t.view.Draw()
 
-	ch := make(chan *detailstruct, stop)
-
 	for i, target := range t.TestTargets {
 		for j, tcase := range t.TestCases {
-			go func(i, j int, target *TestTarget, tcase *TestCase) {
-				ch <- &detailstruct{i, j, t.exec(target, tcase)}
-			}(i, j, target, tcase)
+			go fn(i, j, target, tcase)
 		}
 	}
 
-	for d := range ch {
-		t.view.Update(d.I)
-		fruits[d.I].Details[d.J] = d.D
+	for res := range ch {
+		i, j, d := res()
+
+		fruits[i].Details[j] = d
+
+		t.view.Update(i)
 
 		if curr++; curr == stop {
 			close(ch)
@@ -112,29 +112,30 @@ func (t *TestUnit) Exec() *Outcome {
 	return outcome
 }
 
-// TODO: refactoring
 func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
-	result, time, output, e := t.do(target.Language, target.SourceCode, tcase.Input)
+	// TODO: refactoring
+	result, time, stdout, stderr := t.do(target.Language, target.SourceCode, tcase.Input)
 
 	if result == "" {
-		// input for test_method goes in this format.
-		// output + "\0" + input + "\0" + answer
-		input := strings.Join([]string{output, tcase.Input, tcase.Answer}, "\000")
-
+		// TODO: Method Execution `on` specified result.
 		if t.TestMethod != nil {
+			// input for test_method goes in this format.
+			// output + "\0" + input + "\0" + answer
+			input := strings.Join([]string{stdout, tcase.Input, tcase.Answer}, "\000")
+
 			res, _, out, ers := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
 
 			if res == "" {
 				result = strings.TrimRight(out, "\n")
-				e += ers
+				stderr += ers
 			} else {
 				result = fmt.Sprintf("METHOD %s", res)
-				e += ers
+				stderr += ers
 			}
 
 		} else {
-
-			if output == tcase.Answer {
+			// simple comparison
+			if stdout == tcase.Answer {
 				result = "PASS"
 			} else {
 				result = "FAIL"
@@ -145,13 +146,21 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 
 	isExpected := result == target.Expect
 
-	return &Detail{tcase.Name, result, isExpected, time, output, e}
+	return &Detail{tcase.Name, result, isExpected, time, stdout, stderr}
 }
 
-// TODO: refactoring
 func (t *TestUnit) do(language string, sourceCode, input string) (string, string, string, string) {
+	// TODO: refactoring
 
-	res1, err := t.Client.RunnersCreate(language, sourceCode, input)
+	req1 := &paizaio.RunnersCreateRequest{
+		Language:        language,
+		SourceCode:      sourceCode,
+		Input:           input,
+		Longpoll:        true,
+		LongpollTimeout: 16,
+	}
+
+	res1, err := t.Client.RunnersCreate(req1)
 	if err != nil {
 		switch err := err.(type) {
 		case paizaio.ServerError:
@@ -163,7 +172,11 @@ func (t *TestUnit) do(language string, sourceCode, input string) (string, string
 		}
 	}
 
-	res2, err := t.Client.RunnersGetDetails(res1.ID)
+	req2 := &paizaio.RunnersGetDetailsRequest{
+		ID: res1.ID,
+	}
+
+	res2, err := t.Client.RunnersGetDetails(req2)
 	if err != nil {
 		switch err := err.(type) {
 		case paizaio.ServerError:
@@ -175,12 +188,14 @@ func (t *TestUnit) do(language string, sourceCode, input string) (string, string
 		}
 	}
 
-	if !(res2.BuildResult == "" || res2.BuildResult == "success") {
-		return fmt.Sprintf("BUILD %s", strings.ToUpper(res2.BuildResult)), "", "", res2.BuildSTDERR
+	if res2.BuildExitCode != 0 {
+		result := fmt.Sprintf("BUILD %s", strings.ToUpper(res2.BuildResult))
+		return result, res2.BuildTime, res2.BuildSTDOUT, res2.BuildSTDERR
 	}
 
-	if res2.Result != "success" {
-		return fmt.Sprintf("EXECUTION %s", strings.ToUpper(res2.Result)), "", "", res2.STDERR
+	if res2.ExitCode != 0 || res2.Result != "success" {
+		result := fmt.Sprintf("EXECUTION %s", strings.ToUpper(res2.Result))
+		return result, res2.Time, res2.STDOUT, res2.STDERR
 	}
 
 	return "", res2.Time, res2.STDOUT, res2.STDERR

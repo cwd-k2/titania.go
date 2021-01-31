@@ -1,64 +1,35 @@
 package paizaio
 
 import (
-	"bytes"
-	"encoding/json"
+	"bufio"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
 
-type RunnersCreateResponse struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
-	Error  string `json:"error"`
-}
-
-type RunnersGetDetailsResponse struct {
-	ID            string `json:"id"`
-	Language      string `json:"language"`
-	Note          string `json:"note"`
-	Status        string `json:"status"`
-	BuildSTDOUT   string `json:"build_stdout"`
-	BuildSTDERR   string `json:"build_stderr"`
-	BuildExitCode uint   `json:"build_exit_code"`
-	BuildTime     string `json:"build_time"`
-	BuildMemory   uint   `json:"build_memory"`
-	BuildResult   string `json:"build_result"`
-	STDOUT        string `json:"stdout"`
-	STDERR        string `json:"stderr"`
-	ExitCode      uint   `json:"exit_code"`
-	Time          string `json:"time"`
-	Memory        uint   `json:"memory"`
-	Connections   uint   `json:"connections"`
-	Result        string `json:"result"`
-}
-
 type Client struct {
 	Host   string
 	APIKey string
-	http   http.Client
 }
 
 func NewClient(config Config) *Client {
-	return &Client{config.Host, config.APIKey, http.Client{}}
+	return &Client{
+		Host:   config.Host,
+		APIKey: config.APIKey,
+	}
 }
 
-func (c *Client) Api(method, endpoint string, params map[string]string, target interface{}) error {
-
-	buf := bytes.NewBuffer([]byte{})
-	if err := json.NewEncoder(buf).Encode(params); err != nil {
-		return nil
-	}
-
-	req, err := http.NewRequest(method, c.Host+endpoint, buf)
+func (c *Client) api(method, endpoint string, body Request, target Response) error {
+	url := fmt.Sprintf("%s/%s?api_key=%s", c.Host, endpoint, c.APIKey)
+	req, err := http.NewRequest(method, url, body.Reader())
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := c.http.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -78,7 +49,7 @@ func (c *Client) Api(method, endpoint string, params map[string]string, target i
 		}
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := target.Write(bufio.NewReader(res.Body)); err != nil {
 		return err
 	}
 
@@ -86,19 +57,9 @@ func (c *Client) Api(method, endpoint string, params map[string]string, target i
 
 }
 
-func (c *Client) RunnersCreate(language string, sourceCode, input string) (RunnersCreateResponse, error) {
-	args := map[string]string{
-		"api_key":          c.APIKey,
-		"language":         language,
-		"source_code":      sourceCode,
-		"input":            input,
-		"longpoll":         "true",
-		"longpoll_timeout": "30",
-	}
-
-	var res RunnersCreateResponse
-
-	if err := c.Api("POST", "/runners/create", args, &res); err != nil {
+func (c *Client) RunnersCreate(req *RunnersCreateRequest) (*RunnersCreateResponse, error) {
+	res := &RunnersCreateResponse{}
+	if err := c.api("POST", "runners/create", req, res); err != nil {
 		return res, err
 	}
 
@@ -109,15 +70,19 @@ func (c *Client) RunnersCreate(language string, sourceCode, input string) (Runne
 	return res, nil
 }
 
-func (c *Client) RunnersGetDetails(id string) (RunnersGetDetailsResponse, error) {
-	args := map[string]string{
-		"api_key": c.APIKey,
-		"id":      id,
+func (c *Client) RunnersGetStatus(req *RunnersGetStatusRequest) (*RunnersGetStatusResponse, error) {
+	res := &RunnersGetStatusResponse{}
+	if err := c.api("GET", "runners/get_status", req, res); err != nil {
+		return res, err
 	}
 
-	var res RunnersGetDetailsResponse
+	return res, nil
 
-	if err := c.Api("GET", "/runners/get_details", args, &res); err != nil {
+}
+
+func (c *Client) RunnersGetDetails(req *RunnersGetDetailsRequest) (*RunnersGetDetailsResponse, error) {
+	res := &RunnersGetDetailsResponse{}
+	if err := c.api("GET", "/runners/get_details", req, res); err != nil {
 		return res, err
 	}
 

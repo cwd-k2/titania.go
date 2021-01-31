@@ -29,13 +29,13 @@ func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 
 	sourceCodeBS, err := ioutil.ReadFile(filename)
 	if err != nil {
-		println(err.Error())
+		logger.Printf("%+v\n", err)
 		return nil
 	}
 
 	language := langtype.LangType(filename)
 	if language == "plain" {
-		println("Invalid test method.")
+		logger.Println("Invalid test method.")
 		return nil
 	}
 

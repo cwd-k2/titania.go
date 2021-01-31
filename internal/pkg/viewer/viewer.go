@@ -1,7 +1,7 @@
 package viewer
 
 import (
-	p "github.com/cwd-k2/titania.go/internal/pkg/pretty"
+	. "github.com/cwd-k2/titania.go/internal/pkg/pretty"
 )
 
 type Viewer interface {
@@ -33,10 +33,10 @@ func NewQuietView(name string, total int) *QuietView {
 
 func (view *FancyView) Draw() {
 
-	p.Printf("%s\n", p.Bold(p.Cyan(view.name)))
+	Printf("%s\n", Bold(Cyan(view.name)))
 
 	for _, index := range view.indices {
-		p.Printf("[%s] %s %s\n", p.Yellow("WAIT"), "START", p.Bold(p.Blue(index)))
+		Printf("[%s] %s %s\n", Yellow("WAIT"), "START", Bold(Blue(index)))
 	}
 
 }
@@ -44,29 +44,29 @@ func (view *FancyView) Draw() {
 func (view *FancyView) Update(position int) {
 	view.counts[position]++
 
-	p.Up(view.codes - position)
-	p.Erase()
+	Up(view.codes - position)
+	Erase()
 
 	if view.counts[position] == view.cases {
-		p.Printf("[%s] ", p.Green("DONE"))
+		Printf("[%s] ", Green("DONE"))
 	} else {
-		p.Printf("[%s] ", p.Yellow("WAIT"))
+		Printf("[%s] ", Yellow("WAIT"))
 	}
-	p.Printf("%02d/%02d %s", view.counts[position], view.cases, p.Bold(p.Blue(view.indices[position])))
+	Printf("%02d/%02d %s", view.counts[position], view.cases, Bold(Blue(view.indices[position])))
 
-	p.Down(view.codes - position)
-	p.Beginning()
+	Down(view.codes - position)
+	Beginning()
 }
 
 func (view *QuietView) Draw() {
-	p.Printf("[%s] %s\n", p.Green("LAUNCH"), p.Bold(p.Cyan(view.name)))
+	Printf("[%s] %s\n", Green("LAUNCH"), Bold(Cyan(view.name)))
 }
 
 func (view *QuietView) Update(_ int) {
 	view.count++
 
 	if view.count == view.total {
-		p.Printf("[%s] %s\n", p.Yellow("FINISH"), p.Bold(p.Cyan(view.name)))
+		Printf("[%s] %s\n", Yellow("FINISH"), Bold(Cyan(view.name)))
 	}
 
 }

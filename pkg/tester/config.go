@@ -6,7 +6,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/cwd-k2/titania.go/internal/pkg/pretty"
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
 )
 
@@ -31,7 +30,7 @@ func NewConfig(basepath string) *Config {
 
 	// File Read 失敗
 	if err != nil {
-		pretty.Printf("Couldn't read %s.\n", filename)
+		logger.Printf("Couldn't read %s.\n", filename)
 		return nil
 	}
 
@@ -40,7 +39,7 @@ func NewConfig(basepath string) *Config {
 
 	// JSON パース失敗
 	if err := json.Unmarshal(rawData, config); err != nil {
-		pretty.Printf("Couldn't parse %s.\n%s\n", filename, err)
+		logger.Printf("Couldn't parse %s.\n%s\n", filename, err)
 		return nil
 	}
 
