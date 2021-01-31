@@ -12,7 +12,6 @@ import (
 
 func version() {
 	fmt.Printf("titania.go %s\n", VERSION)
-	os.Exit(1)
 }
 
 func usage() {
@@ -54,6 +53,7 @@ func optparse() ([]string, []string, bool) {
 			os.Exit(0)
 		} else if arg == "--version" || arg == "-v" {
 			version()
+			os.Exit(0)
 		} else if arg == "--quiet" {
 			quiet = true
 		} else if strings.HasPrefix(arg, "--lang=") {
