@@ -9,12 +9,11 @@ import (
 type Viewer interface {
 	Init()
 	Update(int)
+	Done()
 }
 
 type QuietView struct {
-	name  string
-	total int
-	count int
+	name string
 }
 
 type FancyView struct {
@@ -23,22 +22,23 @@ type FancyView struct {
 	cases   int
 	counts  []int
 	indices []string
+	time    time.Time
 }
 
 func NewView(name string, codes, cases int, indices []string) Viewer {
 	if quiet {
-		return NewQuietView(name, codes*cases)
+		return NewQuietView(name)
 	} else {
 		return NewFancyView(name, codes, cases, indices)
 	}
 }
 
 func NewFancyView(name string, codes, cases int, indices []string) *FancyView {
-	return &FancyView{name, codes, cases, make([]int, codes), indices}
+	return &FancyView{name, codes, cases, make([]int, codes), indices, time.Now()}
 }
 
-func NewQuietView(name string, total int) *QuietView {
-	return &QuietView{name, total, 0}
+func NewQuietView(name string) *QuietView {
+	return &QuietView{name}
 }
 
 func (view *FancyView) Init() {
@@ -68,14 +68,18 @@ func (view *FancyView) Update(position int) {
 	Beginning()
 }
 
+func (view *FancyView) Done() {
+	Printf("[%s] Done in %ds.\n", Blue("INFO"), int(time.Now().Sub(view.time).Seconds()))
+}
+
 func (view *QuietView) Init() {
 	Printf("[%s] %s %s\n", Green("LAUNCH"), time.Now().Format("15:04:05"), Bold(Cyan(view.name)))
 }
 
 func (view *QuietView) Update(_ int) {
-	view.count++
+	// Nothing to do
+}
 
-	if view.count == view.total {
-		Printf("[%s] %s %s\n", Yellow("FINISH"), time.Now().Format("15:04:05"), Bold(Cyan(view.name)))
-	}
+func (view *QuietView) Done() {
+	Printf("[%s] %s %s\n", Yellow("FINISH"), time.Now().Format("15:04:05"), Bold(Cyan(view.name)))
 }

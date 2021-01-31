@@ -98,6 +98,8 @@ func (t *TestUnit) Exec() *Outcome {
 		}
 	}
 
+	t.view.Done()
+
 	outcome := &Outcome{t.Name, "default", fruits}
 	if t.TestMethod != nil {
 		outcome.TestMethod = t.TestMethod.Name
