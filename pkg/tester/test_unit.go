@@ -19,7 +19,7 @@ type TestUnit struct {
 
 // Reads given directory and create an instance of TestUnit.
 // if failed to load Config/TestTargets/TestCases, returns nil (no error).
-func NewTestUnit(dirname string, languages []string) *TestUnit {
+func NewTestUnit(dirname string) *TestUnit {
 	basepath, err := filepath.Abs(dirname)
 	if err != nil {
 		logger.Printf("%+v\n", err)
@@ -36,7 +36,7 @@ func NewTestUnit(dirname string, languages []string) *TestUnit {
 	client := paizaio.NewClient(config.ClientConfig)
 
 	// ソースコード
-	targets := MakeTestTargets(basepath, languages, config.TestTarget)
+	targets := MakeTestTargets(basepath, config.TestTarget)
 	if len(targets) == 0 {
 		return nil
 	}

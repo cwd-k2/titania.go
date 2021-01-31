@@ -76,5 +76,4 @@ func (view *QuietView) Update(_ int) {
 	if view.count == view.total {
 		Printf("[%s] %s\n", Yellow("FINISH"), Bold(Cyan(view.name)))
 	}
-
 }

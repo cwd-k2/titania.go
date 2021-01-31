@@ -11,11 +11,12 @@ const VERSION = "v0.4.0"
 
 func main() {
 	// ターゲットのディレクトリと言語，quiet
-	dirnames, languages, quiet := optparse()
+	directories, languages, quiet := optparse()
 
 	tester.SetQuiet(quiet)
+	tester.SetLanguages(languages)
 
-	outcomes := exec(dirnames, languages)
+	outcomes := exec(directories)
 
 	// 何もテストが実行されなかった場合
 	if len(outcomes) == 0 {

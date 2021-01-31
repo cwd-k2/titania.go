@@ -22,7 +22,7 @@ type TestTargetConfig struct {
 }
 
 // returns []*TestTarget
-func MakeTestTargets(basepath string, languages []string, configs []TestTargetConfig) []*TestTarget {
+func MakeTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget {
 
 	targets := make([]*TestTarget, 0)
 
