@@ -117,6 +117,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 		if t.TestMethod != nil {
 			// input for test_method goes in this format.
 			// output + "\0" + input + "\0" + answer
+			// TODO: the order and element should be specified by config.
 			input := strings.Join([]string{stdout, tcase.Input, tcase.Answer}, "\000")
 
 			res, _, out, ers := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
@@ -140,14 +141,12 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 		}
 	}
 
-	isExpected := result == target.Expect
-
-	return &Detail{tcase.Name, result, isExpected, time, stdout, stderr}
+	return &Detail{tcase.Name, result, result == target.Expect, time, stdout, stderr}
 }
 
 // Returns: Result, Time, STDOUT, STDERR
 func (t *TestUnit) do(language string, sourceCode, input string) (string, string, string, string) {
-	// TODO: refactoring (returned value's style is ugly)
+	// TODO: refactoring (returned value's style is ugly); should use some struct?
 	// TODO: build error and build stdout are ignored.
 	// TODO: how can I treat build time?
 
