@@ -82,6 +82,7 @@ func (t *TestUnit) Exec() *Outcome {
 
 	for i, target := range t.TestTargets {
 		for j, tcase := range t.TestCases {
+			// Each test is executed asynchronously
 			go fn(i, j, target, tcase)
 		}
 	}
@@ -123,6 +124,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 			res, _, out, ers := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
 
 			if len(res) == 0 {
+				// mainly expecting PASS or FAIL
 				result = strings.TrimRight(out, "\n")
 			} else {
 				result = fmt.Sprintf("METHOD %s", res)
@@ -162,9 +164,11 @@ func (t *TestUnit) do(language string, sourceCode, input string) (string, string
 	if err != nil {
 		switch err := err.(type) {
 		case paizaio.ServerError:
-			return "SERVER ERROR", "", "", err.Error()
+			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
+			return "SERVER ERROR", "", "", errstr
 		case paizaio.ClientError:
-			return "CLIENT ERROR", "", "", err.Error()
+			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
+			return "CLIENT ERROR", "", "", errstr
 		default:
 			return "TESTER ERROR", "", "", err.Error()
 		}
@@ -178,9 +182,11 @@ func (t *TestUnit) do(language string, sourceCode, input string) (string, string
 	if err != nil {
 		switch err := err.(type) {
 		case paizaio.ServerError:
-			return "SERVER ERROR", "", "", err.Error()
+			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
+			return "SERVER ERROR", "", "", errstr
 		case paizaio.ClientError:
-			return "CLIENT ERROR", "", "", err.Error()
+			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
+			return "CLIENT ERROR", "", "", errstr
 		default:
 			return "TESTER ERROR", "", "", err.Error()
 		}

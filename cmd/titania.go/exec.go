@@ -5,7 +5,6 @@ import (
 )
 
 func exec(directories []string) []*tester.Outcome {
-
 	outcomes := make([]*tester.Outcome, 0)
 
 	for _, dirname := range directories {

@@ -8,8 +8,6 @@ import (
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
 )
 
-// Config
-// test configs
 type Config struct {
 	ClientConfig paizaio.Config     `json:"client"`
 	TestTarget   []TestTargetConfig `json:"test_target"`
@@ -17,6 +15,9 @@ type Config struct {
 	TestMethod   TestMethodConfig   `json:"test_method"`
 }
 
+// Creates Config struct.
+// if error occurred, then nil will be returned.
+// TODO: error handling.
 func NewConfig(basepath string) *Config {
 	// ディレクトリ直下に titania.json がいるか確認したい
 	filename := filepath.Join(basepath, "titania.json")

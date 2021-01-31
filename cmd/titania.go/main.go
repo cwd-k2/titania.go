@@ -7,7 +7,7 @@ import (
 	"github.com/cwd-k2/titania.go/pkg/tester"
 )
 
-const VERSION = "v0.4.0"
+const VERSION string = "v0.4.0"
 
 func main() {
 	// ターゲットのディレクトリと言語，quiet
@@ -30,6 +30,7 @@ func main() {
 	enc.SetIndent("", "  ")
 	enc.SetEscapeHTML(false)
 
+	// TODO: 全部メモリに持っておくのは辛いので (形式はそのままに) 分割して出力したい.
 	if err := enc.Encode(outcomes); err != nil {
 		panic(err)
 	}

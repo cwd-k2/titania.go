@@ -17,6 +17,9 @@ type TestMethodConfig struct {
 	FileName string `json:"file_name"`
 }
 
+// Creates TestMethod struct.
+// if error occurred, then nil will be returned.
+// TODO: error handling.
 func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 	if config.FileName == "" {
 		return nil
