@@ -23,11 +23,11 @@ directories:
   if not specified, titania.go will take all subdirectories as targets.
 
 options:
-  -h, --help                 show this help message
-  -v, --version              show version
-  --lang=lang1[,lang2[,...]] language[s] to test
+  -h, --help                   show this help message
+  -v, --version                show version
+      --quiet                  quiet log
+      --lang=lang1[,lang2,...] language[s] to test
 `)
-	os.Exit(1)
 }
 
 // パスを相対パスとして綺麗な形に
@@ -42,24 +42,26 @@ func cleanerpath(pwd, directory string) (string, error) {
 // オプション解析
 func optparse() ([]string, []string, bool) {
 	var (
-		args     []string
-		langs    []string
-		dirnames []string
-		async    bool = false
+		args     = make([]string, 0)
+		langs    = make([]string, 0)
+		dirnames = make([]string, 0)
+		quiet    = false
 	)
 
 	for _, arg := range os.Args[1:] {
 		if arg == "--help" || arg == "-h" {
 			usage()
+			os.Exit(0)
 		} else if arg == "--version" || arg == "-v" {
 			version()
+		} else if arg == "--quiet" {
+			quiet = true
 		} else if strings.HasPrefix(arg, "--lang=") {
 			langs = strings.Split(strings.Replace(arg, "--lang=", "", 1), ",")
-		} else if strings.HasPrefix(arg, "--async") {
-			async = true
 		} else if strings.HasPrefix(arg, "-") {
 			pretty.Printf("Unknown option: %s\n", arg)
 			usage()
+			os.Exit(1)
 		} else {
 			args = append(args, arg)
 		}
@@ -94,5 +96,5 @@ func optparse() ([]string, []string, bool) {
 
 	}
 
-	return dirnames, langs, async
+	return dirnames, langs, quiet
 }

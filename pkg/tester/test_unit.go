@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cwd-k2/titania.go/internal/pkg/viewer"
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
 )
 
@@ -15,12 +14,12 @@ type TestUnit struct {
 	TestMethod  *TestMethod
 	TestTargets []*TestTarget
 	TestCases   []*TestCase
-	view        viewer.Viewer
+	view        Viewer
 }
 
 // Reads given directory and create an instance of TestUnit.
 // if failed to load Config/TestTargets/TestCases, returns nil (no error).
-func NewTestUnit(dirname string, languages []string, quiet bool) *TestUnit {
+func NewTestUnit(dirname string, languages []string) *TestUnit {
 	basepath, err := filepath.Abs(dirname)
 	if err != nil {
 		logger.Printf("%+v\n", err)
@@ -52,18 +51,13 @@ func NewTestUnit(dirname string, languages []string, quiet bool) *TestUnit {
 	tmethod := NewTestMethod(basepath, config.TestMethod)
 
 	// Viewer
-	if quiet {
-		view := viewer.NewQuietView(dirname, len(targets)*len(tcases))
-		return &TestUnit{dirname, client, tmethod, targets, tcases, view}
-	} else {
-		indices := make([]string, 0)
-		for _, target := range targets {
-			indices = append(indices, target.Name)
-		}
-		view := viewer.NewFancyView(dirname, len(targets), len(tcases), indices)
-		return &TestUnit{dirname, client, tmethod, targets, tcases, view}
+	indices := make([]string, 0)
+	for _, target := range targets {
+		indices = append(indices, target.Name)
 	}
+	view := NewView(dirname, len(targets), len(tcases), indices)
 
+	return &TestUnit{dirname, client, tmethod, targets, tcases, view}
 }
 
 // Execute test (itself) using paiza.io API.

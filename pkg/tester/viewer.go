@@ -1,4 +1,4 @@
-package viewer
+package tester
 
 import (
 	. "github.com/cwd-k2/titania.go/internal/pkg/pretty"
@@ -21,6 +21,14 @@ type FancyView struct {
 	cases   int
 	counts  []int
 	indices []string
+}
+
+func NewView(name string, codes, cases int, indices []string) Viewer {
+	if quiet {
+		return NewQuietView(name, codes*cases)
+	} else {
+		return NewFancyView(name, codes, cases, indices)
+	}
 }
 
 func NewFancyView(name string, codes, cases int, indices []string) *FancyView {
