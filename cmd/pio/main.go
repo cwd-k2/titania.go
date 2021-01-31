@@ -11,7 +11,7 @@ import (
 	"github.com/jessevdk/go-flags"
 )
 
-const (
+var (
 	PAIZA_IO_URL     = "http://api.paiza.io:80"
 	PAIZA_IO_API_KEY = "guest"
 )
@@ -24,6 +24,16 @@ var opts struct {
 	Args      struct {
 		File string
 	} `positional-args:"yes" required:"yes"`
+}
+
+func init() {
+	if val := os.Getenv("PAIZA_IO_URL"); val != "" {
+		PAIZA_IO_URL = val
+	}
+
+	if val := os.Getenv("PAIZA_IO_API_KEY"); val != "" {
+		PAIZA_IO_API_KEY = val
+	}
 }
 
 func main() {
@@ -64,22 +74,9 @@ func main() {
 		}
 	}
 
-	var (
-		host   = PAIZA_IO_URL
-		apikey = PAIZA_IO_API_KEY
-	)
-
-	if val := os.Getenv("PAIZA_IO_URL"); val != "" {
-		host = val
-	}
-
-	if val := os.Getenv("PAIZA_IO_API_KEY"); val != "" {
-		apikey = val
-	}
-
 	client := paizaio.NewClient(paizaio.Config{
-		Host:   host,
-		APIKey: apikey,
+		Host:   PAIZA_IO_URL,
+		APIKey: PAIZA_IO_API_KEY,
 	})
 
 	req1 := &paizaio.RunnersCreateRequest{

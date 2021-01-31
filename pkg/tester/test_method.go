@@ -3,7 +3,6 @@ package tester
 import (
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"github.com/cwd-k2/titania.go/internal/pkg/langtype"
 )
@@ -18,6 +17,9 @@ type TestMethodConfig struct {
 	FileName string `json:"file_name"`
 }
 
+// Creates TestMethod struct.
+// if error occurred, then nil will be returned.
+// TODO: error handling.
 func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 	if config.FileName == "" {
 		return nil
@@ -25,7 +27,10 @@ func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 
 	filename := filepath.Join(basepath, config.FileName)
 
-	name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
+	name, err := filepath.Rel(basepath, filename)
+	if err != nil {
+		name = filename
+	}
 
 	sourceCodeBS, err := ioutil.ReadFile(filename)
 	if err != nil {

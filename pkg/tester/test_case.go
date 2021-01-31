@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 )
 
-// TestCase
-// contains input and output texts
 type TestCase struct {
 	Name   string
 	Input  string
@@ -19,9 +17,11 @@ type TestCaseConfig struct {
 	OutputExtention string `json:"output_extension"`
 }
 
-// returns []*TestCases
+// Create []*TestTarget
+// This can return an empty slice.
+// All errors are logged but ignored.
 func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
-	testCases := make([]*TestCase, 0)
+	tcases := make([]*TestCase, 0)
 
 	for _, config := range configs {
 		// 出力(正解)ファイル
@@ -56,10 +56,10 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 			}
 			name = name[0 : len(name)-len(config.OutputExtention)]
 
-			testCases = append(testCases, &TestCase{name, string(inputBS), string(answerBS)})
+			tcases = append(tcases, &TestCase{name, string(inputBS), string(answerBS)})
 		}
 
 	}
 
-	return testCases
+	return tcases
 }

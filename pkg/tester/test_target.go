@@ -7,8 +7,6 @@ import (
 	"github.com/cwd-k2/titania.go/internal/pkg/langtype"
 )
 
-// TestTarget
-// contains source code, its language
 type TestTarget struct {
 	Name       string
 	Language   string
@@ -21,9 +19,10 @@ type TestTargetConfig struct {
 	Expect  string `json:"expect"`
 }
 
-// returns []*TestTarget
-func MakeTestTargets(basepath string, languages []string, configs []TestTargetConfig) []*TestTarget {
-
+// Create []*TestTarget
+// This can return an empty slice.
+// All errors are logged but ignored.
+func MakeTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget {
 	targets := make([]*TestTarget, 0)
 
 	for _, config := range configs {

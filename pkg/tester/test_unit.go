@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cwd-k2/titania.go/internal/pkg/viewer"
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
 )
 
@@ -15,12 +14,12 @@ type TestUnit struct {
 	TestMethod  *TestMethod
 	TestTargets []*TestTarget
 	TestCases   []*TestCase
-	view        viewer.Viewer
+	view        Viewer
 }
 
 // Reads given directory and create an instance of TestUnit.
 // if failed to load Config/TestTargets/TestCases, returns nil (no error).
-func NewTestUnit(dirname string, languages []string, quiet bool) *TestUnit {
+func NewTestUnit(dirname string) *TestUnit {
 	basepath, err := filepath.Abs(dirname)
 	if err != nil {
 		logger.Printf("%+v\n", err)
@@ -37,7 +36,7 @@ func NewTestUnit(dirname string, languages []string, quiet bool) *TestUnit {
 	client := paizaio.NewClient(config.ClientConfig)
 
 	// ソースコード
-	targets := MakeTestTargets(basepath, languages, config.TestTarget)
+	targets := MakeTestTargets(basepath, config.TestTarget)
 	if len(targets) == 0 {
 		return nil
 	}
@@ -52,18 +51,13 @@ func NewTestUnit(dirname string, languages []string, quiet bool) *TestUnit {
 	tmethod := NewTestMethod(basepath, config.TestMethod)
 
 	// Viewer
-	if quiet {
-		view := viewer.NewQuietView(dirname, len(targets)*len(tcases))
-		return &TestUnit{dirname, client, tmethod, targets, tcases, view}
-	} else {
-		indices := make([]string, 0)
-		for _, target := range targets {
-			indices = append(indices, target.Name)
-		}
-		view := viewer.NewFancyView(dirname, len(targets), len(tcases), indices)
-		return &TestUnit{dirname, client, tmethod, targets, tcases, view}
+	indices := make([]string, 0)
+	for _, target := range targets {
+		indices = append(indices, target.Name)
 	}
+	view := NewView(dirname, len(targets), len(tcases), indices)
 
+	return &TestUnit{dirname, client, tmethod, targets, tcases, view}
 }
 
 // Execute test (itself) using paiza.io API.
@@ -84,10 +78,11 @@ func (t *TestUnit) Exec() *Outcome {
 		ch <- func() (int, int, *Detail) { return i, j, detail }
 	}
 
-	t.view.Draw()
+	t.view.Init()
 
 	for i, target := range t.TestTargets {
 		for j, tcase := range t.TestCases {
+			// Each test is executed asynchronously
 			go fn(i, j, target, tcase)
 		}
 	}
@@ -104,6 +99,8 @@ func (t *TestUnit) Exec() *Outcome {
 		}
 	}
 
+	t.view.Done()
+
 	outcome := &Outcome{t.Name, "default", fruits}
 	if t.TestMethod != nil {
 		outcome.TestMethod = t.TestMethod.Name
@@ -116,22 +113,24 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 	// TODO: refactoring
 	result, time, stdout, stderr := t.do(target.Language, target.SourceCode, tcase.Input)
 
-	if result == "" {
+	if len(result) == 0 {
 		// TODO: Method Execution `on` specified result.
 		if t.TestMethod != nil {
 			// input for test_method goes in this format.
 			// output + "\0" + input + "\0" + answer
+			// TODO: the order and element should be specified by config.
 			input := strings.Join([]string{stdout, tcase.Input, tcase.Answer}, "\000")
 
 			res, _, out, ers := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
 
-			if res == "" {
+			if len(res) == 0 {
+				// mainly expecting PASS or FAIL
 				result = strings.TrimRight(out, "\n")
-				stderr += ers
 			} else {
 				result = fmt.Sprintf("METHOD %s", res)
-				stderr += ers
 			}
+
+			stderr += ers
 
 		} else {
 			// simple comparison
@@ -144,13 +143,14 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 		}
 	}
 
-	isExpected := result == target.Expect
-
-	return &Detail{tcase.Name, result, isExpected, time, stdout, stderr}
+	return &Detail{tcase.Name, result, result == target.Expect, time, stdout, stderr}
 }
 
+// Returns: Result, Time, STDOUT, STDERR
 func (t *TestUnit) do(language string, sourceCode, input string) (string, string, string, string) {
-	// TODO: refactoring
+	// TODO: refactoring (returned value's style is ugly); should use some struct?
+	// TODO: build error and build stdout are ignored.
+	// TODO: how can I treat build time?
 
 	req1 := &paizaio.RunnersCreateRequest{
 		Language:        language,
@@ -164,9 +164,11 @@ func (t *TestUnit) do(language string, sourceCode, input string) (string, string
 	if err != nil {
 		switch err := err.(type) {
 		case paizaio.ServerError:
-			return "SERVER ERROR", "", "", err.Error()
+			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
+			return "SERVER ERROR", "", "", errstr
 		case paizaio.ClientError:
-			return "CLIENT ERROR", "", "", err.Error()
+			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
+			return "CLIENT ERROR", "", "", errstr
 		default:
 			return "TESTER ERROR", "", "", err.Error()
 		}
@@ -180,9 +182,11 @@ func (t *TestUnit) do(language string, sourceCode, input string) (string, string
 	if err != nil {
 		switch err := err.(type) {
 		case paizaio.ServerError:
-			return "SERVER ERROR", "", "", err.Error()
+			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
+			return "SERVER ERROR", "", "", errstr
 		case paizaio.ClientError:
-			return "CLIENT ERROR", "", "", err.Error()
+			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
+			return "CLIENT ERROR", "", "", errstr
 		default:
 			return "TESTER ERROR", "", "", err.Error()
 		}
