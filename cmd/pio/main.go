@@ -109,12 +109,8 @@ func main() {
 	fmt.Fprint(os.Stdout, res2.BuildSTDOUT)
 	fmt.Fprint(os.Stderr, res2.BuildSTDERR)
 
-	if res2.BuildResult != "" && res2.BuildResult != "success" {
-		os.Exit(int(res2.BuildExitCode))
-	}
-
-	if res2.Result != "success" {
-		fmt.Fprintln(os.Stderr, res2.Result)
+	if res2.BuildExitCode != 0 {
+		os.Exit(res2.BuildExitCode)
 	}
 
 	fmt.Fprint(os.Stdout, res2.STDOUT)
@@ -128,6 +124,10 @@ func main() {
 		}
 		fmt.Printf("time:         %ss\n", res2.Time)
 		fmt.Printf("memory:       %dKB\n", res2.Memory/1024)
+	}
+
+	if res2.ExitCode != 0 {
+		fmt.Fprintln(os.Stderr, res2.Result)
 	}
 
 	os.Exit(int(res2.ExitCode))

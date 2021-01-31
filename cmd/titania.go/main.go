@@ -15,7 +15,7 @@ func main() {
 
 	// 何もテストが実行されなかった場合
 	if len(outcomes) == 0 {
-		println("There's no test in this subdirectories.")
+		println("There's no test in (sub)directory[ies].")
 		os.Exit(1)
 	}
 

@@ -59,7 +59,7 @@ func (c *Client) api(method, endpoint string, body Request, target Response) err
 
 func (c *Client) RunnersCreate(req *RunnersCreateRequest) (*RunnersCreateResponse, error) {
 	res := &RunnersCreateResponse{}
-	if err := c.api("POST", "/runners/create", req, res); err != nil {
+	if err := c.api("POST", "runners/create", req, res); err != nil {
 		return res, err
 	}
 
@@ -72,7 +72,7 @@ func (c *Client) RunnersCreate(req *RunnersCreateRequest) (*RunnersCreateRespons
 
 func (c *Client) RunnersGetStatus(req *RunnersGetStatusRequest) (*RunnersGetStatusResponse, error) {
 	res := &RunnersGetStatusResponse{}
-	if err := c.api("GET", "/runners/get_status", req, res); err != nil {
+	if err := c.api("GET", "runners/get_status", req, res); err != nil {
 		return res, err
 	}
 

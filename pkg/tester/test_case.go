@@ -29,7 +29,7 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 		filenames, err := filepath.Glob(pattern)
 		// ここのエラーは bad pattern
 		if err != nil {
-			println(err.Error())
+			logger.Printf("%+v\n", err)
 			continue
 		}
 
@@ -38,7 +38,7 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 			// 出力から先に決める
 			answerBS, err := ioutil.ReadFile(afile)
 			if err != nil {
-				println(err.Error())
+				logger.Printf("%+v\n", err)
 				continue
 			}
 
@@ -46,7 +46,7 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 			ifile := afile[0:len(afile)-len(config.OutputExtention)] + config.InputExtention
 			inputBS, err := ioutil.ReadFile(ifile)
 			if err != nil {
-				println(err.Error())
+				logger.Printf("%+v\n", err)
 				continue
 			}
 
