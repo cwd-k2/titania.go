@@ -110,7 +110,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 	// TODO: refactoring
 	result, time, stdout, stderr := t.do(target.Language, target.SourceCode, tcase.Input)
 
-	if result == "" {
+	if len(result) == 0 {
 		// TODO: Method Execution `on` specified result.
 		if t.TestMethod != nil {
 			// input for test_method goes in this format.
@@ -119,13 +119,13 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 
 			res, _, out, ers := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
 
-			if res == "" {
+			if len(res) == 0 {
 				result = strings.TrimRight(out, "\n")
-				stderr += ers
 			} else {
 				result = fmt.Sprintf("METHOD %s", res)
-				stderr += ers
 			}
+
+			stderr += ers
 
 		} else {
 			// simple comparison
@@ -143,9 +143,11 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 	return &Detail{tcase.Name, result, isExpected, time, stdout, stderr}
 }
 
+// Returns: Result, Time, STDOUT, STDERR
 func (t *TestUnit) do(language string, sourceCode, input string) (string, string, string, string) {
 	// TODO: refactoring (returned value's style is ugly)
 	// TODO: build error and build stdout are ignored.
+	// TODO: how can I treat build time?
 
 	req1 := &paizaio.RunnersCreateRequest{
 		Language:        language,

@@ -3,7 +3,6 @@ package tester
 import (
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"github.com/cwd-k2/titania.go/internal/pkg/langtype"
 )
@@ -25,7 +24,10 @@ func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 
 	filename := filepath.Join(basepath, config.FileName)
 
-	name := strings.Replace(filename, basepath+string(filepath.Separator), "", 1)
+	name, err := filepath.Rel(basepath, filename)
+	if err != nil {
+		name = filename
+	}
 
 	sourceCodeBS, err := ioutil.ReadFile(filename)
 	if err != nil {
