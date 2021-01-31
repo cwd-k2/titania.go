@@ -78,7 +78,7 @@ func (t *TestUnit) Exec() *Outcome {
 		ch <- func() (int, int, *Detail) { return i, j, detail }
 	}
 
-	t.view.Draw()
+	t.view.Init()
 
 	for i, target := range t.TestTargets {
 		for j, tcase := range t.TestCases {
@@ -144,7 +144,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 }
 
 func (t *TestUnit) do(language string, sourceCode, input string) (string, string, string, string) {
-	// TODO: refactoring
+	// TODO: refactoring (returned value's style is ugly)
 
 	req1 := &paizaio.RunnersCreateRequest{
 		Language:        language,

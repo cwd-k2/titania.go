@@ -1,11 +1,13 @@
 package tester
 
 import (
+	"time"
+
 	. "github.com/cwd-k2/titania.go/internal/pkg/pretty"
 )
 
 type Viewer interface {
-	Draw()
+	Init()
 	Update(int)
 }
 
@@ -39,7 +41,7 @@ func NewQuietView(name string, total int) *QuietView {
 	return &QuietView{name, total, 0}
 }
 
-func (view *FancyView) Draw() {
+func (view *FancyView) Init() {
 
 	Printf("%s\n", Bold(Cyan(view.name)))
 
@@ -66,14 +68,14 @@ func (view *FancyView) Update(position int) {
 	Beginning()
 }
 
-func (view *QuietView) Draw() {
-	Printf("[%s] %s\n", Green("LAUNCH"), Bold(Cyan(view.name)))
+func (view *QuietView) Init() {
+	Printf("[%s] %s %s\n", Green("LAUNCH"), time.Now().Format("15:04:05"), Bold(Cyan(view.name)))
 }
 
 func (view *QuietView) Update(_ int) {
 	view.count++
 
 	if view.count == view.total {
-		Printf("[%s] %s\n", Yellow("FINISH"), Bold(Cyan(view.name)))
+		Printf("[%s] %s %s\n", Yellow("FINISH"), time.Now().Format("15:04:05"), Bold(Cyan(view.name)))
 	}
 }

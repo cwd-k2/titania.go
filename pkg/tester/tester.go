@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	logger    = log.New(os.Stderr, "[tester] ", log.Lshortfile)
+	logger    = log.New(os.Stderr, "[tester] ", log.Lshortfile|log.Ltime)
 	quiet     = false
 	languages = make([]string, 0)
 )
