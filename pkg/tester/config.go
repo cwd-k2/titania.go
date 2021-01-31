@@ -27,14 +27,14 @@ func NewConfig(basepath string) *Config {
 	// ディレクトリ直下の titania.json を読んで設定を作る
 	rawData, err := ioutil.ReadFile(filename)
 	if err != nil {
-		logger.Printf("Couldn't read %s.\n", filename)
+		logger.Printf("Couldn't read %s.\n%+v\n", filename, err)
 		return nil
 	}
 
 	// ようやく設定の構造体を作れる
 	config := &Config{}
 	if err := json.Unmarshal(rawData, config); err != nil {
-		logger.Printf("Couldn't parse %s.\n%s\n", filename, err)
+		logger.Printf("Couldn't parse %s.\n%+v\n", filename, err)
 		return nil
 	}
 
