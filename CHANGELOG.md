@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Change
 
 - `internal/pkg/viewer` is now a part of `pkg/tester`.
+- Output while quiet testing is more informative.
 
 ### Added
 
