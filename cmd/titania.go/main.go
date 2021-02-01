@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"os"
 
@@ -26,7 +27,8 @@ func main() {
 
 	final(outcomes)
 
-	enc := json.NewEncoder(os.Stdout)
+	// buffering
+	enc := json.NewEncoder(bufio.NewWriter(os.Stdout))
 	enc.SetIndent("", "  ")
 	enc.SetEscapeHTML(false)
 
