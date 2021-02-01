@@ -8,7 +8,6 @@ import (
 
 	"github.com/cwd-k2/titania.go/internal/pkg/langtype"
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
-	"github.com/jessevdk/go-flags"
 )
 
 var (
@@ -17,13 +16,13 @@ var (
 )
 
 var opts struct {
-	STDIN     bool   `long:"stdin" description:"read input from STDIN (overwritten by --input)"`
-	Detail    bool   `long:"detail" description:"show detail"`
-	InputFile string `long:"input" value-name:"FILE" description:"read input from specified FILE"`
-	Language  string `long:"language" value-name:"LANGUAGE" description:"executed program's language"`
+	STDIN     bool
+	Detail    bool
+	InputFile string
+	Language  string
 	Args      struct {
-		File string
-	} `positional-args:"yes" required:"yes"`
+		ProgramFile string
+	}
 }
 
 func init() {
@@ -37,12 +36,9 @@ func init() {
 }
 
 func main() {
-	_, err := flags.Parse(&opts)
-	if err != nil {
-		return
-	}
+	optparse()
 
-	filename := opts.Args.File
+	filename := opts.Args.ProgramFile
 
 	sourceBS, err := ioutil.ReadFile(filename)
 	if err != nil {
