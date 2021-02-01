@@ -229,9 +229,3 @@ Or, if you just want to know runtime information, below is the way you go (Like 
 ```bash
 $ titania.go [directories] > /dev/null
 ```
-
-## Library
-
-- [jessevdk/go-flags](https://github.com/jessevdk/go-flags)
-  - BSD 3-Clause "New" or "Revised" License
-  - Copyright (c) 2012 Jesse van den Kieboom.
