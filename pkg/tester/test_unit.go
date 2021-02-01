@@ -1,9 +1,7 @@
 package tester
 
 import (
-	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
 )
@@ -80,9 +78,9 @@ func (t *TestUnit) Exec() *Outcome {
 
 	t.view.Init()
 
+	// Each test is executed asynchronously
 	for i, target := range t.TestTargets {
 		for j, tcase := range t.TestCases {
-			// Each test is executed asynchronously
 			go fn(i, j, target, tcase)
 		}
 	}
@@ -107,100 +105,4 @@ func (t *TestUnit) Exec() *Outcome {
 	}
 
 	return outcome
-}
-
-func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
-	// TODO: refactoring
-	result, time, stdout, stderr := t.do(target.Language, target.SourceCode, tcase.Input)
-
-	if len(result) == 0 {
-		// TODO: Method Execution `on` specified result.
-		if t.TestMethod != nil {
-			// input for test_method goes in this format.
-			// output + "\0" + input + "\0" + answer
-			// TODO: the order and element should be specified by config.
-			input := strings.Join([]string{stdout, tcase.Input, tcase.Answer}, "\000")
-
-			res, _, out, ers := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
-
-			if len(res) == 0 {
-				// mainly expecting PASS or FAIL
-				result = strings.TrimRight(out, "\n")
-			} else {
-				result = fmt.Sprintf("METHOD %s", res)
-			}
-
-			stderr += ers
-
-		} else {
-			// simple comparison
-			if stdout == tcase.Answer {
-				result = "PASS"
-			} else {
-				result = "FAIL"
-			}
-
-		}
-	}
-
-	return &Detail{tcase.Name, result, result == target.Expect, time, stdout, stderr}
-}
-
-// Returns: Result, Time, STDOUT, STDERR
-func (t *TestUnit) do(language string, sourceCode, input string) (string, string, string, string) {
-	// TODO: refactoring (returned value's style is ugly); should use some struct?
-	// TODO: build error and build stdout are ignored.
-	// TODO: how can I treat build time?
-
-	req1 := &paizaio.RunnersCreateRequest{
-		Language:        language,
-		SourceCode:      sourceCode,
-		Input:           input,
-		Longpoll:        true,
-		LongpollTimeout: 16,
-	}
-
-	res1, err := t.Client.RunnersCreate(req1)
-	if err != nil {
-		switch err := err.(type) {
-		case paizaio.ServerError:
-			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
-			return "SERVER ERROR", "", "", errstr
-		case paizaio.ClientError:
-			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
-			return "CLIENT ERROR", "", "", errstr
-		default:
-			return "TESTER ERROR", "", "", err.Error()
-		}
-	}
-
-	req2 := &paizaio.RunnersGetDetailsRequest{
-		ID: res1.ID,
-	}
-
-	res2, err := t.Client.RunnersGetDetails(req2)
-	if err != nil {
-		switch err := err.(type) {
-		case paizaio.ServerError:
-			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
-			return "SERVER ERROR", "", "", errstr
-		case paizaio.ClientError:
-			errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
-			return "CLIENT ERROR", "", "", errstr
-		default:
-			return "TESTER ERROR", "", "", err.Error()
-		}
-	}
-
-	if res2.BuildExitCode != 0 {
-		result := fmt.Sprintf("BUILD %s", strings.ToUpper(res2.BuildResult))
-		return result, res2.BuildTime, res2.BuildSTDOUT, res2.BuildSTDERR
-	}
-
-	if res2.ExitCode != 0 || res2.Result != "success" {
-		result := fmt.Sprintf("EXECUTION %s", strings.ToUpper(res2.Result))
-		return result, res2.Time, res2.STDOUT, res2.STDERR
-	}
-
-	return "", res2.Time, res2.STDOUT, res2.STDERR
 }
