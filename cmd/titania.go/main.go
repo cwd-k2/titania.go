@@ -28,7 +28,10 @@ func main() {
 	final(outcomes)
 
 	// buffering
-	enc := json.NewEncoder(bufio.NewWriter(os.Stdout))
+	stdout := bufio.NewWriter(os.Stdout)
+	defer stdout.Flush()
+
+	enc := json.NewEncoder(stdout)
 	enc.SetIndent("", "  ")
 	enc.SetEscapeHTML(false)
 
