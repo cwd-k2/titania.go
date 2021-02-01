@@ -123,14 +123,19 @@ func (t *TestUnit) do(language string, sourceCode, input string) *singleresult {
 }
 
 func handle(err error) *singleresult {
+	var result, errstr string
+
 	switch err := err.(type) {
 	case paizaio.ServerError:
-		errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
-		return &singleresult{Result: "SERVER ERROR", Error: errstr}
+		result = "SERVER ERROR"
+		errstr = fmt.Sprintf("HTTP response status code: %d\n%v", err.Code, err)
 	case paizaio.ClientError:
-		errstr := fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
-		return &singleresult{Result: "CLIENT ERROR", Error: errstr}
+		result = "CLIENT ERROR"
+		errstr = fmt.Sprintf("HTTP response status code: %d\n%v", err.Code, err)
 	default:
-		return &singleresult{Result: "TESTER ERROR", Error: err.Error()}
+		result = "TESTER ERROR"
+		errstr = fmt.Sprintf("%+v", err)
 	}
+
+	return &singleresult{Result: result, Error: errstr}
 }
