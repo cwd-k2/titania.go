@@ -128,13 +128,13 @@ func handle(err error) *singleresult {
 	switch err := err.(type) {
 	case paizaio.ServerError:
 		result = "SERVER ERROR"
-		errstr = fmt.Sprintf("HTTP response status code: %d\n%v", err.Code, err)
+		errstr = fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
 	case paizaio.ClientError:
 		result = "CLIENT ERROR"
-		errstr = fmt.Sprintf("HTTP response status code: %d\n%v", err.Code, err)
+		errstr = fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
 	default:
 		result = "TESTER ERROR"
-		errstr = fmt.Sprintf("%+v", err)
+		errstr = err.Error()
 	}
 
 	return &singleresult{Result: result, Error: errstr}
