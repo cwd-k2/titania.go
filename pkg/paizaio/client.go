@@ -77,7 +77,6 @@ func (c *Client) RunnersGetStatus(req *RunnersGetStatusRequest) (*RunnersGetStat
 	}
 
 	return res, nil
-
 }
 
 func (c *Client) RunnersGetDetails(req *RunnersGetDetailsRequest) (*RunnersGetDetailsResponse, error) {
