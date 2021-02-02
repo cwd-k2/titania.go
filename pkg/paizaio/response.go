@@ -39,6 +39,7 @@ type RunnersGetDetailsResponse struct {
 	Memory        int    `json:"memory"`
 	Connections   int    `json:"connections"`
 	Result        string `json:"result"`
+	Error         string `json:"error"`
 }
 
 func (r *RunnersCreateResponse) Write(w io.Reader) error {

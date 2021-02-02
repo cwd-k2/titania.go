@@ -55,7 +55,7 @@ The directories should contain `titania.json`, like below.
 ```
 {
   "client": {
-    "host": "http://api.paiza.io:80",
+    "host": "https://api.paiza.io",
     "api_key": "guest"
   },
   "test_target": [

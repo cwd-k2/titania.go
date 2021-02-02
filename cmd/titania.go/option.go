@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/cwd-k2/titania.go/internal/pkg/pretty"
 )
 
 func version() {
@@ -15,7 +13,7 @@ func version() {
 }
 
 func usage() {
-	pretty.Printf(`usage: titania.go [options] [directories]
+	print(`usage: titania.go [options] [directories]
 
 directories:
   directories to test, that have titania.json.
@@ -59,7 +57,7 @@ func optparse() ([]string, []string, bool) {
 		} else if strings.HasPrefix(arg, "--lang=") {
 			langs = strings.Split(strings.Replace(arg, "--lang=", "", 1), ",")
 		} else if strings.HasPrefix(arg, "-") {
-			pretty.Printf("Unknown option: %s\n", arg)
+			println("Unknown option:", arg)
 			usage()
 			os.Exit(1)
 		} else {
