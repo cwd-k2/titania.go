@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Now `tester.Detail.Error` includes `build_stderr`.
 - Now `tester.NewTestUnit` takes `*tester.Config` as argument. You have to create a `*tester.Config` instance before `tester.NewTestUnit`
 
+### Added
+
+- Now `paizaio.RunnersGetDetailsResponse` has `Error` field.
+
 ## [0.5.1] - 2021-02-02
 
 ### Removed
