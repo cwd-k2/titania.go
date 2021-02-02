@@ -22,44 +22,41 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 	// fire paiza.io API
 	sres1 := t.do(target.Language, target.SourceCode, tcase.Input)
 
-	result := sres1.Result
-	// anything but BuildSTDOUT or STDOUT
-	// TODO: still ignoring BuildSTDOUT...
-	// TODO: Detail に Build 時のものとか他に何も入れてないからちょっと辛い
-	errstr := sres1.BuildSTDERR + sres1.STDERR + sres1.Error
+	var (
+		result string
+		// anything but BuildSTDOUT or STDOUT
+		// TODO: still ignoring BuildSTDOUT...
+		errstr = sres1.BuildSTDERR + sres1.STDERR + sres1.Error
+	)
 
 	// making result string
-	// if not confirmed yet
-	if len(result) == 0 {
-		// TODO: Method Execution `on` specified result.
-		if t.TestMethod != nil {
-			// input for test_method goes in this format.
-			// output + "\0" + input + "\0" + answer
-			// TODO: the order and element should be specified by config.
-			input := strings.Join([]string{sres1.STDOUT, tcase.Input, tcase.Answer}, "\000")
+	// TODO: Method Execution `on` specified result.
+	if t.TestMethod != nil && sres1.Result == "SUCCESS" {
+		// input for test_method goes in this format.
+		// output + "\0" + input + "\0" + answer
+		// TODO: the order and element should be specified by config.
+		input := strings.Join([]string{sres1.STDOUT, tcase.Input, tcase.Answer}, "\000")
 
-			// TestMethod
-			sres2 := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
+		// TestMethod
+		sres2 := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
 
-			// if not confirmed yet
-			if len(sres2.Result) == 0 {
-				// mainly expecting PASS or FAIL
-				result = strings.TrimRight(sres2.STDOUT, "\n")
-			} else {
-				result = fmt.Sprintf("METHOD %s", sres2.Result)
-			}
-
-			// still anything but STDOUT
-			errstr += sres2.BuildSTDERR + sres2.STDERR + sres2.Error
+		if sres2.Result == "SUCCESS" {
+			result = strings.TrimRight(sres2.STDOUT, "\n") // mainly expecting PASS or FAIL
 		} else {
-			// simple comparison
-			if sres1.STDOUT == tcase.Answer {
-				result = "PASS"
-			} else {
-				result = "FAIL"
-			}
-
+			result = fmt.Sprintf("METHOD %s", sres2.Result)
 		}
+
+		errstr += sres2.BuildSTDERR + sres2.STDERR + sres2.Error
+
+	} else if sres1.Result == "SUCCESS" {
+		// simple comparison
+		if sres1.STDOUT == tcase.Answer {
+			result = "PASS"
+		} else {
+			result = "FAIL"
+		}
+	} else {
+		result = sres1.Result
 	}
 
 	return &Detail{tcase.Name, result, result == target.Expect, sres1.Time, sres1.STDOUT, errstr}
@@ -114,6 +111,7 @@ func (t *TestUnit) do(language string, sourceCode, input string) *singleresult {
 	}
 
 	return &singleresult{
+		Result:      strings.ToUpper(res2.Result),
 		Time:        res2.Time,
 		BuildSTDOUT: res2.BuildSTDOUT,
 		BuildSTDERR: res2.BuildSTDERR,
