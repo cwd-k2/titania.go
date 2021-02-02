@@ -132,6 +132,9 @@ func handle(err error) *singleresult {
 	case paizaio.ClientError:
 		result = "CLIENT ERROR"
 		errstr = fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
+	case paizaio.RunnerError:
+		result = "RUNNER ERROR"
+		errstr = fmt.Sprintf("Error occurred at paiza.io code runner.\n%s", err.Error())
 	default:
 		result = "TESTER ERROR"
 		errstr = err.Error()
