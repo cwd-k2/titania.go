@@ -10,7 +10,7 @@ import (
 type TestMethod struct {
 	Name       string
 	Language   string
-	SourceCode string
+	SourceCode *string
 }
 
 type TestMethodConfig struct {
@@ -44,5 +44,6 @@ func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 		return nil
 	}
 
-	return &TestMethod{name, language, string(sourceCodeBS)}
+	sourceCode := string(sourceCodeBS)
+	return &TestMethod{name, language, &sourceCode}
 }

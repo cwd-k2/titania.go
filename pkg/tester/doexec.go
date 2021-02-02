@@ -36,10 +36,10 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 			// input for test_method goes in this format.
 			// output + "\0" + input + "\0" + answer
 			// TODO: the order and element should be specified by config.
-			input := strings.Join([]string{sres1.STDOUT, tcase.Input, tcase.Answer}, "\000")
+			input := strings.Join([]string{sres1.STDOUT, *tcase.Input, *tcase.Answer}, "\000")
 
 			// TestMethod
-			sres2 := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
+			sres2 := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, &input)
 
 			// if not confirmed yet
 			if len(sres2.Result) == 0 {
@@ -53,7 +53,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 			errstr += sres2.BuildSTDERR + sres2.STDERR + sres2.Error
 		} else {
 			// simple comparison
-			if sres1.STDOUT == tcase.Answer {
+			if sres1.STDOUT == *tcase.Answer {
 				result = "PASS"
 			} else {
 				result = "FAIL"
@@ -66,13 +66,13 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 }
 
 // errors are treated as string
-func (t *TestUnit) do(language string, sourceCode, input string) *singleresult {
+func (t *TestUnit) do(language string, sourceCode, input *string) *singleresult {
 	// TODO: how can I treat build time?
 
 	req1 := &paizaio.RunnersCreateRequest{
 		Language:        language,
-		SourceCode:      sourceCode,
-		Input:           input,
+		SourceCode:      *sourceCode,
+		Input:           *input,
 		Longpoll:        true,
 		LongpollTimeout: 16,
 	}

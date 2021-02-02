@@ -10,7 +10,7 @@ import (
 type TestTarget struct {
 	Name       string
 	Language   string
-	SourceCode string
+	SourceCode *string
 	Expect     string
 }
 
@@ -54,7 +54,8 @@ func MakeTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget 
 				name = filename
 			}
 
-			targets = append(targets, &TestTarget{name, language, string(sourceCodeBS), expect})
+			sourceCode := string(sourceCodeBS)
+			targets = append(targets, &TestTarget{name, language, &sourceCode, expect})
 		}
 	}
 
