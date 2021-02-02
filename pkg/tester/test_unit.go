@@ -1,6 +1,7 @@
 package tester
 
 import (
+	"log"
 	"path/filepath"
 
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
@@ -17,16 +18,10 @@ type TestUnit struct {
 
 // Reads given directory and create an instance of TestUnit.
 // if failed to load Config/TestTargets/TestCases, returns nil (no error).
-func NewTestUnit(dirname string) *TestUnit {
+func NewTestUnit(dirname string, config *Config) *TestUnit {
 	basepath, err := filepath.Abs(dirname)
 	if err != nil {
-		logger.Printf("%+v\n", err)
-		return nil
-	}
-
-	// 設定
-	config := NewConfig(basepath)
-	if config == nil {
+		log.Printf("%+v\n", err)
 		return nil
 	}
 

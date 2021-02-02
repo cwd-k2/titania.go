@@ -3,6 +3,7 @@ package tester
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"path/filepath"
 
 	"github.com/cwd-k2/titania.go/pkg/paizaio"
@@ -18,7 +19,13 @@ type Config struct {
 // Creates Config struct.
 // if error occurred, then nil will be returned.
 // TODO: error handling.
-func NewConfig(basepath string) *Config {
+func NewConfig(dirname string) *Config {
+	basepath, err := filepath.Abs(dirname)
+	if err != nil {
+		log.Printf("%+v\n", err)
+		return nil
+	}
+
 	// ディレクトリ直下に titania.json がいるか確認したい
 	filename := filepath.Join(basepath, "titania.json")
 	if match, _ := filepath.Glob(filename); len(match) == 0 {
