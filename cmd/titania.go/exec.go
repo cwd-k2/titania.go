@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 
+	. "github.com/cwd-k2/titania.go/internal/pkg/pretty"
 	"github.com/cwd-k2/titania.go/pkg/tester"
 )
 
@@ -23,6 +24,9 @@ func exec(directories []string) {
 	defer stdout.Flush()
 	defer stderr.Flush()
 
+	// open square bracket
+	buffer.WriteByte('[')
+
 	for _, dirname := range directories {
 		// 設定
 		tconf := tester.NewConfig(dirname)
@@ -37,10 +41,8 @@ func exec(directories []string) {
 
 		outcome := tunit.Exec()
 
-		// need a open square bracket and commas.
-		if executed == 0 {
-			buffer.WriteByte('[')
-		} else {
+		// need commas.
+		if executed != 0 {
 			buffer.WriteByte(',')
 		}
 
@@ -54,13 +56,16 @@ func exec(directories []string) {
 		executed++
 	}
 
+	// closing square bracket
+	buffer.WriteByte(']')
+
 	if executed == 0 {
 		// 何もテストが実行されなかった場合
 		println("There's no test in (sub)directory[ies].")
 		os.Exit(1)
 	} else {
-		// closing square bracket
-		buffer.WriteByte(']')
+		// all done.
+		Printf("\n%s\n", Bold("ALL DONE"))
 
 		// output buffered info
 		if _, err := buferr.WriteTo(stderr); err != nil {
