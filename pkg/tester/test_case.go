@@ -7,8 +7,8 @@ import (
 
 type TestCase struct {
 	Name   string
-	Input  string
-	Answer string
+	Input  []byte
+	Answer []byte
 }
 
 type TestCaseConfig struct {
@@ -56,7 +56,7 @@ func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 			}
 			name = name[0 : len(name)-len(config.OutputExtention)]
 
-			tcases = append(tcases, &TestCase{name, string(inputBS), string(answerBS)})
+			tcases = append(tcases, &TestCase{name, inputBS, answerBS})
 		}
 
 	}

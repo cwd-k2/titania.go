@@ -1,6 +1,7 @@
 package tester
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -10,10 +11,10 @@ import (
 type singleresult struct {
 	Result      string
 	Time        string
-	BuildSTDOUT string
-	BuildSTDERR string
-	STDOUT      string
-	STDERR      string
+	BuildSTDOUT []byte
+	BuildSTDERR []byte
+	STDOUT      []byte
+	STDERR      []byte
 	Error       string
 }
 
@@ -26,7 +27,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 		result string
 		// anything but BuildSTDOUT or STDOUT
 		// TODO: still ignoring BuildSTDOUT...
-		errstr = sres1.BuildSTDERR + sres1.STDERR + sres1.Error
+		errstr = string(sres1.BuildSTDERR) + string(sres1.STDERR) + sres1.Error
 	)
 
 	// making result string
@@ -35,22 +36,27 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 		// input for test_method goes in this format.
 		// output + "\0" + input + "\0" + answer
 		// TODO: the order and element should be specified by config.
-		input := strings.Join([]string{sres1.STDOUT, tcase.Input, tcase.Answer}, "\000")
+		var input []byte
+		input = append(input, sres1.STDOUT...)
+		input = append(input, '\000')
+		input = append(input, tcase.Input...)
+		input = append(input, '\000')
+		input = append(input, tcase.Answer...)
 
 		// TestMethod
 		sres2 := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
 
 		if sres2.Result == "SUCCESS" {
-			result = strings.TrimRight(sres2.STDOUT, "\n") // mainly expecting PASS or FAIL
+			result = strings.TrimRight(string(sres2.STDOUT), "\n") // mainly expecting PASS or FAIL
 		} else {
 			result = fmt.Sprintf("METHOD %s", sres2.Result)
 		}
 
-		errstr += sres2.BuildSTDERR + sres2.STDERR + sres2.Error
+		errstr += string(sres2.BuildSTDERR) + string(sres2.STDERR) + sres2.Error
 
 	} else if sres1.Result == "SUCCESS" {
 		// simple comparison
-		if sres1.STDOUT == tcase.Answer {
+		if bytes.Equal(sres1.STDOUT, tcase.Answer) {
 			result = "PASS"
 		} else {
 			result = "FAIL"
@@ -59,17 +65,24 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 		result = sres1.Result
 	}
 
-	return &Detail{tcase.Name, result, result == target.Expect, sres1.Time, sres1.STDOUT, errstr}
+	return &Detail{
+		TestCase:   tcase.Name,
+		Result:     result,
+		IsExpected: result == target.Expect,
+		Time:       sres1.Time,
+		Output:     string(sres1.STDOUT),
+		Error:      errstr,
+	}
 }
 
 // errors are treated as string
-func (t *TestUnit) do(language string, sourceCode, input string) *singleresult {
+func (t *TestUnit) do(language string, sourceCode, input []byte) *singleresult {
 	// TODO: how can I treat build time?
 
 	req1 := &paizaio.RunnersCreateRequest{
 		Language:        language,
-		SourceCode:      sourceCode,
-		Input:           input,
+		SourceCode:      string(sourceCode),
+		Input:           string(input),
 		Longpoll:        true,
 		LongpollTimeout: 16,
 	}
@@ -93,8 +106,8 @@ func (t *TestUnit) do(language string, sourceCode, input string) *singleresult {
 		return &singleresult{
 			Result:      result,
 			Time:        res2.BuildTime,
-			BuildSTDOUT: res2.BuildSTDOUT,
-			BuildSTDERR: res2.BuildSTDERR,
+			BuildSTDOUT: []byte(res2.BuildSTDOUT),
+			BuildSTDERR: []byte(res2.BuildSTDERR),
 		}
 	}
 
@@ -103,20 +116,20 @@ func (t *TestUnit) do(language string, sourceCode, input string) *singleresult {
 		return &singleresult{
 			Result:      result,
 			Time:        res2.Time,
-			BuildSTDOUT: res2.BuildSTDOUT,
-			BuildSTDERR: res2.BuildSTDERR,
-			STDOUT:      res2.STDOUT,
-			STDERR:      res2.STDERR,
+			BuildSTDOUT: []byte(res2.BuildSTDOUT),
+			BuildSTDERR: []byte(res2.BuildSTDERR),
+			STDOUT:      []byte(res2.STDOUT),
+			STDERR:      []byte(res2.STDERR),
 		}
 	}
 
 	return &singleresult{
 		Result:      strings.ToUpper(res2.Result),
 		Time:        res2.Time,
-		BuildSTDOUT: res2.BuildSTDOUT,
-		BuildSTDERR: res2.BuildSTDERR,
-		STDOUT:      res2.STDOUT,
-		STDERR:      res2.STDERR,
+		BuildSTDOUT: []byte(res2.BuildSTDOUT),
+		BuildSTDERR: []byte(res2.BuildSTDERR),
+		STDOUT:      []byte(res2.STDOUT),
+		STDERR:      []byte(res2.STDERR),
 	}
 }
 
