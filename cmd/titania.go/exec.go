@@ -23,7 +23,7 @@ func exec(directories []string) {
 	defer stdout.Flush()
 	defer stderr.Flush()
 
-	for i, dirname := range directories {
+	for _, dirname := range directories {
 		// 設定
 		tconf := tester.NewConfig(dirname)
 		if tconf == nil {
@@ -51,11 +51,6 @@ func exec(directories []string) {
 			panic(err)
 		}
 
-		// closing square bracket
-		if i == len(directories)-1 {
-			buffer.WriteByte(']')
-		}
-
 		executed++
 	}
 
@@ -64,6 +59,8 @@ func exec(directories []string) {
 		println("There's no test in (sub)directory[ies].")
 		os.Exit(1)
 	} else {
+		// closing square bracket
+		buffer.WriteByte(']')
 
 		// output buffered info
 		if _, err := buferr.WriteTo(stderr); err != nil {
