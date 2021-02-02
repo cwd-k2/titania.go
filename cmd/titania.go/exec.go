@@ -24,6 +24,9 @@ func exec(directories []string) {
 	defer stdout.Flush()
 	defer stderr.Flush()
 
+	// don't escape for HTML emmbedding
+	bufenc.SetEscapeHTML(false)
+
 	// open square bracket
 	buffer.WriteByte('[')
 
