@@ -2,7 +2,6 @@ package paizaio
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -63,8 +62,8 @@ func (c *Client) RunnersCreate(req *RunnersCreateRequest) (*RunnersCreateRespons
 		return res, err
 	}
 
-	if res.ID == "" {
-		return res, errors.New(res.Error)
+	if res.Error != "" {
+		return res, &RunnerError{res.Error}
 	}
 
 	return res, nil
@@ -76,6 +75,10 @@ func (c *Client) RunnersGetStatus(req *RunnersGetStatusRequest) (*RunnersGetStat
 		return res, err
 	}
 
+	if res.Error != "" {
+		return res, &RunnerError{res.Error}
+	}
+
 	return res, nil
 }
 
@@ -83,6 +86,10 @@ func (c *Client) RunnersGetDetails(req *RunnersGetDetailsRequest) (*RunnersGetDe
 	res := &RunnersGetDetailsResponse{}
 	if err := c.api("GET", "/runners/get_details", req, res); err != nil {
 		return res, err
+	}
+
+	if res.Error != "" {
+		return res, &RunnerError{res.Error}
 	}
 
 	return res, nil
