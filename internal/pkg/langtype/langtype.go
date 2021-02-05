@@ -7,9 +7,7 @@ func LangType(filename string) string {
 	switch filepath.Ext(filename) {
 	case ".c":
 		return "c"
-	case ".cc":
-		fallthrough
-	case ".cpp":
+	case ".cc", ".cpp":
 		return "cpp"
 	case ".m":
 		return "objective-c"
@@ -43,13 +41,13 @@ func LangType(filename string) string {
 		return "r"
 	case ".js":
 		return "javascript"
+	case ".ts":
+		return "typescript"
 	case ".coffee":
 		return "coffeescript"
 	case ".vb":
 		return "vb"
-	case ".cbl":
-		fallthrough
-	case ".cob":
+	case ".cbl", ".cob":
 		return "cobol"
 	case ".fs":
 		return "fsharp"
@@ -67,6 +65,8 @@ func LangType(filename string) string {
 		return "scheme"
 	case ".lisp":
 		return "commonlisp"
+	case ".nako3":
+		return "nadesiko"
 	default:
 		return "plain"
 	}
