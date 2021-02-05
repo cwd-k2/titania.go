@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2021-02-05
+
+### Added
+
+- Now TypeScript and なでしこ are available (Following the change of [paiza.io](https://paiza.io) API).
+
 ## [0.6.0] - 2021-02-02
 
 ### Change
