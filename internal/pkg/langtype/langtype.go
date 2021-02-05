@@ -41,6 +41,8 @@ func LangType(filename string) string {
 		return "r"
 	case ".js":
 		return "javascript"
+	case ".ts":
+		return "typescript"
 	case ".coffee":
 		return "coffeescript"
 	case ".vb":
@@ -63,6 +65,8 @@ func LangType(filename string) string {
 		return "scheme"
 	case ".lisp":
 		return "commonlisp"
+	case ".nako3":
+		return "nadesiko"
 	default:
 		return "plain"
 	}
