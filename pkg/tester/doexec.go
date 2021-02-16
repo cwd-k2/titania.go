@@ -31,18 +31,29 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 	)
 
 	// making result string
-	// TODO: Method Execution `on` specified result.
-	if t.TestMethod != nil && sres1.Result == "SUCCESS" {
+	if t.TestMethod != nil && sres1.Result == t.TestMethod.OnResult {
 		// input for test_method goes in this format.
-		// output + "\0" + input + "\0" + answer
-		// TODO: the order and element should be specified by config.
+		// ex: stdin + '\000' + stdout + '\000' + answer
 		var input []byte
-		input = append(input, sres1.STDOUT...)
-		input = append(input, '\000')
-		input = append(input, tcase.Input...)
-		input = append(input, '\000')
-		input = append(input, tcase.Answer...)
-
+		for _, what := range t.TestMethod.InputOrder {
+			if len(input) > 0 {
+				input = append(input, '\000')
+			}
+			switch what {
+			case "input":
+				input = append(input, tcase.Input...)
+			case "answer":
+				input = append(input, tcase.Answer...)
+			case "stdout":
+				input = append(input, sres1.STDOUT...)
+			case "stderr":
+				input = append(input, sres1.STDERR...)
+			case "b_stdout":
+				input = append(input, sres1.BuildSTDOUT...)
+			case "b_stderr":
+				input = append(input, sres1.BuildSTDERR...)
+			}
+		}
 		// TestMethod
 		sres2 := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
 
