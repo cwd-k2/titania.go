@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	PAIZA_IO_URL     = "http://api.paiza.io:80"
+	PAIZA_IO_URL     = "https://api.paiza.io"
 	PAIZA_IO_API_KEY = "guest"
 )
 
