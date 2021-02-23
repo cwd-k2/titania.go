@@ -100,7 +100,7 @@ func (t *TestUnit) do(language string, sourceCode, input []byte) *singleresult {
 
 	res1, err := t.Client.RunnersCreate(req1)
 	if err != nil {
-		handle(err)
+		return handle(err)
 	}
 
 	req2 := &paizaio.RunnersGetDetailsRequest{
