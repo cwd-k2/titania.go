@@ -41,7 +41,7 @@ func ReadTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 			name, _ := filepath.Rel(basepath, inputFileName)
 			name = name[0 : len(name)-len(config.InputExtention)]
 
-			tcases = append(tcases, &TestCase{name, answerFileName, inputFileName})
+			tcases = append(tcases, &TestCase{name, inputFileName, answerFileName})
 		}
 
 	}

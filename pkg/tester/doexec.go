@@ -15,7 +15,10 @@ import (
 
 type singleresult struct {
 	Result              string
+	BuildTime           string
+	BuildExitCode       int
 	Time                string
+	ExitCode            int
 	BuildStdoutFileName string
 	BuildStderrFileName string
 	StdoutFileName      string
@@ -31,21 +34,33 @@ func sameFileContents(fname1, fname2 string) bool {
 	return bytes.Equal(b1, b2)
 }
 
-func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
-	dirname := filepath.Join(t.Name, target.Name, tcase.Name)
-	// TODO: refactoring
-	// fire paiza.io API
-	sres1 := t.do(dirname, target.Language, target.FileName, []string{tcase.InputFileName})
+// the first token to be the result
+func readResult(filename string) string {
+	fp, _ := os.Open(filename)
+	defer fp.Close()
 
+	scanner := bufio.NewScanner(fp)
+	if scanner.Scan() {
+		return scanner.Text()
+	} else {
+		return "<NONE>"
+	}
+}
+
+func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 	var (
 		result string
-		errstr string = sres1.Error
-		// anyting other than stdout
-		others []string = []string{sres1.BuildStdoutFileName, sres1.BuildStderrFileName, sres1.StderrFileName}
+		errstr string
 	)
+	// TODO: refactoring
+	dirname := filepath.Join(t.Name, target.Name, tcase.Name)
+	// fire paiza.io API
+	sres1 := t.do(dirname, target.Language, target.FileName, []string{tcase.InputFileName})
+	// anyting other than stdout
+	others := []string{sres1.BuildStdoutFileName, sres1.BuildStderrFileName, sres1.StderrFileName}
 
 	// making result string
-	if t.TestMethod != nil && sres1.Result == t.TestMethod.OnResult {
+	if t.TestMethod != nil && (sres1.ExitCode == t.TestMethod.OnExit || sres1.BuildExitCode == t.TestMethod.OnExit-512) {
 		// ex: stdin + '\000' + stdout + '\000' + answer
 		var inputs []string
 		for _, what := range t.TestMethod.InputOrder {
@@ -69,17 +84,17 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 		// TestMethod
 		sres2 := t.do(filepath.Join(dirname, t.TestMethod.Name), t.TestMethod.Language, t.TestMethod.FileName, inputs)
 
-		if sres2.Result == "SUCCESS" {
-			byteArray, _ := ioutil.ReadFile(sres2.StdoutFileName)
-			result = strings.TrimRight(string(byteArray), "\n") // mainly expecting PASS or FAIL
+		// TestMethod should gracefully terminate.
+		if sres2.BuildExitCode == 0 && sres2.ExitCode == 0 {
+			result = readResult(sres2.StdoutFileName) // mainly expecting PASS or FAIL
 		} else {
 			result = fmt.Sprintf("METHOD %s", sres2.Result)
 		}
 
 		errstr += sres2.Error
-		others = append(others, sres2.BuildStdoutFileName, sres2.BuildStderrFileName, sres2.StderrFileName)
+		others = append(others, sres2.BuildStdoutFileName, sres2.BuildStderrFileName, sres1.StdoutFileName, sres2.StderrFileName)
 
-	} else if sres1.Result == "SUCCESS" {
+	} else if sres1.BuildExitCode == 0 && sres1.ExitCode == 0 {
 		// simple comparison
 		if sameFileContents(sres1.StdoutFileName, tcase.AnswerFileName) {
 			result = "PASS"
@@ -106,7 +121,6 @@ func (t *TestUnit) do(name, language, sourceFileName string, inputFileNames []st
 	dirname := filepath.Join(tmpdir, name)
 	os.MkdirAll(dirname, 0755)
 
-	// TODO: how can I treat build time?
 	sourcecode, _ := os.Open(sourceFileName)
 	defer sourcecode.Close()
 
@@ -140,37 +154,35 @@ func (t *TestUnit) do(name, language, sourceFileName string, inputFileNames []st
 		BuildStdout:    buildstdout,
 		BuildStderr:    buildstderr,
 	})
-	if err != nil {
-		return handle(err)
-	}
 
 	ret := &singleresult{
+		Time:                res.Time,
+		ExitCode:            res.ExitCode,
+		BuildTime:           res.BuildTime,
+		BuildExitCode:       res.BuildExitCode,
 		StdoutFileName:      stdoutFileName,
 		StderrFileName:      stderrFileName,
 		BuildStdoutFileName: buildStdoutFileName,
 		BuildStderrFileName: buildStderrFileName,
 	}
 
+	if err != nil {
+		ret.Result, ret.Error = handle(err)
+		ret.BuildExitCode, ret.ExitCode = -1, -1
+		return ret
+	}
+
 	if res.BuildExitCode != 0 {
-		result := fmt.Sprintf("BUILD %s", strings.ToUpper(res.BuildResult))
-		ret.Result = result
-		ret.Time = res.BuildTime
-		return ret
+		ret.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(res.BuildResult))
+	} else if res.ExitCode != 0 {
+		ret.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(res.Result))
+	} else {
+		ret.Result = strings.ToUpper(res.Result)
 	}
-
-	if res.ExitCode != 0 || res.Result != "success" {
-		result := fmt.Sprintf("EXECUTION %s", strings.ToUpper(res.Result))
-		ret.Result = result
-		ret.Time = res.Time
-		return ret
-	}
-
-	ret.Result = strings.ToUpper(res.Result)
-	ret.Time = res.Time
 	return ret
 }
 
-func handle(err error) *singleresult {
+func handle(err error) (string, string) {
 	var result, errstr string
 
 	switch err := err.(type) {
@@ -188,5 +200,5 @@ func handle(err error) *singleresult {
 		errstr = err.Error()
 	}
 
-	return &singleresult{Result: result, Error: errstr}
+	return result, errstr
 }

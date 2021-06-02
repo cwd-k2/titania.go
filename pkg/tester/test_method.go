@@ -2,7 +2,6 @@ package tester
 
 import (
 	"path/filepath"
-	"strings"
 
 	"github.com/cwd-k2/titania.go/pkg/runner"
 )
@@ -10,14 +9,14 @@ import (
 type TestMethod struct {
 	Name       string
 	Language   string
-	OnResult   string
+	OnExit     int
 	FileName   string
 	InputOrder []string
 }
 
 type TestMethodConfig struct {
 	FileName   string   `json:"file_name"`
-	On         string   `json:"on"`          // one of SUCCESS, EXECUTION FAILURE, ...
+	OnExit     int      `json:"on_exit"`     // on_exit: 0, ...
 	InputOrder []string `json:"input_order"` // ex: [stdout, stderr, input, ...]
 }
 
@@ -40,13 +39,6 @@ func ReadTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 		return nil
 	}
 
-	var onresult string
-	if len(config.On) != 0 {
-		onresult = strings.ToUpper(config.On)
-	} else {
-		onresult = "SUCCESS"
-	}
-
 	var inputorder []string
 	// TODO: validation
 	if len(config.InputOrder) != 0 {
@@ -58,7 +50,7 @@ func ReadTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 	return &TestMethod{
 		Name:       name,
 		Language:   language,
-		OnResult:   onresult,
+		OnExit:     config.OnExit,
 		FileName:   filename,
 		InputOrder: inputorder,
 	}

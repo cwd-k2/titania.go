@@ -80,6 +80,8 @@ func optparse() []string {
 			os.Exit(0)
 		case "--quiet":
 			quiet = true
+		case "--pretty":
+			prettyprint = true
 		case "--lang":
 			langs = strings.Split(strings.TrimPrefix(os.Args[i+2], "--lang="), ",")
 			used = i + 1

@@ -13,7 +13,7 @@ import (
 
 // TODO: perfomance?
 func (b *builder) writeEscapedStringFromBuffer(strbuf *bytes.Buffer) error {
-	//b.buf.WriteString(strings.ReplaceAll(strconv.Quote(buf.String()), `\x`, `\u00`))
+	//b.buf.WriteString(strings.ReplaceAll(strconv.Quote(strbuf.String()), `\x`, `\u00`))
 	b.buf.WriteByte('"')
 	for {
 		c, err := strbuf.ReadByte()
@@ -50,7 +50,6 @@ func (b *builder) writeEscapedStringFromBuffer(strbuf *bytes.Buffer) error {
 			b.buf.WriteByte("0123456789abcdef"[c>>4])
 			b.buf.WriteByte("0123456789abcdef"[c&0xF])
 		}
-		continue
 	}
 	b.buf.WriteByte('"')
 	return nil
