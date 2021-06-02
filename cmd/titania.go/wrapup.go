@@ -70,7 +70,11 @@ func printjson(uresults []*tester.TestUnitResult) {
 					arr.AddObject(func(obj simplejson.Object) {
 						obj.SetString("name", tresult.Name)
 						obj.SetString("language", tresult.Language)
-						obj.SetString("expect", tresult.Expect)
+						obj.SetObject("expect", func(obj simplejson.Object) {
+							for casename, expect := range tresult.Expect {
+								obj.SetString(casename, expect)
+							}
+						})
 						obj.SetArray("details", func(arr simplejson.Array) {
 							for _, cresult := range tresult.TestCases {
 								arr.AddObject(func(obj simplejson.Object) {
@@ -97,9 +101,9 @@ func printjson(uresults []*tester.TestUnitResult) {
 			Name       string `json:"name"`
 			TestMethod string `json:"test_method"`
 			Fruits     []*struct {
-				TestTarget string `json:"test_target"`
-				Language   string `json:"language"`
-				Expect     string `json:"expect"`
+				TestTarget string            `json:"test_target"`
+				Language   string            `json:"language"`
+				Expect     map[string]string `json:"expect"`
 				Details    []*struct {
 					TestCase   string `json:"test_case"`
 					Result     string `json:"result"`

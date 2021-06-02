@@ -9,7 +9,7 @@ type TestUnitResult struct {
 type TestTargetResult struct {
 	Name      string
 	Language  string
-	Expect    string
+	Expect    map[string]string
 	TestCases []*TestCaseResult
 }
 

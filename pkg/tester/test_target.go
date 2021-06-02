@@ -1,6 +1,7 @@
 package tester
 
 import (
+	"encoding/json"
 	"path/filepath"
 
 	"github.com/cwd-k2/titania.go/pkg/runner"
@@ -10,12 +11,33 @@ type TestTarget struct {
 	Name     string
 	Language string
 	FileName string
-	Expect   string
+	Expect   map[string]string
 }
 
 type TestTargetConfig struct {
-	Pattern string `json:"pattern"`
-	Expect  string `json:"expect"`
+	Pattern string         `json:"pattern"`
+	Expect  ExpectedResult `json:"expect"`
+}
+
+type ExpectedResult struct {
+	Map map[string]string
+}
+
+func (e *ExpectedResult) UnmarshalJSON(data []byte) error {
+	e.Map = map[string]string{}
+	var dyn interface{}
+	if err := json.Unmarshal(data, &dyn); err != nil {
+		return err
+	}
+	switch dyn.(type) {
+	case string:
+		e.Map["default"] = dyn.(string)
+	case map[string]string:
+		for k, v := range dyn.(map[string]string) {
+			e.Map[k] = v
+		}
+	}
+	return nil
 }
 
 // This can return an empty slice.
@@ -30,9 +52,9 @@ func ReadTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget 
 			continue
 		}
 
-		expect := config.Expect
-		if len(expect) == 0 {
-			expect = "PASS"
+		expect := map[string]string{"default": "PASS"}
+		for k, v := range config.Expect.Map {
+			expect[k] = v
 		}
 
 		for _, filename := range filenames {

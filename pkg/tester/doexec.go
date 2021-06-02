@@ -58,6 +58,10 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 	sres1 := t.do(dirname, target.Language, target.FileName, []string{tcase.InputFileName})
 	// anyting other than stdout
 	others := []string{sres1.BuildStdoutFileName, sres1.BuildStderrFileName, sres1.StderrFileName}
+	expect, ok := target.Expect[tcase.Name]
+	if !ok {
+		expect = target.Expect["default"]
+	}
 
 	// making result string
 	if t.TestMethod != nil && (sres1.ExitCode == t.TestMethod.OnExit || sres1.BuildExitCode == t.TestMethod.OnExit-512) {
@@ -108,7 +112,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 	return &TestCaseResult{
 		Name:       tcase.Name,
 		Result:     result,
-		IsExpected: result == target.Expect,
+		IsExpected: result == expect,
 		Time:       sres1.Time,
 		Output:     sres1.StdoutFileName,
 		Others:     others,
@@ -172,9 +176,17 @@ func (t *TestUnit) do(name, language, sourceFileName string, inputFileNames []st
 		return ret
 	}
 
-	if res.BuildExitCode != 0 {
+	// TIMEOUT exit code to be 124 (like coreutils timeout)
+	if res.BuildResult == "timeout" {
+		ret.BuildExitCode = 124
+	}
+	if res.Result == "timeout" {
+		ret.ExitCode = 124
+	}
+
+	if ret.BuildExitCode != 0 {
 		ret.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(res.BuildResult))
-	} else if res.ExitCode != 0 {
+	} else if ret.ExitCode != 0 {
 		ret.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(res.Result))
 	} else {
 		ret.Result = strings.ToUpper(res.Result)
