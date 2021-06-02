@@ -4,12 +4,12 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/cwd-k2/titania.go/pkg/paizaio"
+	"github.com/cwd-k2/titania.go/pkg/runner"
 )
 
 type TestUnit struct {
 	Name        string
-	Client      *paizaio.Client
+	Runner      *runner.Runner
 	TestMethod  *TestMethod
 	TestTargets []*TestTarget
 	TestCases   []*TestCase
@@ -18,30 +18,30 @@ type TestUnit struct {
 
 // Reads given directory and create an instance of TestUnit.
 // if failed to load Config/TestTargets/TestCases, returns nil (no error).
-func NewTestUnit(dirname string, config *Config) *TestUnit {
+func ReadTestUnit(dirname string, config *Config) *TestUnit {
 	basepath, err := filepath.Abs(dirname)
 	if err != nil {
 		log.Printf("%+v\n", err)
 		return nil
 	}
 
-	// paiza.io API クライアント
-	client := paizaio.NewClient(config.ClientConfig)
+	// Code Runner
+	runner := runner.NewRunner(config.ClientConfig)
 
 	// ソースコード
-	targets := MakeTestTargets(basepath, config.TestTarget)
+	targets := ReadTestTargets(basepath, config.TestTarget)
 	if len(targets) == 0 {
 		return nil
 	}
 
 	// テストケース
-	tcases := MakeTestCases(basepath, config.TestCase)
+	tcases := ReadTestCases(basepath, config.TestCase)
 	if len(tcases) == 0 {
 		return nil
 	}
 
 	// テストメソッド
-	tmethod := NewTestMethod(basepath, config.TestMethod)
+	tmethod := ReadTestMethod(basepath, config.TestMethod)
 
 	// Viewer
 	indices := make([]string, 0)
@@ -50,25 +50,25 @@ func NewTestUnit(dirname string, config *Config) *TestUnit {
 	}
 	view := NewView(dirname, len(targets), len(tcases), indices)
 
-	return &TestUnit{dirname, client, tmethod, targets, tcases, view}
+	return &TestUnit{dirname, runner, tmethod, targets, tcases, view}
 }
 
 // Execute test (itself) using paiza.io API.
 // Any errors are included in returning values.
-func (t *TestUnit) Exec() *Outcome {
+func (t *TestUnit) Exec() *TestUnitResult {
 	curr := 0
 	stop := len(t.TestTargets) * len(t.TestCases)
 
-	fruits := make([]*Fruit, len(t.TestTargets))
+	tresults := make([]*TestTargetResult, len(t.TestTargets))
 	for i, target := range t.TestTargets {
-		fruits[i] = &Fruit{target.Name, target.Language, target.Expect, make([]*Detail, len(t.TestCases))}
+		tresults[i] = &TestTargetResult{target.Name, target.Language, target.Expect, make([]*TestCaseResult, len(t.TestCases))}
 	}
 
 	// idiom: sending multiple value with a single channel
-	ch := make(chan func() (int, int, *Detail), stop)
+	ch := make(chan func() (int, int, *TestCaseResult), stop)
 	fn := func(i, j int, target *TestTarget, tcase *TestCase) {
-		detail := t.exec(target, tcase)
-		ch <- func() (int, int, *Detail) { return i, j, detail }
+		cresult := t.exec(target, tcase)
+		ch <- func() (int, int, *TestCaseResult) { return i, j, cresult }
 	}
 
 	t.view.Init()
@@ -81,9 +81,9 @@ func (t *TestUnit) Exec() *Outcome {
 	}
 
 	for res := range ch {
-		i, j, d := res()
+		i, j, cresult := res()
 
-		fruits[i].Details[j] = d
+		tresults[i].TestCases[j] = cresult
 
 		t.view.Update(i)
 
@@ -94,10 +94,10 @@ func (t *TestUnit) Exec() *Outcome {
 
 	t.view.Done()
 
-	outcome := &Outcome{t.Name, "default", fruits}
+	uresult := &TestUnitResult{t.Name, "default", tresults}
 	if t.TestMethod != nil {
-		outcome.TestMethod = t.TestMethod.Name
+		uresult.TestMethod = t.TestMethod.Name
 	}
 
-	return outcome
+	return uresult
 }

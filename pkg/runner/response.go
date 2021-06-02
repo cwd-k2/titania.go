@@ -1,13 +1,4 @@
-package paizaio
-
-import (
-	"encoding/json"
-	"io"
-)
-
-type Response interface {
-	Write(io.Reader) error
-}
+package runner
 
 type RunnersCreateResponse struct {
 	ID     string `json:"id"`
@@ -40,16 +31,4 @@ type RunnersGetDetailsResponse struct {
 	Connections   int    `json:"connections"`
 	Result        string `json:"result"`
 	Error         string `json:"error"`
-}
-
-func (r *RunnersCreateResponse) Write(w io.Reader) error {
-	return json.NewDecoder(w).Decode(r)
-}
-
-func (r *RunnersGetStatusResponse) Write(w io.Reader) error {
-	return json.NewDecoder(w).Decode(r)
-}
-
-func (r *RunnersGetDetailsResponse) Write(w io.Reader) error {
-	return json.NewDecoder(w).Decode(r)
 }

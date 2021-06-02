@@ -1,18 +1,17 @@
 package tester
 
 import (
-	"io/ioutil"
 	"path/filepath"
 	"strings"
 
-	"github.com/cwd-k2/titania.go/internal/pkg/langtype"
+	"github.com/cwd-k2/titania.go/pkg/runner"
 )
 
 type TestMethod struct {
 	Name       string
 	Language   string
 	OnResult   string
-	SourceCode []byte
+	FileName   string
 	InputOrder []string
 }
 
@@ -22,10 +21,8 @@ type TestMethodConfig struct {
 	InputOrder []string `json:"input_order"` // ex: [stdout, stderr, input, ...]
 }
 
-// Creates TestMethod struct.
 // if error occurred, then nil will be returned.
-// TODO: error handling.
-func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
+func ReadTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 	if config.FileName == "" {
 		return nil
 	}
@@ -37,13 +34,7 @@ func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 		name = filename
 	}
 
-	sourceCodeBS, err := ioutil.ReadFile(filename)
-	if err != nil {
-		logger.Printf("%+v\n", err)
-		return nil
-	}
-
-	language := langtype.LangType(filename)
+	language := runner.LangType(filename)
 	if language == "plain" {
 		logger.Println("Invalid test method.")
 		return nil
@@ -68,7 +59,7 @@ func NewTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 		Name:       name,
 		Language:   language,
 		OnResult:   onresult,
-		SourceCode: sourceCodeBS,
+		FileName:   filename,
 		InputOrder: inputorder,
 	}
 }

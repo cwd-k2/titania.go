@@ -4,23 +4,23 @@ import (
 	"github.com/cwd-k2/titania.go/pkg/tester"
 )
 
-func exec(directories []string) []*tester.Outcome {
-	outcomes := make([]*tester.Outcome, 0)
+func exec(directories []string) []*tester.TestUnitResult {
+	uresults := make([]*tester.TestUnitResult, 0)
 
 	for _, dirname := range directories {
 		// 設定
-		tconf := tester.NewConfig(dirname)
+		tconf := tester.ReadConfig(dirname)
 		if tconf == nil {
 			continue
 		}
 
-		tunit := tester.NewTestUnit(dirname, tconf)
+		tunit := tester.ReadTestUnit(dirname, tconf)
 		if tunit == nil {
 			continue
 		}
 
-		outcomes = append(outcomes, tunit.Exec())
+		uresults = append(uresults, tunit.Exec())
 	}
 
-	return outcomes
+	return uresults
 }

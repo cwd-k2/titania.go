@@ -1,23 +1,24 @@
 package tester
 
-type Outcome struct {
-	Name       string   `json:"name"`
-	TestMethod string   `json:"test_method"`
-	Fruits     []*Fruit `json:"fruits"`
+type TestUnitResult struct {
+	Name        string
+	TestMethod  string
+	TestTargets []*TestTargetResult
 }
 
-type Fruit struct {
-	TestTarget string    `json:"test_target"`
-	Language   string    `json:"language"`
-	Expect     string    `json:"expect"`
-	Details    []*Detail `json:"details"`
+type TestTargetResult struct {
+	Name      string
+	Language  string
+	Expect    string
+	TestCases []*TestCaseResult
 }
 
-type Detail struct {
-	TestCase   string `json:"test_case"`
-	Result     string `json:"result"`
-	IsExpected bool   `json:"is_expected"`
-	Time       string `json:"time"`
-	Output     string `json:"output"`
-	Error      string `json:"error"`
+type TestCaseResult struct {
+	Name       string
+	Result     string
+	IsExpected bool
+	Time       string
+	Output     string
+	Others     []string
+	Error      string
 }

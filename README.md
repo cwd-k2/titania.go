@@ -36,7 +36,7 @@ It's simple. Just run `go get`.
 $ go get -u github.com/cwd-k2/titania.go/cmd/titania.go
 ```
 
-## Usage
+## How to Use
 
 Make sure `titania.go` is in your `$PATH`.
 
@@ -211,6 +211,12 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
   }
 ]
 ```
+
+## Usage
+
+### Options
+
+### Fields in `titania.json`
 
 ## Philosophy
 

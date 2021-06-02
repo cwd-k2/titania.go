@@ -6,20 +6,18 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/cwd-k2/titania.go/pkg/paizaio"
+	"github.com/cwd-k2/titania.go/pkg/runner"
 )
 
 type Config struct {
-	ClientConfig paizaio.Config     `json:"client"`
+	ClientConfig runner.Config      `json:"client"`
 	TestTarget   []TestTargetConfig `json:"test_target"`
 	TestCase     []TestCaseConfig   `json:"test_case"`
 	TestMethod   TestMethodConfig   `json:"test_method"`
 }
 
-// Creates Config struct.
 // if error occurred, then nil will be returned.
-// TODO: error handling.
-func NewConfig(dirname string) *Config {
+func ReadConfig(dirname string) *Config {
 	basepath, err := filepath.Abs(dirname)
 	if err != nil {
 		log.Printf("%+v\n", err)
