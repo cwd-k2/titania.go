@@ -1,0 +1,14 @@
+{
+  "client": {
+    "host": "https://api.paiza.io",
+    "api_key": "guest"
+  },
+  "test_target": [{ "pattern": "./source_*/*.*" }],
+  "test_case": [
+    {
+      "directory": "./test_case",
+      "input_extension": ".in",
+      "output_extension": ".out"
+    }
+  ]
+}

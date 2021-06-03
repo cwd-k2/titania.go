@@ -1,0 +1,19 @@
+{
+  "client": {
+    "host": "https://api.paiza.io",
+    "api_key": "guest"
+  },
+  "test_target": [
+    { "pattern": "./source_code/main.*" },
+    { "pattern": "./source_code/wrong_answer.rb", "expect": "FAIL" },
+    { "pattern": "./source_code/time_out.rb" },
+    { "pattern": "./source_code/build_error.c", "expect": "BUILD FAILURE" }
+  ],
+  "test_case": [
+    {
+      "directory": "./test_case",
+      "input_extension": ".in",
+      "output_extension": ".ans"
+    }
+  ]
+}
