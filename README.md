@@ -36,7 +36,7 @@ It's simple. Just run `go get`.
 $ go get -u github.com/cwd-k2/titania.go/cmd/titania.go
 ```
 
-## Usage
+## How to Use
 
 Make sure `titania.go` is in your `$PATH`.
 
@@ -52,7 +52,7 @@ A directory contains one problem, some amount of test cases, and different solut
 
 The directories should contain `titania.json`, like below.
 
-```
+```json
 {
   "client": {
     "host": "https://api.paiza.io",
@@ -60,10 +60,18 @@ The directories should contain `titania.json`, like below.
   },
   "test_target": [
     { "pattern": "./source_code/main.*" },
-    { "pattern": "./source_code/wrong_answer.rb", "expect": "FAIL" },
+    {
+      "pattern": "./source_code/wrong_answer.rb",
+      "expect": { "default": "FAIL", "test_case/01": "PASS", "test_case/03": "EXECUTION TIMEOUT" }
+    },
     { "pattern": "./source_code/time_out.rb" },
     { "pattern": "./source_code/build_error.c", "expect": "BUILD FAILURE" }
   ],
+  "test_method": {
+    "file_name": "./special_judge.cpp",
+    "on_exit": 0,
+    "input_order": ["input", "source_code", "build_error", "stdout"]
+  },
   "test_case": [
     {
       "directory": "./test_case",
@@ -74,9 +82,130 @@ The directories should contain `titania.json`, like below.
 }
 ```
 
+### Fields in `titania.json`
+
+#### `"client"`
+
+The paiza.io api client config. Fields are `"host"` and `"api_key"`. See [here](https://paiza.io/en)
+
+```
+{
+  "host":    string
+  "api_key": string
+}
+```
+
+#### `"test_target"`
+
+An array of objects.
+
+```
+{
+  "pattern": string
+  "expect":  string | map[string]: string  (Optional)
+}
+```
+
+The `"pattern"` field is shell glob pattern, required to collect each single file to be tested.
+
+The `"expect"` field is the expected test result for the specified target. You can set more detailed one using object. Without this field, the expected result is treated as `{ "default": "PASS" }` or `"PASS"`.
+
+```
+{
+  "pattern": "./source_code/main.rb",
+  "expect": {
+    "default": "PASS",
+    "test_case/01": "EXECUTION TIMEOUT",
+    "test_case/02": "FAIL"
+  }
+}
+```
+
+#### `"test_case"`
+
+An array of objects.
+
+```
+{
+  "directory":        string
+  "input_extension":  string
+  "output_extension": string
+}
+```
+
+The `"directory"` field indicates the directory that contains test-cases, which are composed of some input-output pairs of files with same basename.
+
+The `"input_extension"` and `"output_extension"` field are simple. With which the program recognize which is the input and which is the expected output.
+
+**Note**: A input-output pair should have input, but not about output.
+
+#### `"test_method"`
+
+An object.
+
+```
+{
+  "file_name":   string
+  "on_exit":     int
+  "input_order": []string
+}
+```
+
+Without `"test_method"`, results are judged by simple comparison of `"test_target"`s' output and expected output.
+
+With this, more complicated judge will be available, if you have any idea.
+
+The `"file_name"` and `"on_exit"` field are simple. Just specify a path to the test method file and specify on which exit code of test target the judge will be conducted.
+
+Okay, let's see an example.
+
+```
+{
+  ...,
+  "input_order": ["stdout", "input", "answer"]
+}
+```
+
+Then the input for this test method goes like this.
+
+`<STDOUT>\0<INPUT>\0<ANSWER>`
+
+**Note**: They are joined with `\0`, the null character.
+
+Available elements for `"input_order"` is...
+
+- `"input"`
+  - The input for `"test_target"`
+- `"answer"`
+  - The expected output or answer you've prepared for `"test_case"`
+- `"stdout"`
+  - The output on STDOUT.
+- `"stderr"`
+  - The output on STDOUT.
+- `"build_stdout"`
+  - The output on STDOUT, when building/compiling.
+- `"build_stderr"`
+  - The output on STDOUT, when building/compiling.
+- `"source_code"`
+  - Then source code of `"test_target"`
+
+And the test method will be like below.
+
+**Note**: the first line of the output of the test method will be treated as the result.
+
+```ruby
+# output, input, answer can be separated by null charactor.
+# ruby's `gets` will read until the argument.
+# so, gets nil means read all from stdin.
+output, input, answer = gets(nil).split("\0")
+
+# and test method should output PASS or FAIL or other RESULT on the first line.
+STDOUT.puts output == answer ? "FAIL" : "PASS"
+```
+
 ### Example
 
-Examples are [here](https://github.com/cwd-k2/titania.example).
+Examples are [here](https://github.com/cwd-k2/titania.go/blob/master/examples).
 
 ```bash
 $ cd example
@@ -91,77 +220,42 @@ $ titania.go example_01 example_02 > /dev/null
 $ titania.go --lang=ruby,haskell > /dev/null
 ```
 
+### Options
+
+#### `--lang=LANG1[,LANG2[,..]]`
+
+You can narrow down tests by languages.
+
+#### `--quiet`
+
+Suppres runtime information output.
+
+#### `--pretty`
+
+Pretty printing the output json.
+
+#### `--tmpdir=DIRNAME`
+
+You can set where to put the intermediate files when executing tests.
+
 ### Source codes; Languages
 
-`titania.go` detects source codes' languages by their extensions. You can see the languages available [here](https://github.com/cwd-k2/titania.go/blob/master/internal/tester/util.go).
-
-### Input and Answer
-
-For test cases to run, `titania.go` requires both input and expected output files.
-
-Correspoiding input and answer files should have same **names**, except their extensions.
-
-### Additional testing method
-
-Sometimes you want to do a specialized judgement. When the problem goes like '...print one of the possible answers', just comparing the output and the expected one is not enough.
-
-`titania.go` just compares the STDOUT of the submitted code and expected output/answer by default (simply check the equality), but you can set another testing method, by setting `test_method`. It means, you can also write an additional code to check if the answer was right, or partially-right, or wrong-but-the-quality-is-worth-to-be-praised.
-
-```json
-{
-  "client": {
-    "host": "http://api.paiza.io:80",
-    "api_key": "guest"
-  },
-  "test_target": [{ "pattern": "./source_*/*.*" }],
-  "test_case": [
-    {
-      "directory": "./test_case",
-      "input_extension": ".in",
-      "output_extension": ".out"
-    }
-  ],
-  "test_method": {
-    "file_name": "./test_method.rb"
-  }
-}
-```
-
-For test method execution, the code's output, the test case's input and expected answer are handed through STDIN, and they are joined by null characters.
-
-Simply, goes like this.
-
-`<STDOUT>\0<STDIN>\0<ANSWER>`
-
-Okay, let's see an example.
-
-```ruby
-# output, input, answer can be separated by null charactor.
-# ruby's `gets` will read until the argument.
-# so, gets nil means read all from stdin.
-output, input, answer = gets(nil).split("\0")
-
-# and test method should output PASS or FAIL
-STDOUT.puts output == answer ? "FAIL" : "PASS"
-STDERR.puts "Just for fun, inversing the result."
-```
-
-This '\0 separator' strategy would be a kind of awful, but I didn't come up with any other solutions.
+`titania.go` detects source codes' languages by their extensions. You can see the languages available [here](https://github.com/cwd-k2/titania.go/blob/master/pkg/runner/langtype.go).
 
 ## Results
 
 **Test results' details** will be written to **STDOUT**, in JSON format. Like below.
 
-```json
+```
 [
   {
     "name": "example_01",
     "test_method": "default",
     "fruits": [
       {
-        "test_target": "source_code/main.c",
-        "language": "c",
-        "expect": "PASS",
+        "name": "source_code/main.hs",
+        "language": "haskell",
+        "expect": { "default": "PASS" },
         "details": [
           {
             "test_case": "test_case/01",
@@ -169,46 +263,13 @@ This '\0 separator' strategy would be a kind of awful, but I didn't come up with
             "is_expected": true,
             "time": "0.00",
             "output": "50\n",
+            "others": "[1 of 1] Compiling Main             ( Main.hs, Main.o )\nLinking Main ...\n",
             "error": ""
-          },
-          (snip)
-        ]
-      },
-      (snip)
-      {
-        "test_target": "source_code/time_out.rb",
-        "language": "ruby",
-        "expect": "PASS",
-        "details": [
-          {
-            "test_case": "test_case/01",
-            "result": "EXECUTION TIMEOUT",
-            "is_expected": false,
-            "time": "",
-            "output": "",
-            "error": ""
-          },
-          (snip)
-        ]
-      },
-      {
-        "test_target": "source_code/build_error.c",
-        "language": "c",
-        "expect": "BUILD FAILURE",
-        "details": [
-          {
-            "test_case": "test_case/01",
-            "result": "BUILD FAILURE",
-            "is_expected": true,
-            "time": "",
-            "output": "",
-            "error": "Main.c:1:1: error: unknown type name 'include'\ninclude <stdio.h>\n^\nMain.c:1:9: error: expected identifier or '('\ninclude <stdio.h>\n        ^\n2 errors generated.\n"
-          },
-          (snip)
-        ]
-      }
-    ]
-  }
+          }, ...
+        ], ...
+      }, ...
+    ], ...
+  }, ...
 ]
 ```
 

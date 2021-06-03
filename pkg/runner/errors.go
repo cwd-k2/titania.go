@@ -1,4 +1,4 @@
-package paizaio
+package runner
 
 type ClientError struct {
 	Code int

@@ -1,28 +1,48 @@
 package tester
 
 import (
-	"io/ioutil"
+	"encoding/json"
 	"path/filepath"
 
-	"github.com/cwd-k2/titania.go/internal/pkg/langtype"
+	"github.com/cwd-k2/titania.go/pkg/runner"
 )
 
 type TestTarget struct {
-	Name       string
-	Language   string
-	SourceCode []byte
-	Expect     string
+	Name     string
+	Language string
+	FileName string
+	Expect   map[string]string
 }
 
 type TestTargetConfig struct {
-	Pattern string `json:"pattern"`
-	Expect  string `json:"expect"`
+	Pattern string         `json:"pattern"`
+	Expect  ExpectedResult `json:"expect"`
 }
 
-// Create []*TestTarget
+type ExpectedResult struct {
+	Map map[string]string
+}
+
+func (e *ExpectedResult) UnmarshalJSON(data []byte) error {
+	e.Map = map[string]string{}
+	var dyn interface{}
+	if err := json.Unmarshal(data, &dyn); err != nil {
+		return err
+	}
+	switch dyn.(type) {
+	case string:
+		e.Map["default"] = dyn.(string)
+	case map[string]string:
+		for k, v := range dyn.(map[string]string) {
+			e.Map[k] = v
+		}
+	}
+	return nil
+}
+
 // This can return an empty slice.
 // All errors are logged but ignored.
-func MakeTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget {
+func ReadTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget {
 	targets := make([]*TestTarget, 0)
 
 	for _, config := range configs {
@@ -32,20 +52,14 @@ func MakeTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget 
 			continue
 		}
 
-		expect := config.Expect
-		if len(expect) == 0 {
-			expect = "PASS"
+		expect := map[string]string{"default": "PASS"}
+		for k, v := range config.Expect.Map {
+			expect[k] = v
 		}
 
 		for _, filename := range filenames {
-			language := langtype.LangType(filename)
+			language := runner.LangType(filename)
 			if language == "plain" || len(languages) > 0 && !acceptable(languages, language) {
-				continue
-			}
-
-			sourceCodeBS, err := ioutil.ReadFile(filename)
-			if err != nil {
-				logger.Printf("%+v\n", err)
 				continue
 			}
 
@@ -54,7 +68,7 @@ func MakeTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget 
 				name = filename
 			}
 
-			targets = append(targets, &TestTarget{name, language, sourceCodeBS, expect})
+			targets = append(targets, &TestTarget{name, language, filename, expect})
 		}
 	}
 

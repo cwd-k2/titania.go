@@ -1,73 +1,106 @@
 package tester
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/cwd-k2/titania.go/pkg/paizaio"
+	"github.com/cwd-k2/titania.go/pkg/runner"
 )
 
 type singleresult struct {
-	Result      string
-	Time        string
-	BuildSTDOUT []byte
-	BuildSTDERR []byte
-	STDOUT      []byte
-	STDERR      []byte
-	Error       string
+	Result              string
+	BuildTime           string
+	BuildExitCode       int
+	Time                string
+	ExitCode            int
+	BuildStdoutFileName string
+	BuildStderrFileName string
+	StdoutFileName      string
+	StderrFileName      string
+	Error               string
 }
 
-func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
-	// TODO: refactoring
-	// fire paiza.io API
-	sres1 := t.do(target.Language, target.SourceCode, tcase.Input)
+func sameFileContents(fname1, fname2 string) bool {
+	// mmm...
+	b1, _ := ioutil.ReadFile(fname1)
+	b2, _ := ioutil.ReadFile(fname2)
 
+	return bytes.Equal(b1, b2)
+}
+
+// the first token to be the result
+func readResult(filename string) string {
+	fp, _ := os.Open(filename)
+	defer fp.Close()
+
+	scanner := bufio.NewScanner(fp)
+	if scanner.Scan() {
+		return scanner.Text()
+	} else {
+		return "<NONE>"
+	}
+}
+
+func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 	var (
 		result string
-		// anything but BuildSTDOUT or STDOUT
-		// TODO: still ignoring BuildSTDOUT...
-		errstr = string(sres1.BuildSTDERR) + string(sres1.STDERR) + sres1.Error
+		errstr string
 	)
+	// TODO: refactoring
+	dirname := filepath.Join(t.Name, target.Name, tcase.Name)
+	// fire paiza.io API
+	sres1 := t.do(dirname, target.Language, target.FileName, []string{tcase.InputFileName})
+	// anyting other than stdout
+	others := []string{sres1.BuildStdoutFileName, sres1.BuildStderrFileName, sres1.StderrFileName}
+	expect, ok := target.Expect[tcase.Name]
+	if !ok {
+		expect = target.Expect["default"]
+	}
 
 	// making result string
-	if t.TestMethod != nil && sres1.Result == t.TestMethod.OnResult {
-		// input for test_method goes in this format.
+	if t.TestMethod != nil && (sres1.ExitCode == t.TestMethod.OnExit || sres1.BuildExitCode == t.TestMethod.OnExit-512) {
 		// ex: stdin + '\000' + stdout + '\000' + answer
-		var input []byte
+		var inputs []string
 		for _, what := range t.TestMethod.InputOrder {
-			if len(input) > 0 {
-				input = append(input, '\000')
-			}
 			switch what {
 			case "input":
-				input = append(input, tcase.Input...)
+				inputs = append(inputs, tcase.InputFileName)
 			case "answer":
-				input = append(input, tcase.Answer...)
+				inputs = append(inputs, tcase.AnswerFileName)
+			case "source_code":
+				inputs = append(inputs, target.FileName)
 			case "stdout":
-				input = append(input, sres1.STDOUT...)
+				inputs = append(inputs, sres1.StdoutFileName)
 			case "stderr":
-				input = append(input, sres1.STDERR...)
-			case "b_stdout":
-				input = append(input, sres1.BuildSTDOUT...)
-			case "b_stderr":
-				input = append(input, sres1.BuildSTDERR...)
+				inputs = append(inputs, sres1.StderrFileName)
+			case "build_stdout":
+				inputs = append(inputs, sres1.BuildStdoutFileName)
+			case "build_stderr":
+				inputs = append(inputs, sres1.BuildStderrFileName)
 			}
 		}
 		// TestMethod
-		sres2 := t.do(t.TestMethod.Language, t.TestMethod.SourceCode, input)
+		sres2 := t.do(filepath.Join(dirname, t.TestMethod.Name), t.TestMethod.Language, t.TestMethod.FileName, inputs)
 
-		if sres2.Result == "SUCCESS" {
-			result = strings.TrimRight(string(sres2.STDOUT), "\n") // mainly expecting PASS or FAIL
+		// TestMethod should gracefully terminate.
+		if sres2.BuildExitCode == 0 && sres2.ExitCode == 0 {
+			result = readResult(sres2.StdoutFileName) // mainly expecting PASS or FAIL
 		} else {
 			result = fmt.Sprintf("METHOD %s", sres2.Result)
 		}
 
-		errstr += string(sres2.BuildSTDERR) + string(sres2.STDERR) + sres2.Error
+		errstr += sres2.Error
+		others = append(others, sres2.BuildStdoutFileName, sres2.BuildStderrFileName, sres1.StdoutFileName, sres2.StderrFileName)
 
-	} else if sres1.Result == "SUCCESS" {
+	} else if sres1.BuildExitCode == 0 && sres1.ExitCode == 0 {
 		// simple comparison
-		if bytes.Equal(sres1.STDOUT, tcase.Answer) {
+		if sameFileContents(sres1.StdoutFileName, tcase.AnswerFileName) {
 			result = "PASS"
 		} else {
 			result = "FAIL"
@@ -76,85 +109,102 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *Detail {
 		result = sres1.Result
 	}
 
-	return &Detail{
-		TestCase:   tcase.Name,
+	return &TestCaseResult{
+		Name:       tcase.Name,
 		Result:     result,
-		IsExpected: result == target.Expect,
+		IsExpected: result == expect,
 		Time:       sres1.Time,
-		Output:     string(sres1.STDOUT),
+		Output:     sres1.StdoutFileName,
+		Others:     others,
 		Error:      errstr,
 	}
 }
 
-// errors are treated as string
-func (t *TestUnit) do(language string, sourceCode, input []byte) *singleresult {
-	// TODO: how can I treat build time?
+func (t *TestUnit) do(name, language, sourceFileName string, inputFileNames []string) *singleresult {
+	// power is power
+	dirname := filepath.Join(tmpdir, name)
+	os.MkdirAll(dirname, 0755)
 
-	req1 := &paizaio.RunnersCreateRequest{
-		Language:        language,
-		SourceCode:      string(sourceCode),
-		Input:           string(input),
-		Longpoll:        true,
-		LongpollTimeout: 16,
+	sourcecode, _ := os.Open(sourceFileName)
+	defer sourcecode.Close()
+
+	inputs := make([]io.Reader, 0)
+	for _, inputFileName := range inputFileNames {
+		input, _ := os.Open(inputFileName)
+		inputs = append(inputs, bufio.NewReader(input))
+		defer input.Close()
 	}
 
-	res1, err := t.Client.RunnersCreate(req1)
+	stdoutFileName := filepath.Join(dirname, "stdout")
+	stdout, _ := os.OpenFile(stdoutFileName, os.O_CREATE|os.O_WRONLY, 0644)
+	defer stdout.Close()
+	stderrFileName := filepath.Join(dirname, "stderr")
+	stderr, _ := os.OpenFile(stderrFileName, os.O_CREATE|os.O_WRONLY, 0644)
+	defer stderr.Close()
+	buildStdoutFileName := filepath.Join(dirname, "build_stdout")
+	buildstdout, _ := os.OpenFile(buildStdoutFileName, os.O_CREATE|os.O_WRONLY, 0644)
+	defer buildstdout.Close()
+	buildStderrFileName := filepath.Join(dirname, "build_stderr")
+	buildstderr, _ := os.OpenFile(buildStderrFileName, os.O_CREATE|os.O_WRONLY, 0644)
+	defer buildstderr.Close()
+
+	res, err := t.Runner.Run(&runner.OrderSpec{
+		Language:       language,
+		SourceCode:     bufio.NewReader(sourcecode),
+		Inputs:         inputs,
+		InputDelimiter: "\x00",
+		Stdout:         stdout,
+		Stderr:         stderr,
+		BuildStdout:    buildstdout,
+		BuildStderr:    buildstderr,
+	})
+
+	ret := &singleresult{
+		Time:                res.Time,
+		ExitCode:            res.ExitCode,
+		BuildTime:           res.BuildTime,
+		BuildExitCode:       res.BuildExitCode,
+		StdoutFileName:      stdoutFileName,
+		StderrFileName:      stderrFileName,
+		BuildStdoutFileName: buildStdoutFileName,
+		BuildStderrFileName: buildStderrFileName,
+	}
+
 	if err != nil {
-		handle(err)
+		ret.Result, ret.Error = handle(err)
+		ret.BuildExitCode, ret.ExitCode = -1, -1
+		return ret
 	}
 
-	req2 := &paizaio.RunnersGetDetailsRequest{
-		ID: res1.ID,
+	// TIMEOUT exit code to be 124 (like coreutils timeout)
+	if res.BuildResult == "timeout" {
+		ret.BuildExitCode = 124
+	}
+	if res.Result == "timeout" {
+		ret.ExitCode = 124
 	}
 
-	res2, err := t.Client.RunnersGetDetails(req2)
-	if err != nil {
-		return handle(err)
+	if ret.BuildExitCode != 0 {
+		ret.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(res.BuildResult))
+	} else if ret.ExitCode != 0 {
+		ret.Result = fmt.Sprintf("EXECUTION %s", strings.ToUpper(res.Result))
+	} else {
+		ret.Result = strings.ToUpper(res.Result)
 	}
-
-	if res2.BuildExitCode != 0 {
-		result := fmt.Sprintf("BUILD %s", strings.ToUpper(res2.BuildResult))
-		return &singleresult{
-			Result:      result,
-			Time:        res2.BuildTime,
-			BuildSTDOUT: []byte(res2.BuildSTDOUT),
-			BuildSTDERR: []byte(res2.BuildSTDERR),
-		}
-	}
-
-	if res2.ExitCode != 0 || res2.Result != "success" {
-		result := fmt.Sprintf("EXECUTION %s", strings.ToUpper(res2.Result))
-		return &singleresult{
-			Result:      result,
-			Time:        res2.Time,
-			BuildSTDOUT: []byte(res2.BuildSTDOUT),
-			BuildSTDERR: []byte(res2.BuildSTDERR),
-			STDOUT:      []byte(res2.STDOUT),
-			STDERR:      []byte(res2.STDERR),
-		}
-	}
-
-	return &singleresult{
-		Result:      strings.ToUpper(res2.Result),
-		Time:        res2.Time,
-		BuildSTDOUT: []byte(res2.BuildSTDOUT),
-		BuildSTDERR: []byte(res2.BuildSTDERR),
-		STDOUT:      []byte(res2.STDOUT),
-		STDERR:      []byte(res2.STDERR),
-	}
+	return ret
 }
 
-func handle(err error) *singleresult {
+func handle(err error) (string, string) {
 	var result, errstr string
 
 	switch err := err.(type) {
-	case paizaio.ServerError:
+	case runner.ServerError:
 		result = "SERVER ERROR"
 		errstr = fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
-	case paizaio.ClientError:
+	case runner.ClientError:
 		result = "CLIENT ERROR"
 		errstr = fmt.Sprintf("HTTP response status code: %d\n%s", err.Code, err.Error())
-	case paizaio.RunnerError:
+	case runner.RunnerError:
 		result = "RUNNER ERROR"
 		errstr = fmt.Sprintf("Error occurred at paiza.io code runner.\n%s", err.Error())
 	default:
@@ -162,5 +212,5 @@ func handle(err error) *singleresult {
 		errstr = err.Error()
 	}
 
-	return &singleresult{Result: result, Error: errstr}
+	return result, errstr
 }

@@ -3,7 +3,7 @@ package tester
 import (
 	"time"
 
-	. "github.com/cwd-k2/titania.go/internal/pkg/pretty"
+	. "github.com/cwd-k2/titania.go/pkg/pretty"
 )
 
 type Viewer interface {

@@ -1,4 +1,4 @@
-package langtype
+package runner
 
 import "path/filepath"
 

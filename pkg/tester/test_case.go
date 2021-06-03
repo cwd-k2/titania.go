@@ -1,14 +1,13 @@
 package tester
 
 import (
-	"io/ioutil"
 	"path/filepath"
 )
 
 type TestCase struct {
-	Name   string
-	Input  []byte
-	Answer []byte
+	Name           string
+	InputFileName  string
+	AnswerFileName string
 }
 
 type TestCaseConfig struct {
@@ -17,46 +16,32 @@ type TestCaseConfig struct {
 	OutputExtention string `json:"output_extension"`
 }
 
-// Create []*TestTarget
 // This can return an empty slice.
 // All errors are logged but ignored.
-func MakeTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
+func ReadTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 	tcases := make([]*TestCase, 0)
 
 	for _, config := range configs {
-		// 出力(正解)ファイル
-		pattern := filepath.Join(basepath, config.Directory, "*"+config.OutputExtention)
-		filenames, err := filepath.Glob(pattern)
+		// 入力ファイル
+		pattern := filepath.Join(basepath, config.Directory, "*"+config.InputExtention)
+		inputFileNames, err := filepath.Glob(pattern)
 		// ここのエラーは bad pattern
 		if err != nil {
 			logger.Printf("%+v\n", err)
 			continue
 		}
 
-		for _, afile := range filenames {
-			// 想定する出力があるものに対してして入力を設定する
-			// 出力から先に決める
-			answerBS, err := ioutil.ReadFile(afile)
-			if err != nil {
-				logger.Printf("%+v\n", err)
-				continue
-			}
+		for _, inputFileName := range inputFileNames {
+			// 入力があるものに対してして出力を設定する
+			// 入力から先に決める
 
-			// 入力ファイル
-			ifile := afile[0:len(afile)-len(config.OutputExtention)] + config.InputExtention
-			inputBS, err := ioutil.ReadFile(ifile)
-			if err != nil {
-				logger.Printf("%+v\n", err)
-				continue
-			}
+			// 想定する出力ファイル
+			answerFileName := inputFileName[0:len(inputFileName)-len(config.InputExtention)] + config.OutputExtention
 
-			name, err := filepath.Rel(basepath, afile)
-			if err != nil {
-				name = afile
-			}
-			name = name[0 : len(name)-len(config.OutputExtention)]
+			name, _ := filepath.Rel(basepath, inputFileName)
+			name = name[0 : len(name)-len(config.InputExtention)]
 
-			tcases = append(tcases, &TestCase{name, inputBS, answerBS})
+			tcases = append(tcases, &TestCase{name, inputFileName, answerFileName})
 		}
 
 	}

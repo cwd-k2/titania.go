@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2021-06-03
+
+### Added
+
+- Added `simplejson` subpackage.
+- Added a functionality to store intermediate output files to a temporary directory.
+- Added `--temdir=` option to change the temporary directory.
+
+### Change
+
+- `paizaio` package was renamed to `runner`.
+- `pio` command was renamed to `piorun`.
+- Now output json is not pretty-printed by default. You can use `--pretty` flag to pretty-print.
+- `internal/pkg/pretty` package are now public.
+- `internal/pkg/langtype` were merged into `runner` package.
+- You can now set `config -> "test_target" -> "expected"` an object that explains what results is expected for each test case. Still, a plain string is OK.
+- Now `config -> "test_method" -> "on"` is `config -> "test_method" -> "on_exit"`, and you can set an integer on which the method will be executed.
+
 ## [0.6.2] - 2021-02-17
 
 ### Added
