@@ -136,16 +136,16 @@ func (t *TestUnit) do(name, language, sourceFileName string, inputFileNames []st
 	}
 
 	stdoutFileName := filepath.Join(dirname, "stdout")
-	stdout, _ := os.OpenFile(stdoutFileName, os.O_CREATE|os.O_WRONLY, 0644)
+	stdout, _ := os.Create(stdoutFileName)
 	defer stdout.Close()
 	stderrFileName := filepath.Join(dirname, "stderr")
-	stderr, _ := os.OpenFile(stderrFileName, os.O_CREATE|os.O_WRONLY, 0644)
+	stderr, _ := os.Create(stderrFileName)
 	defer stderr.Close()
 	buildStdoutFileName := filepath.Join(dirname, "build_stdout")
-	buildstdout, _ := os.OpenFile(buildStdoutFileName, os.O_CREATE|os.O_WRONLY, 0644)
+	buildstdout, _ := os.Create(buildStdoutFileName)
 	defer buildstdout.Close()
 	buildStderrFileName := filepath.Join(dirname, "build_stderr")
-	buildstderr, _ := os.OpenFile(buildStderrFileName, os.O_CREATE|os.O_WRONLY, 0644)
+	buildstderr, _ := os.Create(buildStderrFileName)
 	defer buildstderr.Close()
 
 	res, err := t.Runner.Run(&runner.OrderSpec{

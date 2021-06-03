@@ -68,19 +68,19 @@ func main() {
 	defer input.Close()
 
 	if opts.StdoutFilePath != "" {
-		stdout, _ = os.OpenFile(opts.StdoutFilePath, os.O_WRONLY|os.O_CREATE, 0644)
+		stdout, _ = os.Create(opts.StdoutFilePath)
 		defer stdout.Close()
 	}
 	if opts.StderrFilePath != "" {
-		stderr, _ = os.OpenFile(opts.StderrFilePath, os.O_WRONLY|os.O_CREATE, 0644)
+		stderr, _ = os.Create(opts.StderrFilePath)
 		defer stderr.Close()
 	}
 	if opts.BuildStdoutFilePath != "" {
-		buildstdout, _ = os.OpenFile(opts.BuildStdoutFilePath, os.O_WRONLY|os.O_CREATE, 0644)
+		buildstdout, _ = os.Create(opts.BuildStdoutFilePath)
 		defer buildstdout.Close()
 	}
 	if opts.BuildStderrFilePath != "" {
-		buildstderr, _ = os.OpenFile(opts.BuildStderrFilePath, os.O_WRONLY|os.O_CREATE, 0644)
+		buildstderr, _ = os.Create(opts.BuildStderrFilePath)
 		defer buildstderr.Close()
 	}
 
