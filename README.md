@@ -205,7 +205,7 @@ STDOUT.puts output == answer ? "FAIL" : "PASS"
 
 ### Example
 
-Examples are [here](https://github.com/cwd-k2/titania.example).
+Examples are [here](https://github.com/cwd-k2/titania.go/blob/master/examples).
 
 ```bash
 $ cd example
