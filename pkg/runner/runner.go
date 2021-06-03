@@ -37,14 +37,20 @@ func (r *Runner) api(method, endpoint string, body io.Reader) (*http.Response, e
 }
 
 func (r *Runner) create(ospec *OrderSpec) (string, error) {
-	obj := simplejson.NewObjectBuilder()
-	obj.SetString("language", ospec.Language)
-	obj.SetBool("longpoll", true)
-	obj.SetInt("longpoll_timeout", 16)
-	obj.SetStringFromReader("source_code", ospec.SourceCode)
-	obj.SetStringFromReaders("input", ospec.Inputs, ospec.InputDelimiter)
+	pr, pw := io.Pipe()
 
-	res, err := r.api("POST", "/runners/create", obj.Build())
+	go func() {
+		obj := simplejson.NewObjectBuilder(pw)
+		obj.SetString("language", ospec.Language)
+		obj.SetBool("longpoll", true)
+		obj.SetInt("longpoll_timeout", 16)
+		obj.SetStringFromReader("source_code", ospec.SourceCode)
+		obj.SetStringFromReaders("input", ospec.Inputs, ospec.InputDelimiter)
+		obj.Flush()
+		pw.Close()
+	}()
+
+	res, err := r.api("POST", "/runners/create", pr)
 	if err != nil {
 		return "", err
 	}
@@ -82,10 +88,16 @@ func (r *Runner) Run(ospec *OrderSpec) (*ResultSpec, error) {
 	if err != nil {
 		return nil, err
 	}
-	obj := simplejson.NewObjectBuilder()
-	obj.SetString("id", id)
 
-	res, err := r.api("GET", "/runners/get_details", obj.Build())
+	pr, pw := io.Pipe()
+	go func() {
+		obj := simplejson.NewObjectBuilder(pw)
+		obj.SetString("id", id)
+		obj.Flush()
+		pw.Close()
+	}()
+
+	res, err := r.api("GET", "/runners/get_details", pr)
 	if err != nil {
 		return nil, err
 	}

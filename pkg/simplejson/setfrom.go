@@ -69,7 +69,6 @@ func (b *builder) SetStringFromFile(key, filename string) error {
 	bufio.NewReader(fp).WriteTo(strbuf)
 
 	b.writeEscapedStringFromBuffer(strbuf)
-	b.buf.WriteByte(',')
 
 	return nil
 }
@@ -94,7 +93,6 @@ func (b *builder) SetStringFromFiles(key string, filenames []string, delimiter s
 	}
 
 	b.writeEscapedStringFromBuffer(strbuf)
-	b.buf.WriteByte(',')
 
 	return nil
 }
@@ -106,7 +104,6 @@ func (b *builder) SetStringFromReader(key string, reader io.Reader) {
 	strbuf.ReadFrom(reader)
 
 	b.writeEscapedStringFromBuffer(strbuf)
-	b.buf.WriteByte(',')
 }
 
 func (b *builder) SetStringFromReaders(key string, readers []io.Reader, delimiter string) {
@@ -122,5 +119,4 @@ func (b *builder) SetStringFromReaders(key string, readers []io.Reader, delimite
 	}
 
 	b.writeEscapedStringFromBuffer(strbuf)
-	b.buf.WriteByte(',')
 }

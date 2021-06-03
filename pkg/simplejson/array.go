@@ -1,7 +1,7 @@
 package simplejson
 
 import (
-	"bytes"
+	"bufio"
 	"io"
 )
 
@@ -16,13 +16,17 @@ type Array interface {
 
 type ArrayBuilder interface {
 	// Once built, you shouldn't touch this.
-	Build() io.Reader
+	Flush()
 	Array
 }
 
-func NewArrayBuilder() ArrayBuilder {
+func NewArrayBuilder(w io.Writer) ArrayBuilder {
+	buf := bufio.NewWriter(w)
+	buf.WriteByte('[')
+
 	return &builder{
-		buf: bytes.NewBuffer([]byte{'['}),
+		buf: buf,
 		end: ']',
+		fst: true,
 	}
 }
