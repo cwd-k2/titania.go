@@ -102,7 +102,7 @@ An array of objects.
 ```
 {
   "pattern": string
-  "expect":  string | map[string]: string  (Optional)
+  "expect":  string | map[string]string  (Optional)
 }
 ```
 
