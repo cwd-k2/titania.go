@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 
@@ -41,8 +40,6 @@ func init() {
 	if val := os.Getenv("PAIZA_IO_API_KEY"); val != "" {
 		PAIZA_IO_API_KEY = val
 	}
-	// default values
-	opts.InputFilePath = os.DevNull
 }
 
 func main() {
@@ -61,7 +58,7 @@ func main() {
 	defer sourcecode.Close()
 
 	if opts.InputFilePath != "" {
-		input, _ := os.Open(opts.InputFilePath)
+		input, _ = os.Open(opts.InputFilePath)
 		defer input.Close()
 	}
 	if opts.StdoutFilePath != "" {
@@ -83,11 +80,12 @@ func main() {
 
 	res, err := run.Run(&runner.OrderSpec{
 		Language:    opts.Language,
-		SourceCode:  bufio.NewReader(sourcecode),
-		Input:       bufio.NewReader(input),
+		SourceCode:  sourcecode,
+		Input:       input,
 		Stdout:      stdout,
 		Stderr:      stderr,
-		BuildStdout: buildstdout, BuildStderr: buildstderr,
+		BuildStdout: buildstdout,
+		BuildStderr: buildstderr,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
@@ -95,7 +93,7 @@ func main() {
 	}
 
 	if opts.ShowDetail {
-		fmt.Println()
+		fmt.Println("====================")
 		if res.BuildResult != "" {
 			fmt.Printf("build_time:   %ss\n", res.BuildTime)
 			fmt.Printf("build_memory: %dKB\n", res.BuildMemory/1024)
