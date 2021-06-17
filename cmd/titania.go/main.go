@@ -6,7 +6,7 @@ import (
 	"github.com/cwd-k2/titania.go/pkg/tester"
 )
 
-const VERSION string = "v0.7.0"
+const VERSION string = "v0.7.1"
 
 func main() {
 	directories := optparse()
