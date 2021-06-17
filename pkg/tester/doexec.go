@@ -1,11 +1,9 @@
 package tester
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,36 +12,25 @@ import (
 )
 
 type singleresult struct {
-	Result              string
-	BuildTime           string
-	BuildExitCode       int
-	Time                string
-	ExitCode            int
-	BuildStdoutFileName string
-	BuildStderrFileName string
-	StdoutFileName      string
-	StderrFileName      string
-	Error               string
-}
-
-func sameFileContents(fname1, fname2 string) bool {
-	// mmm...
-	b1, _ := ioutil.ReadFile(fname1)
-	b2, _ := ioutil.ReadFile(fname2)
-
-	return bytes.Equal(b1, b2)
+	Result          string
+	BuildTime       string
+	BuildExitCode   int
+	Time            string
+	ExitCode        int
+	BuildStdoutData []byte
+	BuildStderrData []byte
+	StdoutData      []byte
+	StderrData      []byte
+	Error           string
 }
 
 // the first token to be the result
-func readResult(filename string) string {
-	fp, _ := os.Open(filename)
-	defer fp.Close()
-
-	scanner := bufio.NewScanner(fp)
-	if scanner.Scan() {
-		return scanner.Text()
-	} else {
+func readResult(data []byte) string {
+	str := string(data)
+	if str == "" {
 		return "<NONE>"
+	} else {
+		return strings.TrimRight(strings.SplitN(str, "\n", 1)[0], "\n")
 	}
 }
 
@@ -54,10 +41,20 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 	)
 	// TODO: refactoring
 	dirname := filepath.Join(t.Name, target.Name, tcase.Name)
+
+	source := bytes.NewBuffer([]byte{})
+	inputs := bytes.NewBuffer([]byte{})
+	others := bytes.NewBuffer([]byte{})
+
 	// fire paiza.io API
-	sres1 := t.do(dirname, target.Language, target.FileName, []string{tcase.InputFileName})
+	source.Write(target.CodeData)
+	inputs.Write(tcase.InputData)
+	sres1 := t.do(dirname, target.Language, source, inputs)
 	// anyting other than stdout
-	others := []string{sres1.BuildStdoutFileName, sres1.BuildStderrFileName, sres1.StderrFileName}
+	others.Write(sres1.BuildStdoutData)
+	others.Write(sres1.BuildStderrData)
+	others.Write(sres1.StderrData)
+
 	expect, ok := target.Expect[tcase.Name]
 	if !ok {
 		expect = target.Expect["default"]
@@ -65,42 +62,52 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 
 	// making result string
 	if t.TestMethod != nil && (sres1.ExitCode == t.TestMethod.OnExit || sres1.BuildExitCode == t.TestMethod.OnExit-512) {
-		// ex: stdin + '\000' + stdout + '\000' + answer
-		var inputs []string
+		source := bytes.NewBuffer([]byte{})
+		source.Write(t.TestMethod.CodeData)
+
+		inputs := bytes.NewBuffer([]byte{})
 		for _, what := range t.TestMethod.InputOrder {
 			switch what {
 			case "input":
-				inputs = append(inputs, tcase.InputFileName)
+				inputs.Write(tcase.InputData)
 			case "answer":
-				inputs = append(inputs, tcase.AnswerFileName)
+				inputs.Write(tcase.AnswerData)
 			case "source_code":
-				inputs = append(inputs, target.FileName)
+				inputs.Write(target.CodeData)
 			case "stdout":
-				inputs = append(inputs, sres1.StdoutFileName)
+				inputs.Write(sres1.StdoutData)
 			case "stderr":
-				inputs = append(inputs, sres1.StderrFileName)
+				inputs.Write(sres1.StderrData)
 			case "build_stdout":
-				inputs = append(inputs, sres1.BuildStdoutFileName)
+				inputs.Write(sres1.BuildStdoutData)
 			case "build_stderr":
-				inputs = append(inputs, sres1.BuildStderrFileName)
+				inputs.Write(sres1.BuildStderrData)
+			case "delimiter":
+				inputs.WriteString(t.TestMethod.Delimiter)
+			case "newline":
+				inputs.WriteString("\n")
+			case "tab":
+				inputs.WriteString("\t")
 			}
 		}
 		// TestMethod
-		sres2 := t.do(filepath.Join(dirname, t.TestMethod.Name), t.TestMethod.Language, t.TestMethod.FileName, inputs)
+		sres2 := t.do(filepath.Join(dirname, t.TestMethod.Name), t.TestMethod.Language, source, inputs)
 
 		// TestMethod should gracefully terminate.
 		if sres2.BuildExitCode == 0 && sres2.ExitCode == 0 {
-			result = readResult(sres2.StdoutFileName) // mainly expecting PASS or FAIL
+			result = readResult(sres2.StdoutData) // mainly expecting PASS or FAIL
 		} else {
 			result = fmt.Sprintf("METHOD %s", sres2.Result)
 		}
 
 		errstr += sres2.Error
-		others = append(others, sres2.BuildStdoutFileName, sres2.BuildStderrFileName, sres1.StdoutFileName, sres2.StderrFileName)
+		others.Write(sres2.BuildStderrData)
+		others.Write(sres2.StdoutData)
+		others.Write(sres2.StderrData)
 
 	} else if sres1.BuildExitCode == 0 && sres1.ExitCode == 0 {
 		// simple comparison
-		if sameFileContents(sres1.StdoutFileName, tcase.AnswerFileName) {
+		if bytes.Equal(sres1.StdoutData, tcase.AnswerData) {
 			result = "PASS"
 		} else {
 			result = "FAIL"
@@ -114,60 +121,49 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 		Result:     result,
 		IsExpected: result == expect,
 		Time:       sres1.Time,
-		Output:     sres1.StdoutFileName,
-		Others:     others,
+		Output:     string(sres1.StdoutData),
+		Others:     others.String(),
 		Error:      errstr,
 	}
 }
 
-func (t *TestUnit) do(name, language, sourceFileName string, inputFileNames []string) *singleresult {
+func (t *TestUnit) do(name, language string, source, input io.Reader) *singleresult {
 	// power is power
 	dirname := filepath.Join(tmpdir, name)
 	os.MkdirAll(dirname, 0755)
 
-	sourcecode, _ := os.Open(sourceFileName)
-	defer sourcecode.Close()
-
-	inputs := make([]io.Reader, 0)
-	for _, inputFileName := range inputFileNames {
-		input, _ := os.Open(inputFileName)
-		inputs = append(inputs, bufio.NewReader(input))
-		defer input.Close()
-	}
-
-	stdoutFileName := filepath.Join(dirname, "stdout")
-	stdout, _ := os.Create(stdoutFileName)
+	stdout, _ := os.Create(filepath.Join(dirname, "stdout"))
+	stderr, _ := os.Create(filepath.Join(dirname, "stderr"))
+	buildStdout, _ := os.Create(filepath.Join(dirname, "build_stdout"))
+	buildStderr, _ := os.Create(filepath.Join(dirname, "build_stderr"))
 	defer stdout.Close()
-	stderrFileName := filepath.Join(dirname, "stderr")
-	stderr, _ := os.Create(stderrFileName)
 	defer stderr.Close()
-	buildStdoutFileName := filepath.Join(dirname, "build_stdout")
-	buildstdout, _ := os.Create(buildStdoutFileName)
-	defer buildstdout.Close()
-	buildStderrFileName := filepath.Join(dirname, "build_stderr")
-	buildstderr, _ := os.Create(buildStderrFileName)
-	defer buildstderr.Close()
+	defer buildStdout.Close()
+	defer buildStderr.Close()
+	stdoutBuf := bytes.NewBuffer([]byte{})
+	stderrBuf := bytes.NewBuffer([]byte{})
+	buildStdoutBuf := bytes.NewBuffer([]byte{})
+	buildStderrBuf := bytes.NewBuffer([]byte{})
 
 	res, err := t.Runner.Run(&runner.OrderSpec{
-		Language:       language,
-		SourceCode:     bufio.NewReader(sourcecode),
-		Inputs:         inputs,
-		InputDelimiter: "\x00",
-		Stdout:         stdout,
-		Stderr:         stderr,
-		BuildStdout:    buildstdout,
-		BuildStderr:    buildstderr,
+		Language:    language,
+		SourceCode:  source,
+		Input:       input,
+		Stdout:      io.MultiWriter(stdout, stdoutBuf),
+		Stderr:      io.MultiWriter(stderr, stderrBuf),
+		BuildStdout: io.MultiWriter(buildStdout, buildStdoutBuf),
+		BuildStderr: io.MultiWriter(buildStderr, buildStderrBuf),
 	})
 
 	ret := &singleresult{
-		Time:                res.Time,
-		ExitCode:            res.ExitCode,
-		BuildTime:           res.BuildTime,
-		BuildExitCode:       res.BuildExitCode,
-		StdoutFileName:      stdoutFileName,
-		StderrFileName:      stderrFileName,
-		BuildStdoutFileName: buildStdoutFileName,
-		BuildStderrFileName: buildStderrFileName,
+		Time:            res.Time,
+		ExitCode:        res.ExitCode,
+		BuildTime:       res.BuildTime,
+		BuildExitCode:   res.BuildExitCode,
+		StdoutData:      stdoutBuf.Bytes(),
+		StderrData:      stderrBuf.Bytes(),
+		BuildStdoutData: buildStdoutBuf.Bytes(),
+		BuildStderrData: buildStderrBuf.Bytes(),
 	}
 
 	if err != nil {

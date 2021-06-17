@@ -19,6 +19,6 @@ type TestCaseResult struct {
 	IsExpected bool
 	Time       string
 	Output     string
-	Others     []string
+	Others     string
 	Error      string
 }

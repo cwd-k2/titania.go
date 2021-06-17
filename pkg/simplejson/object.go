@@ -13,9 +13,7 @@ type Object interface {
 	SetObject(string, func(Object))
 	SetArray(string, func(Array))
 	SetStringFromFile(string, string) error
-	SetStringFromFiles(string, []string, string) error
 	SetStringFromReader(string, io.Reader)
-	SetStringFromReaders(string, []io.Reader, string)
 }
 
 type ObjectBuilder interface {

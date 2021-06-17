@@ -45,7 +45,7 @@ func (r *Runner) create(ospec *OrderSpec) (string, error) {
 		obj.SetBool("longpoll", true)
 		obj.SetInt("longpoll_timeout", 16)
 		obj.SetStringFromReader("source_code", ospec.SourceCode)
-		obj.SetStringFromReaders("input", ospec.Inputs, ospec.InputDelimiter)
+		obj.SetStringFromReader("input", ospec.Input)
 		obj.Flush()
 		pw.Close()
 	}()

@@ -73,50 +73,11 @@ func (b *builder) SetStringFromFile(key, filename string) error {
 	return nil
 }
 
-func (b *builder) SetStringFromFiles(key string, filenames []string, delimiter string) error {
-	b.addKey(key)
-
-	strbuf := bytes.NewBuffer([]byte{})
-
-	for i, filename := range filenames {
-		fp, err := os.Open(filename)
-		if err != nil {
-			return err
-		}
-		defer fp.Close()
-
-		bufio.NewReader(fp).WriteTo(strbuf)
-
-		if i < len(filenames)-1 {
-			strbuf.WriteString(delimiter)
-		}
-	}
-
-	b.writeEscapedStringFromBuffer(strbuf)
-
-	return nil
-}
-
 func (b *builder) SetStringFromReader(key string, reader io.Reader) {
 	b.addKey(key)
 
 	strbuf := bytes.NewBuffer([]byte{})
 	strbuf.ReadFrom(reader)
-
-	b.writeEscapedStringFromBuffer(strbuf)
-}
-
-func (b *builder) SetStringFromReaders(key string, readers []io.Reader, delimiter string) {
-	b.addKey(key)
-
-	strbuf := bytes.NewBuffer([]byte{})
-
-	for i, reader := range readers {
-		strbuf.ReadFrom(reader)
-		if i < len(readers)-1 {
-			strbuf.WriteString(delimiter)
-		}
-	}
 
 	b.writeEscapedStringFromBuffer(strbuf)
 }

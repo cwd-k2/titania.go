@@ -84,8 +84,8 @@ func buildjson(w io.Writer, uresults []*tester.TestUnitResult) {
 									obj.SetString("result", cresult.Result)
 									obj.SetBool("is_expected", cresult.IsExpected)
 									obj.SetString("time", cresult.Time)
-									obj.SetStringFromFile("output", cresult.Output)
-									obj.SetStringFromFiles("others", cresult.Others, "")
+									obj.SetString("output", cresult.Output)
+									obj.SetString("others", cresult.Others)
 									obj.SetString("error", cresult.Error)
 								})
 							}
