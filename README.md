@@ -243,6 +243,10 @@ Pretty printing the output json.
 
 You can set where to put the intermediate files when executing tests.
 
+#### `--maxjob=N`
+
+You can set the maximum number of concurrent jobs. As default, there is no limit.
+
 ### Source codes; Languages
 
 `titania.go` detects source codes' languages by their extensions. You can see the languages available [here](https://github.com/cwd-k2/titania.go/blob/master/pkg/runner/langtype.go).

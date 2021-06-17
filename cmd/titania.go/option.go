@@ -5,14 +5,14 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+
+	"github.com/cwd-k2/titania.go/pkg/tester"
 )
 
 var (
-	quiet       = false
 	prettyprint = false
-	tmpdir      = ""
-	langs       = []string{}
 )
 
 func version() {
@@ -33,6 +33,7 @@ options:
       --quiet                  quiet log
       --lang=lang1[,lang2,...] language[s] to test
       --tmpdir=DIRNAME         set a directory where temporary files are put
+      --maxjob=N               set a maximum number of jobs to run concurrently (N > 0)
 `)
 }
 
@@ -64,10 +65,22 @@ func optparse() []string {
 		}
 
 		if strings.HasPrefix(arg, "--lang=") {
-			langs = strings.Split(strings.TrimPrefix(arg, "--lang="), ",")
+			langs := strings.Split(strings.TrimPrefix(arg, "--lang="), ",")
+			tester.SetLanguages(langs)
 			continue
 		} else if strings.HasPrefix(arg, "--tmpdir=") {
-			tmpdir, _ = cleanerpath(pwd, strings.TrimPrefix(arg, "--tmpdir="))
+			tmpdir, _ := cleanerpath(pwd, strings.TrimPrefix(arg, "--tmpdir="))
+			if tmpdir != "" {
+				tester.SetTmpDir(tmpdir)
+			}
+			continue
+		} else if strings.HasPrefix(arg, "--maxjob=") {
+			num, err := strconv.Atoi(strings.TrimPrefix(arg, "--maxjob="))
+			if err != nil || num <= 0 {
+				usage()
+				os.Exit(1)
+			}
+			tester.SetMaxConcurrentJobs(num)
 			continue
 		}
 
@@ -79,14 +92,26 @@ func optparse() []string {
 			version()
 			os.Exit(0)
 		case "--quiet":
-			quiet = true
+			tester.SetQuiet(true)
 		case "--pretty":
 			prettyprint = true
 		case "--lang":
-			langs = strings.Split(strings.TrimPrefix(os.Args[i+2], "--lang="), ",")
+			langs := strings.Split(os.Args[i+2], ",")
+			tester.SetLanguages(langs)
 			used = i + 1
 		case "--tmpdir":
-			tmpdir, _ = cleanerpath(pwd, strings.TrimPrefix(os.Args[i+2], "--tmpdir="))
+			tmpdir, _ := cleanerpath(pwd, os.Args[i+2])
+			if tmpdir != "" {
+				tester.SetTmpDir(tmpdir)
+			}
+			used = i + 1
+		case "--maxjob":
+			num, err := strconv.Atoi(os.Args[i+2])
+			if err != nil || num <= 0 {
+				usage()
+				os.Exit(1)
+			}
+			tester.SetMaxConcurrentJobs(num)
 			used = i + 1
 		default:
 			println("No such option:", arg)
