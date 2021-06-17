@@ -1,40 +1,35 @@
 package simplejson
 
 import (
-	"bytes"
-	"io"
+	"bufio"
 	"strconv"
 	"strings"
 )
 
 // hidden!
 type builder struct {
-	buf *bytes.Buffer
+	buf *bufio.Writer
 	end byte
+	fst bool
 	// TODO: structure management (ok to set, add, etc)
 	// (state: inside object/nestedobject/array/nestedarray...)
 	// TODO: Error handling
 }
 
-func (b *builder) Build() io.Reader {
-	b.trailing(b.end)
-
-	buf := b.buf
-	b.buf = nil
-
-	return buf
+func (b *builder) Flush() {
+	b.buf.WriteByte(b.end)
+	b.buf.Flush()
 }
 
-func (b *builder) trailing(token byte) {
-	length := b.buf.Len()
-	if length > 0 && b.buf.Bytes()[length-1] == ',' {
-		b.buf.Bytes()[length-1] = token
-	} else {
-		b.buf.WriteByte(token)
+func (b *builder) addComma() {
+	if !b.fst {
+		b.buf.WriteByte(',')
 	}
+	b.fst = false
 }
 
 func (b *builder) addKey(key string) {
+	b.addComma()
 	b.writeEscapedString(key)
 	b.buf.WriteByte(':')
 }
@@ -49,22 +44,26 @@ func (b *builder) writeEscapedString(str string) {
 
 func (b *builder) SetInt(key string, value int) {
 	b.addKey(key)
-	b.AddInt(value)
+	b.buf.WriteString(strconv.Itoa(value))
 }
 
 func (b *builder) SetBool(key string, value bool) {
 	b.addKey(key)
-	b.AddBool(value)
+	if value {
+		b.buf.WriteString("true")
+	} else {
+		b.buf.WriteString("false")
+	}
 }
 
 func (b *builder) SetNull(key string) {
 	b.addKey(key)
-	b.AddNull()
+	b.buf.WriteString("null")
 }
 
 func (b *builder) SetString(key, value string) {
 	b.addKey(key)
-	b.AddString(value)
+	b.writeEscapedString(value)
 }
 
 /**
@@ -72,27 +71,27 @@ func (b *builder) SetString(key, value string) {
  */
 
 func (b *builder) AddInt(value int) {
+	b.addComma()
 	b.buf.WriteString(strconv.Itoa(value))
-	b.buf.WriteByte(',')
 }
 
 func (b *builder) AddBool(value bool) {
+	b.addComma()
 	if value {
 		b.buf.WriteString("true")
 	} else {
 		b.buf.WriteString("false")
 	}
-	b.buf.WriteByte(',')
 }
 
 func (b *builder) AddNull() {
+	b.addComma()
 	b.buf.WriteString("null")
-	b.buf.WriteByte(',')
 }
 
 func (b *builder) AddString(value string) {
+	b.addComma()
 	b.writeEscapedString(value)
-	b.buf.WriteByte(',')
 }
 
 /**
@@ -101,24 +100,32 @@ func (b *builder) AddString(value string) {
 
 func (b *builder) SetObject(key string, value func(Object)) {
 	b.addKey(key)
-	b.AddObject(value)
+	b.fst = true
+	b.buf.WriteByte('{')
+	value(b)
+	b.buf.WriteByte('}')
 }
 
 func (b *builder) SetArray(key string, value func(Array)) {
 	b.addKey(key)
-	b.AddArray(value)
+	b.fst = true
+	b.buf.WriteByte('[')
+	value(b)
+	b.buf.WriteByte(']')
 }
 
 func (b *builder) AddObject(value func(Object)) {
+	b.addComma()
+	b.fst = true
 	b.buf.WriteByte('{')
 	value(b)
-	b.trailing('}')
-	b.buf.WriteByte(',')
+	b.buf.WriteByte('}')
 }
 
 func (b *builder) AddArray(value func(Array)) {
+	b.addComma()
+	b.fst = true
 	b.buf.WriteByte('[')
 	value(b)
-	b.trailing(']')
-	b.buf.WriteByte(',')
+	b.buf.WriteByte(']')
 }

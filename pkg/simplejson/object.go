@@ -1,7 +1,7 @@
 package simplejson
 
 import (
-	"bytes"
+	"bufio"
 	"io"
 )
 
@@ -13,20 +13,22 @@ type Object interface {
 	SetObject(string, func(Object))
 	SetArray(string, func(Array))
 	SetStringFromFile(string, string) error
-	SetStringFromFiles(string, []string, string) error
 	SetStringFromReader(string, io.Reader)
-	SetStringFromReaders(string, []io.Reader, string)
 }
 
 type ObjectBuilder interface {
 	// Once built, you shouldn't touch this.
-	Build() io.Reader
+	Flush()
 	Object
 }
 
-func NewObjectBuilder() ObjectBuilder {
+func NewObjectBuilder(w io.Writer) ObjectBuilder {
+	buf := bufio.NewWriter(w)
+	buf.WriteByte('{')
+
 	return &builder{
-		buf: bytes.NewBuffer([]byte{'{'}),
+		buf: buf,
 		end: '}',
+		fst: true,
 	}
 }

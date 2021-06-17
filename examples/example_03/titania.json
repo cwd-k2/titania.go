@@ -12,6 +12,7 @@
     }
   ],
   "test_method": {
-    "file_name": "./test_method.rb"
+    "file_name": "./test_method.rb",
+    "input_order": ["stdout", "delimiter", "input", "delimiter", "answer"]
   }
 }

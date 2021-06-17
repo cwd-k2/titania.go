@@ -1,13 +1,14 @@
 package tester
 
 import (
+	"os"
 	"path/filepath"
 )
 
 type TestCase struct {
-	Name           string
-	InputFileName  string
-	AnswerFileName string
+	Name       string
+	InputData  []byte
+	AnswerData []byte
 }
 
 type TestCaseConfig struct {
@@ -41,7 +42,20 @@ func ReadTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 			name, _ := filepath.Rel(basepath, inputFileName)
 			name = name[0 : len(name)-len(config.InputExtention)]
 
-			tcases = append(tcases, &TestCase{name, inputFileName, answerFileName})
+			tcase := &TestCase{
+				Name: name,
+			}
+
+			if tcase.InputData, err = os.ReadFile(inputFileName); err != nil {
+				logger.Printf("%+v\n", err)
+				continue
+			}
+			// 出力ファイルはなくてもよい
+			if tcase.AnswerData, err = os.ReadFile(answerFileName); err != nil {
+				logger.Printf("%+v\n", err)
+			}
+
+			tcases = append(tcases, tcase)
 		}
 
 	}

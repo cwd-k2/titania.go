@@ -1,3 +1,4 @@
 *.json
 !titania.json
 go.sum
+.tmp

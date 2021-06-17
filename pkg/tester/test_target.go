@@ -2,6 +2,7 @@ package tester
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 
 	"github.com/cwd-k2/titania.go/pkg/runner"
@@ -10,7 +11,7 @@ import (
 type TestTarget struct {
 	Name     string
 	Language string
-	FileName string
+	CodeData []byte
 	Expect   map[string]string
 }
 
@@ -68,7 +69,18 @@ func ReadTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget 
 				name = filename
 			}
 
-			targets = append(targets, &TestTarget{name, language, filename, expect})
+			target := &TestTarget{
+				Name:     name,
+				Language: language,
+				Expect:   expect,
+			}
+
+			if target.CodeData, err = os.ReadFile(filename); err != nil {
+				logger.Printf("%+v\n", err)
+				continue
+			}
+
+			targets = append(targets, target)
 		}
 	}
 

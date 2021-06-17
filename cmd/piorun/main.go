@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/cwd-k2/titania.go/pkg/runner"
@@ -15,7 +14,6 @@ var (
 )
 
 var opts struct {
-	STDIN               bool
 	ShowDetail          bool
 	InputFilePath       string
 	Language            string
@@ -29,6 +27,7 @@ var opts struct {
 }
 
 var (
+	input       = os.Stdin
 	stdout      = os.Stdout
 	stderr      = os.Stderr
 	buildstdout = os.Stdout
@@ -52,9 +51,6 @@ func main() {
 	if opts.Language == "" {
 		opts.Language = runner.LangType(opts.Args.ProgramFilePath)
 	}
-	if opts.InputFilePath != "" && opts.STDIN {
-		opts.InputFilePath = "/dev/stdin"
-	}
 
 	run := runner.NewRunner(runner.Config{
 		Host:   PAIZA_IO_URL,
@@ -64,34 +60,34 @@ func main() {
 	sourcecode, _ := os.Open(opts.Args.ProgramFilePath)
 	defer sourcecode.Close()
 
-	input, _ := os.Open(opts.InputFilePath)
-	defer input.Close()
-
+	if opts.InputFilePath != "" {
+		input, _ := os.Open(opts.InputFilePath)
+		defer input.Close()
+	}
 	if opts.StdoutFilePath != "" {
-		stdout, _ = os.OpenFile(opts.StdoutFilePath, os.O_WRONLY|os.O_CREATE, 0644)
+		stdout, _ = os.Create(opts.StdoutFilePath)
 		defer stdout.Close()
 	}
 	if opts.StderrFilePath != "" {
-		stderr, _ = os.OpenFile(opts.StderrFilePath, os.O_WRONLY|os.O_CREATE, 0644)
+		stderr, _ = os.Create(opts.StderrFilePath)
 		defer stderr.Close()
 	}
 	if opts.BuildStdoutFilePath != "" {
-		buildstdout, _ = os.OpenFile(opts.BuildStdoutFilePath, os.O_WRONLY|os.O_CREATE, 0644)
+		buildstdout, _ = os.Create(opts.BuildStdoutFilePath)
 		defer buildstdout.Close()
 	}
 	if opts.BuildStderrFilePath != "" {
-		buildstderr, _ = os.OpenFile(opts.BuildStderrFilePath, os.O_WRONLY|os.O_CREATE, 0644)
+		buildstderr, _ = os.Create(opts.BuildStderrFilePath)
 		defer buildstderr.Close()
 	}
 
 	res, err := run.Run(&runner.OrderSpec{
 		Language:    opts.Language,
 		SourceCode:  bufio.NewReader(sourcecode),
-		Inputs:      []io.Reader{bufio.NewReader(input)},
+		Input:       bufio.NewReader(input),
 		Stdout:      stdout,
 		Stderr:      stderr,
-		BuildStdout: buildstdout,
-		BuildStderr: buildstderr,
+		BuildStdout: buildstdout, BuildStderr: buildstderr,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)

@@ -9,7 +9,6 @@ func usage() {
 	println(`Usage: piorun [OPTIONS] PROGRAMFILE
 
 Options:
-      --stdin                read input from STDIN (overwritten by --input)
       --detail               show detail
       --input=FILE           read input from specified FILE
       --stdout=FILE          write stdout to specified FILE
@@ -58,8 +57,6 @@ func optparse() {
 		case "--help", "-h":
 			usage()
 			os.Exit(0)
-		case "--stdin":
-			opts.STDIN = true
 		case "--detail":
 			opts.ShowDetail = true
 		case "--input":

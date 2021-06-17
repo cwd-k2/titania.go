@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
+	"io"
 	"os"
 
 	. "github.com/cwd-k2/titania.go/pkg/pretty"
@@ -59,8 +61,8 @@ func showTestCaseResult(cresult *tester.TestCaseResult) {
 	}
 }
 
-func printjson(uresults []*tester.TestUnitResult) {
-	builder := simplejson.NewArrayBuilder()
+func buildjson(w io.Writer, uresults []*tester.TestUnitResult) {
+	builder := simplejson.NewArrayBuilder(w)
 	for _, uresult := range uresults {
 		builder.AddObject(func(obj simplejson.Object) {
 			obj.SetString("name", uresult.Name)
@@ -82,8 +84,8 @@ func printjson(uresults []*tester.TestUnitResult) {
 									obj.SetString("result", cresult.Result)
 									obj.SetBool("is_expected", cresult.IsExpected)
 									obj.SetString("time", cresult.Time)
-									obj.SetStringFromFile("output", cresult.Output)
-									obj.SetStringFromFiles("others", cresult.Others, "")
+									obj.SetString("output", cresult.Output)
+									obj.SetString("others", cresult.Others)
 									obj.SetString("error", cresult.Error)
 								})
 							}
@@ -93,10 +95,14 @@ func printjson(uresults []*tester.TestUnitResult) {
 			})
 		})
 	}
-	stdoutbuf := bufio.NewWriter(os.Stdout)
-	defer stdoutbuf.Flush()
+	builder.Flush()
+}
 
+func printjson(uresults []*tester.TestUnitResult) {
 	if prettyprint {
+		writer := bytes.NewBuffer([]byte{})
+		buildjson(writer, uresults)
+
 		o := make([]*struct {
 			Name       string `json:"name"`
 			TestMethod string `json:"test_method"`
@@ -116,8 +122,10 @@ func printjson(uresults []*tester.TestUnitResult) {
 			} `json:"fruits"`
 		}, 0)
 
-		dec := json.NewDecoder(builder.Build())
+		dec := json.NewDecoder(writer)
 		dec.Decode(&o)
+
+		stdoutbuf := bufio.NewWriter(os.Stdout)
 
 		enc := json.NewEncoder(stdoutbuf)
 		enc.SetIndent("", "  ")
@@ -126,9 +134,8 @@ func printjson(uresults []*tester.TestUnitResult) {
 		if err := enc.Encode(o); err != nil {
 			panic(err)
 		}
-
 	} else {
-		stdoutbuf.ReadFrom(builder.Build())
+		buildjson(os.Stdout, uresults)
 	}
 
 }

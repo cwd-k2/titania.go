@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2021-06-17
+
+### Change
+
+- `piorun` command now takes `os.Stdin` as default input.
+- Now you can set `"delimiter"` and more detailed order for `"test_method"`.
+
 ## [0.7.0] - 2021-06-03
 
 ### Added

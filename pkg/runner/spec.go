@@ -3,10 +3,9 @@ package runner
 import "io"
 
 type OrderSpec struct {
-	Language       string
-	SourceCode     io.Reader
-	Inputs         []io.Reader
-	InputDelimiter string
+	Language   string
+	SourceCode io.Reader
+	Input      io.Reader
 
 	BuildStdout io.Writer
 	BuildStderr io.Writer

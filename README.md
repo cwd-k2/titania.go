@@ -146,6 +146,7 @@ An object.
 ```
 {
   "file_name":   string
+  "delimiter":   string
   "on_exit":     int
   "input_order": []string
 }
@@ -155,22 +156,20 @@ Without `"test_method"`, results are judged by simple comparison of `"test_targe
 
 With this, more complicated judge will be available, if you have any idea.
 
-The `"file_name"` and `"on_exit"` field are simple. Just specify a path to the test method file and specify on which exit code of test target the judge will be conducted.
+The `"file_name"` and `"on_exit"` field are simple. Just specify a path to the test method file and specify on which exit code of test target the judge will be conducted. The `"delimiter"` is a special string, which can be used in `"input_order"` section.
 
-Okay, let's see an example.
+Okay, let's see the default value for it.
 
 ```
 {
   ...,
-  "input_order": ["stdout", "input", "answer"]
+  "input_order": ["stdout", "delimiter" , "input", "delimiter", "answer"]
 }
 ```
 
 Then the input for this test method goes like this.
 
-`<STDOUT>\0<INPUT>\0<ANSWER>`
-
-**Note**: They are joined with `\0`, the null character.
+`<STDOUT><delimiter><INPUT><delimiter><ANSWER>`
 
 Available elements for `"input_order"` is...
 
@@ -188,6 +187,12 @@ Available elements for `"input_order"` is...
   - The output on STDOUT, when building/compiling.
 - `"source_code"`
   - Then source code of `"test_target"`
+- `"delimiter"`
+  - You can use this special string in input_order. Default is `"\x00"` (null character).
+- `"newline"`
+  - A newline (`"\n"`)
+- `"tab"`
+  - A tab character (`"\t"`)
 
 And the test method will be like below.
 

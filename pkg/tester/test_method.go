@@ -1,6 +1,7 @@
 package tester
 
 import (
+	"os"
 	"path/filepath"
 
 	"github.com/cwd-k2/titania.go/pkg/runner"
@@ -9,14 +10,16 @@ import (
 type TestMethod struct {
 	Name       string
 	Language   string
+	CodeData   []byte
+	Delimiter  string
 	OnExit     int
-	FileName   string
 	InputOrder []string
 }
 
 type TestMethodConfig struct {
 	FileName   string   `json:"file_name"`
 	OnExit     int      `json:"on_exit"`     // on_exit: 0, ...
+	Delimiter  string   `json:"delimiter"`   // ex: 9E806A3A-8E0C-4CF4-8139-4ABCC2443E4E
 	InputOrder []string `json:"input_order"` // ex: [stdout, stderr, input, ...]
 }
 
@@ -39,19 +42,33 @@ func ReadTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 		return nil
 	}
 
+	var delimiter string
+	if len(config.Delimiter) != 0 {
+		delimiter = config.Delimiter
+	} else {
+		delimiter = "\x00"
+	}
+
 	var inputorder []string
 	// TODO: validation
 	if len(config.InputOrder) != 0 {
 		inputorder = config.InputOrder
 	} else {
-		inputorder = []string{"stdout", "input", "answer"}
+		inputorder = []string{"stdout", "newline", "input", "newline", "answer"}
 	}
 
-	return &TestMethod{
+	tmethod := &TestMethod{
 		Name:       name,
 		Language:   language,
+		Delimiter:  delimiter,
 		OnExit:     config.OnExit,
-		FileName:   filename,
 		InputOrder: inputorder,
 	}
+
+	if tmethod.CodeData, err = os.ReadFile(filename); err != nil {
+		logger.Printf("%+v\n", err)
+		return nil
+	}
+
+	return tmethod
 }
