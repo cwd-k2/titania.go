@@ -241,7 +241,7 @@ Pretty printing the output json.
 
 #### `--tmpdir=DIRNAME`
 
-You can set where to put the intermediate files when executing tests.
+You can set where to put the intermediate files when executing tests. If not specified, intermediate files will not be created.
 
 #### `--maxjob=N`
 

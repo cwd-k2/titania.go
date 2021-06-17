@@ -4,15 +4,13 @@ import (
 	"log"
 	"math"
 	"os"
-	"path/filepath"
-	"time"
 )
 
 var (
 	logger            = log.New(os.Stderr, "[tester] ", log.Lshortfile|log.Ltime)
 	quiet             = false
 	languages         = make([]string, 0)
-	tmpdir            = filepath.Join(os.TempDir(), "titania.go", time.Now().Format("20060102150405"))
+	tmpdir            = ""
 	maxConcurrentJobs = math.MaxInt32
 )
 
