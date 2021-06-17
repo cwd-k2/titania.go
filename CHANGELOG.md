@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Change
+
+- Doesn't create temporary files by default.
+
+## [0.8.0] - 2021-06-17
+
+### Added
+
+- You can now set the maximum jobs to run concurrently by `--maxjob=N`.
+
 ## [0.7.1] - 2021-06-17
 
 ### Change

@@ -58,15 +58,26 @@ func ReadTestUnit(dirname string, config *Config) *TestUnit {
 func (t *TestUnit) Exec() *TestUnitResult {
 	curr := 0
 	stop := len(t.TestTargets) * len(t.TestCases)
+	jobs := stop
+	if jobs > maxConcurrentJobs {
+		jobs = maxConcurrentJobs
+	}
 
 	tresults := make([]*TestTargetResult, len(t.TestTargets))
 	for i, target := range t.TestTargets {
-		tresults[i] = &TestTargetResult{target.Name, target.Language, target.Expect, make([]*TestCaseResult, len(t.TestCases))}
+		tresults[i] = &TestTargetResult{
+			Name:      target.Name,
+			Language:  target.Language,
+			Expect:    target.Expect,
+			TestCases: make([]*TestCaseResult, len(t.TestCases)),
+		}
 	}
 
 	// idiom: sending multiple value with a single channel
 	ch := make(chan func() (int, int, *TestCaseResult), stop)
+	wk := make(chan int, jobs)
 	fn := func(i, j int, target *TestTarget, tcase *TestCase) {
+		wk <- 0
 		cresult := t.exec(target, tcase)
 		ch <- func() (int, int, *TestCaseResult) { return i, j, cresult }
 	}
@@ -81,6 +92,7 @@ func (t *TestUnit) Exec() *TestUnitResult {
 	}
 
 	for res := range ch {
+		<-wk
 		i, j, cresult := res()
 
 		tresults[i].TestCases[j] = cresult

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,6 +52,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 	inputs.Write(tcase.InputData)
 	sres1 := t.do(dirname, target.Language, source, inputs)
 	// anyting other than stdout
+	errstr += sres1.Error
 	others.Write(sres1.BuildStdoutData)
 	others.Write(sres1.BuildStderrData)
 	others.Write(sres1.StderrData)
@@ -101,6 +103,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 		}
 
 		errstr += sres2.Error
+		others.Write(sres2.BuildStdoutData)
 		others.Write(sres2.BuildStderrData)
 		others.Write(sres2.StdoutData)
 		others.Write(sres2.StderrData)
@@ -129,30 +132,44 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 
 func (t *TestUnit) do(name, language string, source, input io.Reader) *singleresult {
 	// power is power
-	dirname := filepath.Join(tmpdir, name)
-	os.MkdirAll(dirname, 0755)
+	stdoutEnt := ioutil.Discard
+	stderrEnt := ioutil.Discard
+	buildStdoutEnt := ioutil.Discard
+	buildStderrEnt := ioutil.Discard
 
-	stdout, _ := os.Create(filepath.Join(dirname, "stdout"))
-	stderr, _ := os.Create(filepath.Join(dirname, "stderr"))
-	buildStdout, _ := os.Create(filepath.Join(dirname, "build_stdout"))
-	buildStderr, _ := os.Create(filepath.Join(dirname, "build_stderr"))
-	defer stdout.Close()
-	defer stderr.Close()
-	defer buildStdout.Close()
-	defer buildStderr.Close()
 	stdoutBuf := bytes.NewBuffer([]byte{})
 	stderrBuf := bytes.NewBuffer([]byte{})
 	buildStdoutBuf := bytes.NewBuffer([]byte{})
 	buildStderrBuf := bytes.NewBuffer([]byte{})
 
+	if tmpdir != "" {
+		dirname := filepath.Join(tmpdir, name)
+		os.MkdirAll(dirname, 0755)
+
+		stdoutFp, _ := os.Create(filepath.Join(dirname, "stdout"))
+		stderrFp, _ := os.Create(filepath.Join(dirname, "stderr"))
+		buildStdoutFp, _ := os.Create(filepath.Join(dirname, "build_stdout"))
+		buildStderrFp, _ := os.Create(filepath.Join(dirname, "build_stderr"))
+
+		stdoutEnt = stdoutFp
+		stderrEnt = stderrFp
+		buildStdoutEnt = buildStdoutFp
+		buildStderrEnt = buildStderrFp
+
+		defer stdoutFp.Close()
+		defer stderrFp.Close()
+		defer buildStdoutFp.Close()
+		defer buildStderrFp.Close()
+	}
+
 	res, err := t.Runner.Run(&runner.OrderSpec{
 		Language:    language,
 		SourceCode:  source,
 		Input:       input,
-		Stdout:      io.MultiWriter(stdout, stdoutBuf),
-		Stderr:      io.MultiWriter(stderr, stderrBuf),
-		BuildStdout: io.MultiWriter(buildStdout, buildStdoutBuf),
-		BuildStderr: io.MultiWriter(buildStderr, buildStderrBuf),
+		Stdout:      io.MultiWriter(stdoutEnt, stdoutBuf),
+		Stderr:      io.MultiWriter(stderrEnt, stderrBuf),
+		BuildStdout: io.MultiWriter(buildStdoutEnt, buildStdoutBuf),
+		BuildStderr: io.MultiWriter(buildStderrEnt, buildStderrBuf),
 	})
 
 	ret := &singleresult{
