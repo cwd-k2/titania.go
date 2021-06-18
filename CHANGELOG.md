@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2021-06-18
+
 ### Change
 
 - Output Json's format changed. Now `"fruits"` & `"details"` are named as `"test_targets"` & `"test_cases"`, `"is_expected"` is replaced by `"expect"`, etc.
