@@ -31,35 +31,35 @@ func readResult(data []byte) string {
 	if str == "" {
 		return "<NONE>"
 	} else {
-		return strings.TrimRight(strings.SplitN(str, "\n", 1)[0], "\n")
+		return strings.Split(str, "\n")[0]
 	}
 }
 
-func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
+func (t *TestUnit) exec(i, j int) *TestCaseResult {
 	var (
 		result string
 		errstr string
 	)
 	// TODO: refactoring
-	dirname := filepath.Join(t.Name, target.Name, tcase.Name)
+	dirname := filepath.Join(t.Name, t.TestTargets[i].Name, t.TestCases[j].Name)
 
 	source := bytes.NewBuffer([]byte{})
 	inputs := bytes.NewBuffer([]byte{})
 	others := bytes.NewBuffer([]byte{})
 
 	// fire paiza.io API
-	source.Write(target.CodeData)
-	inputs.Write(tcase.InputData)
-	ttsres := t.do(dirname, target.Language, source, inputs)
+	source.Write(t.TestTargets[i].CodeData)
+	inputs.Write(t.TestCases[j].InputData)
+	ttsres := t.do(dirname, t.TestTargets[i].Language, source, inputs)
 	// anyting other than stdout
 	errstr += ttsres.Error
 	others.Write(ttsres.BuildStdoutData)
 	others.Write(ttsres.BuildStderrData)
 	others.Write(ttsres.StderrData)
 
-	expect, ok := target.Expect[tcase.Name]
+	expect, ok := t.TestTargets[i].Expect[t.TestCases[j].Name]
 	if !ok {
-		expect = target.Expect["default"]
+		expect = t.TestTargets[i].Expect["default"]
 	}
 
 	// making result string
@@ -71,11 +71,11 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 		for _, what := range t.TestMethod.InputOrder {
 			switch what {
 			case "input":
-				inputs.Write(tcase.InputData)
+				inputs.Write(t.TestCases[j].InputData)
 			case "answer":
-				inputs.Write(tcase.AnswerData)
+				inputs.Write(t.TestCases[j].AnswerData)
 			case "source_code":
-				inputs.Write(target.CodeData)
+				inputs.Write(t.TestTargets[i].CodeData)
 			case "stdout":
 				inputs.Write(ttsres.StdoutData)
 			case "stderr":
@@ -110,7 +110,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 
 	} else if ttsres.BuildExitCode == 0 && ttsres.ExitCode == 0 {
 		// simple comparison
-		if bytes.Equal(ttsres.StdoutData, tcase.AnswerData) {
+		if bytes.Equal(ttsres.StdoutData, t.TestCases[j].AnswerData) {
 			result = "PASS"
 		} else {
 			result = "FAIL"
@@ -120,7 +120,7 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 	}
 
 	return &TestCaseResult{
-		Name:   tcase.Name,
+		Name:   t.TestCases[j].Name,
 		Expect: expect,
 		Result: result,
 		Time:   ttsres.Time,
