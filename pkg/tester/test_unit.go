@@ -68,7 +68,6 @@ func (t *TestUnit) Exec() *TestUnitResult {
 		tresults[i] = &TestTargetResult{
 			Name:      target.Name,
 			Language:  target.Language,
-			Expect:    target.Expect,
 			TestCases: make([]*TestCaseResult, len(t.TestCases)),
 		}
 	}

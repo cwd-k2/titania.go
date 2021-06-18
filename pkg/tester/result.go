@@ -1,5 +1,7 @@
 package tester
 
+import "io"
+
 type TestUnitResult struct {
 	Name        string
 	TestMethod  string
@@ -9,16 +11,15 @@ type TestUnitResult struct {
 type TestTargetResult struct {
 	Name      string
 	Language  string
-	Expect    map[string]string
 	TestCases []*TestCaseResult
 }
 
 type TestCaseResult struct {
-	Name       string
-	Result     string
-	IsExpected bool
-	Time       string
-	Output     string
-	Others     string
-	Error      string
+	Name   string
+	Time   string
+	Expect string
+	Result string
+	Output io.Reader
+	Others io.Reader
+	Errors string
 }
