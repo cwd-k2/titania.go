@@ -47,13 +47,13 @@ func showTestCaseResult(cresult *tester.TestCaseResult) {
 	case "PASS":
 		fallthrough
 	case "FAIL":
-		if cresult.IsExpected {
+		if cresult.Result == cresult.Expect {
 			Printf("%s: %s %ss\n", Green(cresult.Name), Green(cresult.Result), cresult.Time)
 		} else {
 			Printf("%s: %s %ss\n", Yellow(cresult.Name), Yellow(cresult.Result), cresult.Time)
 		}
 	default:
-		if cresult.IsExpected {
+		if cresult.Result == cresult.Expect {
 			Printf("%s: %s\n", Green(cresult.Name), Green(cresult.Result))
 		} else {
 			Printf("%s: %s\n", Red(cresult.Name), Red(cresult.Result))
@@ -67,26 +67,21 @@ func buildjson(w io.Writer, uresults []*tester.TestUnitResult) {
 		builder.AddObject(func(obj simplejson.Object) {
 			obj.SetString("name", uresult.Name)
 			obj.SetString("test_method", uresult.TestMethod)
-			obj.SetArray("fruits", func(arr simplejson.Array) {
+			obj.SetArray("test_targets", func(arr simplejson.Array) {
 				for _, tresult := range uresult.TestTargets {
 					arr.AddObject(func(obj simplejson.Object) {
 						obj.SetString("name", tresult.Name)
 						obj.SetString("language", tresult.Language)
-						obj.SetObject("expect", func(obj simplejson.Object) {
-							for casename, expect := range tresult.Expect {
-								obj.SetString(casename, expect)
-							}
-						})
-						obj.SetArray("details", func(arr simplejson.Array) {
+						obj.SetArray("test_cases", func(arr simplejson.Array) {
 							for _, cresult := range tresult.TestCases {
 								arr.AddObject(func(obj simplejson.Object) {
-									obj.SetString("test_case", cresult.Name)
-									obj.SetString("result", cresult.Result)
-									obj.SetBool("is_expected", cresult.IsExpected)
+									obj.SetString("name", cresult.Name)
 									obj.SetString("time", cresult.Time)
-									obj.SetString("output", cresult.Output)
-									obj.SetString("others", cresult.Others)
-									obj.SetString("error", cresult.Error)
+									obj.SetString("expect", cresult.Expect)
+									obj.SetString("result", cresult.Result)
+									obj.SetStringFromReader("output", cresult.Output)
+									obj.SetStringFromReader("others", cresult.Others)
+									obj.SetString("errors", cresult.Errors)
 								})
 							}
 						})
@@ -103,23 +98,22 @@ func printjson(uresults []*tester.TestUnitResult) {
 		writer := bytes.NewBuffer([]byte{})
 		buildjson(writer, uresults)
 
-		o := make([]*struct {
-			Name       string `json:"name"`
-			TestMethod string `json:"test_method"`
-			Fruits     []*struct {
-				TestTarget string            `json:"test_target"`
-				Language   string            `json:"language"`
-				Expect     map[string]string `json:"expect"`
-				Details    []*struct {
-					TestCase   string `json:"test_case"`
-					Result     string `json:"result"`
-					IsExpected bool   `json:"is_expected"`
-					Time       string `json:"time"`
-					Output     string `json:"output"`
-					Others     string `json:"others"`
-					Error      string `json:"error"`
-				} `json:"details"`
-			} `json:"fruits"`
+		o := make([]struct {
+			Name        string `json:"name"`
+			TestMethod  string `json:"test_method"`
+			TestTargets []struct {
+				Name      string `json:"name"`
+				Language  string `json:"language"`
+				TestCases []struct {
+					Name   string `json:"name"`
+					Time   string `json:"time"`
+					Expect string `json:"expect"`
+					Result string `json:"result"`
+					Output string `json:"output"`
+					Others string `json:"others"`
+					Errors string `json:"errors"`
+				} `json:"test_cases"`
+			} `json:"test_targets"`
 		}, 0)
 
 		dec := json.NewDecoder(writer)

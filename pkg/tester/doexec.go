@@ -31,39 +31,39 @@ func readResult(data []byte) string {
 	if str == "" {
 		return "<NONE>"
 	} else {
-		return strings.TrimRight(strings.SplitN(str, "\n", 1)[0], "\n")
+		return strings.Split(str, "\n")[0]
 	}
 }
 
-func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
+func (t *TestUnit) exec(i, j int) *TestCaseResult {
 	var (
 		result string
 		errstr string
 	)
 	// TODO: refactoring
-	dirname := filepath.Join(t.Name, target.Name, tcase.Name)
+	dirname := filepath.Join(t.Name, t.TestTargets[i].Name, t.TestCases[j].Name)
 
 	source := bytes.NewBuffer([]byte{})
 	inputs := bytes.NewBuffer([]byte{})
 	others := bytes.NewBuffer([]byte{})
 
 	// fire paiza.io API
-	source.Write(target.CodeData)
-	inputs.Write(tcase.InputData)
-	sres1 := t.do(dirname, target.Language, source, inputs)
+	source.Write(t.TestTargets[i].CodeData)
+	inputs.Write(t.TestCases[j].InputData)
+	ttsres := t.do(dirname, t.TestTargets[i].Language, source, inputs)
 	// anyting other than stdout
-	errstr += sres1.Error
-	others.Write(sres1.BuildStdoutData)
-	others.Write(sres1.BuildStderrData)
-	others.Write(sres1.StderrData)
+	errstr += ttsres.Error
+	others.Write(ttsres.BuildStdoutData)
+	others.Write(ttsres.BuildStderrData)
+	others.Write(ttsres.StderrData)
 
-	expect, ok := target.Expect[tcase.Name]
+	expect, ok := t.TestTargets[i].Expect[t.TestCases[j].Name]
 	if !ok {
-		expect = target.Expect["default"]
+		expect = t.TestTargets[i].Expect["default"]
 	}
 
 	// making result string
-	if t.TestMethod != nil && (sres1.ExitCode == t.TestMethod.OnExit || sres1.BuildExitCode == t.TestMethod.OnExit-512) {
+	if t.TestMethod != nil && (ttsres.ExitCode == t.TestMethod.OnExit || ttsres.BuildExitCode == t.TestMethod.OnExit-512) {
 		source := bytes.NewBuffer([]byte{})
 		source.Write(t.TestMethod.CodeData)
 
@@ -71,19 +71,19 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 		for _, what := range t.TestMethod.InputOrder {
 			switch what {
 			case "input":
-				inputs.Write(tcase.InputData)
+				inputs.Write(t.TestCases[j].InputData)
 			case "answer":
-				inputs.Write(tcase.AnswerData)
+				inputs.Write(t.TestCases[j].AnswerData)
 			case "source_code":
-				inputs.Write(target.CodeData)
+				inputs.Write(t.TestTargets[i].CodeData)
 			case "stdout":
-				inputs.Write(sres1.StdoutData)
+				inputs.Write(ttsres.StdoutData)
 			case "stderr":
-				inputs.Write(sres1.StderrData)
+				inputs.Write(ttsres.StderrData)
 			case "build_stdout":
-				inputs.Write(sres1.BuildStdoutData)
+				inputs.Write(ttsres.BuildStdoutData)
 			case "build_stderr":
-				inputs.Write(sres1.BuildStderrData)
+				inputs.Write(ttsres.BuildStderrData)
 			case "delimiter":
 				inputs.WriteString(t.TestMethod.Delimiter)
 			case "newline":
@@ -93,40 +93,40 @@ func (t *TestUnit) exec(target *TestTarget, tcase *TestCase) *TestCaseResult {
 			}
 		}
 		// TestMethod
-		sres2 := t.do(filepath.Join(dirname, t.TestMethod.Name), t.TestMethod.Language, source, inputs)
+		tmsres := t.do(filepath.Join(dirname, t.TestMethod.Name), t.TestMethod.Language, source, inputs)
 
 		// TestMethod should gracefully terminate.
-		if sres2.BuildExitCode == 0 && sres2.ExitCode == 0 {
-			result = readResult(sres2.StdoutData) // mainly expecting PASS or FAIL
+		if tmsres.BuildExitCode == 0 && tmsres.ExitCode == 0 {
+			result = readResult(tmsres.StdoutData) // mainly expecting PASS or FAIL
 		} else {
-			result = fmt.Sprintf("METHOD %s", sres2.Result)
+			result = fmt.Sprintf("METHOD %s", tmsres.Result)
 		}
 
-		errstr += sres2.Error
-		others.Write(sres2.BuildStdoutData)
-		others.Write(sres2.BuildStderrData)
-		others.Write(sres2.StdoutData)
-		others.Write(sres2.StderrData)
+		errstr += tmsres.Error
+		others.Write(tmsres.BuildStdoutData)
+		others.Write(tmsres.BuildStderrData)
+		others.Write(tmsres.StdoutData)
+		others.Write(tmsres.StderrData)
 
-	} else if sres1.BuildExitCode == 0 && sres1.ExitCode == 0 {
+	} else if ttsres.BuildExitCode == 0 && ttsres.ExitCode == 0 {
 		// simple comparison
-		if bytes.Equal(sres1.StdoutData, tcase.AnswerData) {
+		if bytes.Equal(ttsres.StdoutData, t.TestCases[j].AnswerData) {
 			result = "PASS"
 		} else {
 			result = "FAIL"
 		}
 	} else {
-		result = sres1.Result
+		result = ttsres.Result
 	}
 
 	return &TestCaseResult{
-		Name:       tcase.Name,
-		Result:     result,
-		IsExpected: result == expect,
-		Time:       sres1.Time,
-		Output:     string(sres1.StdoutData),
-		Others:     others.String(),
-		Error:      errstr,
+		Name:   t.TestCases[j].Name,
+		Expect: expect,
+		Result: result,
+		Time:   ttsres.Time,
+		Output: bytes.NewReader(ttsres.StdoutData),
+		Others: others,
+		Errors: errstr,
 	}
 }
 

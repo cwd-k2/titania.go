@@ -260,20 +260,19 @@ You can set the maximum number of concurrent jobs. As default, there is no limit
   {
     "name": "example_01",
     "test_method": "default",
-    "fruits": [
+    "test_targets": [
       {
         "name": "source_code/main.hs",
         "language": "haskell",
-        "expect": { "default": "PASS" },
-        "details": [
+        "test_cases": [
           {
-            "test_case": "test_case/01",
-            "result": "PASS",
-            "is_expected": true,
+            "name": "test_case/01",
             "time": "0.00",
+            "expect": "PASS",
+            "result": "PASS",
             "output": "50\n",
             "others": "[1 of 1] Compiling Main             ( Main.hs, Main.o )\nLinking Main ...\n",
-            "error": ""
+            "errors": ""
           }, ...
         ], ...
       }, ...

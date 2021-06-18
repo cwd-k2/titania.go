@@ -68,7 +68,6 @@ func (t *TestUnit) Exec() *TestUnitResult {
 		tresults[i] = &TestTargetResult{
 			Name:      target.Name,
 			Language:  target.Language,
-			Expect:    target.Expect,
 			TestCases: make([]*TestCaseResult, len(t.TestCases)),
 		}
 	}
@@ -76,18 +75,18 @@ func (t *TestUnit) Exec() *TestUnitResult {
 	// idiom: sending multiple value with a single channel
 	ch := make(chan func() (int, int, *TestCaseResult), stop)
 	wk := make(chan int, jobs)
-	fn := func(i, j int, target *TestTarget, tcase *TestCase) {
+	fn := func(i, j int) {
 		wk <- 0
-		cresult := t.exec(target, tcase)
+		cresult := t.exec(i, j)
 		ch <- func() (int, int, *TestCaseResult) { return i, j, cresult }
 	}
 
 	t.view.Init()
 
 	// Each test is executed asynchronously
-	for i, target := range t.TestTargets {
-		for j, tcase := range t.TestCases {
-			go fn(i, j, target, tcase)
+	for i := range t.TestTargets {
+		for j := range t.TestCases {
+			go fn(i, j)
 		}
 	}
 
