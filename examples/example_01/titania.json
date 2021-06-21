@@ -12,8 +12,8 @@
   "test_case": [
     {
       "directory": "./test_case",
-      "input_extension": ".in",
-      "output_extension": ".ans"
+      "input_suffix": ".in",
+      "answer_suffix": ".ans"
     }
   ]
 }

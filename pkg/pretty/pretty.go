@@ -77,3 +77,7 @@ func Cyan(str string) string {
 func White(str string) string {
 	return fmt.Sprintf("\033[37m%s\033[39m", str)
 }
+
+func Deprecated(deprecated, instead string) string {
+	return fmt.Sprintf("\nDeprecated: %s\n=> %s", Yellow(deprecated), Green(instead))
+}
