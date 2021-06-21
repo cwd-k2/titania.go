@@ -4,7 +4,7 @@ import (
 	"os"
 )
 
-const VERSION string = "v0.8.2"
+const VERSION string = "v0.9.0"
 
 func main() {
 	directories := optparse()
