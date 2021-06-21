@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New fields `"input_prefix"` and `"answer_prefix"`. You can now use those prefixes to identify each test case.
+
+### Change
+
+- `"input_extension"` and `"output_extension"` are deprecated. They are now `"input_suffix"` and `"answer_suffix"` respectively.
+
 ## [0.8.2] - 2021-06-18
 
 ### Change
