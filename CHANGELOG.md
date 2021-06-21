@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2021-06-21
+
 ### Added
 
 - New fields `"input_prefix"` and `"answer_prefix"`. You can now use those prefixes to identify each test case.
