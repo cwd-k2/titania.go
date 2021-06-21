@@ -82,13 +82,12 @@ func optparse() {
 			usage()
 			os.Exit(1)
 		}
-
 	}
 
 	if len(args) != 1 {
 		usage()
 		os.Exit(1)
 	} else {
-		opts.Args.ProgramFilePath = args[0]
+		opts.ProgramFilePath = args[0]
 	}
 }
