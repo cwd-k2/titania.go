@@ -2,7 +2,7 @@ package tester
 
 import (
 	"encoding/json"
-	"os"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/cwd-k2/titania.go/pkg/runner"
@@ -75,7 +75,7 @@ func ReadTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget 
 				Expect:   expect,
 			}
 
-			if target.CodeData, err = os.ReadFile(filename); err != nil {
+			if target.CodeData, err = ioutil.ReadFile(filename); err != nil {
 				logger.Printf("%+v\n", err)
 				continue
 			}

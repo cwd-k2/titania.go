@@ -1,8 +1,10 @@
 package tester
 
 import (
-	"os"
+	"io/ioutil"
 	"path/filepath"
+
+	"github.com/cwd-k2/titania.go/pkg/pretty"
 )
 
 type TestCase struct {
@@ -12,9 +14,13 @@ type TestCase struct {
 }
 
 type TestCaseConfig struct {
-	Directory       string `json:"directory"`
-	InputExtention  string `json:"input_extension"`
-	OutputExtention string `json:"output_extension"`
+	Directory          string `json:"directory"`
+	InputPrefix        string `json:"input_prefix"`
+	InputSuffix        string `json:"input_suffix"`
+	AnswerPrefix       string `json:"answer_prefix"`
+	AnswerSuffix       string `json:"answer_suffix"`
+	CompatInputSuffix  string `json:"input_extension"`  // deprecated
+	CompatAnswerSuffix string `json:"output_extension"` // deprecated
 }
 
 // This can return an empty slice.
@@ -23,41 +29,60 @@ func ReadTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 	tcases := make([]*TestCase, 0)
 
 	for _, config := range configs {
-		// 入力ファイル
-		pattern := filepath.Join(basepath, config.Directory, "*"+config.InputExtention)
-		inputFileNames, err := filepath.Glob(pattern)
+		// compatibility
+		if len(config.InputSuffix) == 0 && len(config.CompatInputSuffix) != 0 {
+			logger.Println(pretty.Deprecated(`"input_extension"`, `"input_suffix"`))
+			config.InputSuffix = config.CompatInputSuffix
+		}
+		if len(config.AnswerSuffix) == 0 && len(config.CompatAnswerSuffix) != 0 {
+			logger.Println(pretty.Deprecated(`"output_extension"`, `"answer_suffix"`))
+			config.AnswerSuffix = config.CompatAnswerSuffix
+		}
+
+		directories, err := filepath.Glob(filepath.Join(basepath, config.Directory))
 		// ここのエラーは bad pattern
 		if err != nil {
 			logger.Printf("%+v\n", err)
 			continue
 		}
 
-		for _, inputFileName := range inputFileNames {
-			// 入力があるものに対してして出力を設定する
-			// 入力から先に決める
-
-			// 想定する出力ファイル
-			answerFileName := inputFileName[0:len(inputFileName)-len(config.InputExtention)] + config.OutputExtention
-
-			name, _ := filepath.Rel(basepath, inputFileName)
-			name = name[0 : len(name)-len(config.InputExtention)]
-
-			tcase := &TestCase{
-				Name: name,
-			}
-
-			if tcase.InputData, err = os.ReadFile(inputFileName); err != nil {
+		for _, directory := range directories {
+			inputFileNamePattern := filepath.Join(directory, config.InputPrefix+"*"+config.InputSuffix)
+			inputFileNames, err := filepath.Glob(inputFileNamePattern)
+			if err != nil {
 				logger.Printf("%+v\n", err)
 				continue
 			}
-			// 出力ファイルはなくてもよい
-			if tcase.AnswerData, err = os.ReadFile(answerFileName); err != nil {
-				logger.Printf("%+v\n", err)
+
+			// 入力があるものに対してして出力を設定する
+			for _, inputFileName := range inputFileNames {
+				bname := inputFileName[len(directory)+len(config.InputPrefix)+1 : len(inputFileName)-len(config.InputSuffix)]
+				// 想定する出力ファイル
+				answerFileName := filepath.Join(directory, config.AnswerPrefix+bname+config.AnswerSuffix)
+
+				name, err := filepath.Rel(basepath, filepath.Join(directory, bname))
+				if err != nil {
+					logger.Printf("%+v\n", err)
+					continue
+				}
+
+				tcase := &TestCase{
+					Name: name,
+				}
+
+				if tcase.InputData, err = ioutil.ReadFile(inputFileName); err != nil {
+					logger.Printf("%+v\n", err)
+					continue
+				}
+
+				if tcase.AnswerData, err = ioutil.ReadFile(answerFileName); err != nil {
+					logger.Printf("%+v\n", err)
+					continue
+				}
+
+				tcases = append(tcases, tcase)
 			}
-
-			tcases = append(tcases, tcase)
 		}
-
 	}
 
 	return tcases

@@ -75,8 +75,8 @@ The directories should contain `titania.json`, like below.
   "test_case": [
     {
       "directory": "./test_case",
-      "input_extension": ".in",
-      "output_extension": ".ans"
+      "input_suffix": ".in",
+      "answer_suffix": ".ans"
     }
   ]
 }
@@ -127,17 +127,17 @@ An array of objects.
 
 ```
 {
-  "directory":        string
-  "input_extension":  string
-  "output_extension": string
+  "directory":     string
+  "input_prefix":  string
+  "input_suffix":  string
+  "answer_prefix": string
+  "answer_suffix": string
 }
 ```
 
 The `"directory"` field indicates the directory that contains test-cases, which are composed of some input-output pairs of files with same basename.
 
-The `"input_extension"` and `"output_extension"` field are simple. With which the program recognize which is the input and which is the expected output.
-
-**Note**: A input-output pair should have input, but not about output.
+The `"input_prefix"`, `"input_suffix"`, `"answer_prefix"` and `"answer_suffix"` field are simple. With which the program recognize each test case's input and expected answer.
 
 #### `"test_method"`
 
