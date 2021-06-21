@@ -60,21 +60,45 @@ func optparse() {
 		case "--detail":
 			opts.ShowDetail = true
 		case "--input":
+			if len(os.Args) < i+3 {
+				usage()
+				os.Exit(1)
+			}
 			opts.InputFilePath = os.Args[i+2]
 			used = i + 1
 		case "--stdout":
+			if len(os.Args) < i+3 {
+				usage()
+				os.Exit(1)
+			}
 			opts.StdoutFilePath = os.Args[i+2]
 			used = i + 1
 		case "--stderr":
+			if len(os.Args) < i+3 {
+				usage()
+				os.Exit(1)
+			}
 			opts.StderrFilePath = os.Args[i+2]
 			used = i + 1
 		case "--build-stdout":
+			if len(os.Args) < i+3 {
+				usage()
+				os.Exit(1)
+			}
 			opts.BuildStdoutFilePath = os.Args[i+2]
 			used = i + 1
 		case "--build-stderr":
+			if len(os.Args) < i+3 {
+				usage()
+				os.Exit(1)
+			}
 			opts.BuildStderrFilePath = os.Args[i+2]
 			used = i + 1
 		case "--language":
+			if len(os.Args) < i+3 {
+				usage()
+				os.Exit(1)
+			}
 			opts.Language = os.Args[i+2]
 			used = i + 1
 		default:
