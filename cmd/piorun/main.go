@@ -20,16 +20,14 @@ var opts struct {
 	StderrFilePath      string
 	BuildStdoutFilePath string
 	BuildStderrFilePath string
-	Args                struct {
-		ProgramFilePath string
-	}
+	ProgramFilePath     string
 }
 
 var (
 	input       = os.Stdin
 	stdout      = os.Stdout
 	stderr      = os.Stderr
-	buildstdout = os.Stdout
+	buildstdout = os.Stderr
 	buildstderr = os.Stderr
 )
 
@@ -46,7 +44,7 @@ func main() {
 	optparse()
 
 	if opts.Language == "" {
-		opts.Language = runner.LangType(opts.Args.ProgramFilePath)
+		opts.Language = runner.LangType(opts.ProgramFilePath)
 	}
 
 	run := runner.NewRunner(runner.Config{
@@ -54,7 +52,7 @@ func main() {
 		APIKey: PAIZA_IO_API_KEY,
 	})
 
-	sourcecode, _ := os.Open(opts.Args.ProgramFilePath)
+	sourcecode, _ := os.Open(opts.ProgramFilePath)
 	defer sourcecode.Close()
 
 	if opts.InputFilePath != "" {

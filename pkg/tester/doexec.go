@@ -36,37 +36,37 @@ func readResult(data []byte) string {
 }
 
 func (t *TestUnit) exec(i, j int) *TestCaseResult {
+	// TODO: refactoring
 	var (
 		result string
 		errstr string
 	)
-	// TODO: refactoring
+
 	dirname := filepath.Join(t.Name, t.TestTargets[i].Name, t.TestCases[j].Name)
 
 	source := bytes.NewBuffer([]byte{})
 	inputs := bytes.NewBuffer([]byte{})
 	others := bytes.NewBuffer([]byte{})
 
-	// fire paiza.io API
-	source.Write(t.TestTargets[i].CodeData)
-	inputs.Write(t.TestCases[j].InputData)
-	ttsres := t.do(dirname, t.TestTargets[i].Language, source, inputs)
-	// anyting other than stdout
-	errstr += ttsres.Error
-	others.Write(ttsres.BuildStdoutData)
-	others.Write(ttsres.BuildStderrData)
-	others.Write(ttsres.StderrData)
-
 	expect, ok := t.TestTargets[i].Expect[t.TestCases[j].Name]
 	if !ok {
 		expect = t.TestTargets[i].Expect["default"]
 	}
 
+	source.Write(t.TestTargets[i].CodeData)
+	inputs.Write(t.TestCases[j].InputData)
+	// fire paiza.io API
+	ttsres := t.do(dirname, t.TestTargets[i].Language, source, inputs)
+	errstr += ttsres.Error
+	// anyting other than stdout
+	others.Write(ttsres.BuildStdoutData)
+	others.Write(ttsres.BuildStderrData)
+	others.Write(ttsres.StderrData)
+
 	// making result string
 	if t.TestMethod != nil && (ttsres.ExitCode == t.TestMethod.OnExit || ttsres.BuildExitCode == t.TestMethod.OnExit-512) {
 		source := bytes.NewBuffer([]byte{})
 		source.Write(t.TestMethod.CodeData)
-
 		inputs := bytes.NewBuffer([]byte{})
 		for _, what := range t.TestMethod.InputOrder {
 			switch what {
@@ -121,9 +121,9 @@ func (t *TestUnit) exec(i, j int) *TestCaseResult {
 
 	return &TestCaseResult{
 		Name:   t.TestCases[j].Name,
+		Time:   ttsres.Time,
 		Expect: expect,
 		Result: result,
-		Time:   ttsres.Time,
 		Output: bytes.NewReader(ttsres.StdoutData),
 		Others: others,
 		Errors: errstr,
@@ -172,6 +172,17 @@ func (t *TestUnit) do(name, language string, source, input io.Reader) *singleres
 		BuildStderr: io.MultiWriter(buildStderrEnt, buildStderrBuf),
 	})
 
+	if err != nil {
+		result, errstr := handle(err)
+		return &singleresult{
+			Time:          "-1",
+			Result:        result,
+			Error:         errstr,
+			ExitCode:      -1,
+			BuildExitCode: -1,
+		}
+	}
+
 	ret := &singleresult{
 		Time:            res.Time,
 		ExitCode:        res.ExitCode,
@@ -181,12 +192,6 @@ func (t *TestUnit) do(name, language string, source, input io.Reader) *singleres
 		StderrData:      stderrBuf.Bytes(),
 		BuildStdoutData: buildStdoutBuf.Bytes(),
 		BuildStderrData: buildStderrBuf.Bytes(),
-	}
-
-	if err != nil {
-		ret.Result, ret.Error = handle(err)
-		ret.BuildExitCode, ret.ExitCode = -1, -1
-		return ret
 	}
 
 	// TIMEOUT exit code to be 124 (like coreutils timeout)

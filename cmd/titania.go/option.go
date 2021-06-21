@@ -96,16 +96,28 @@ func optparse() []string {
 		case "--pretty":
 			prettyprint = true
 		case "--lang":
+			if len(os.Args) < i+3 {
+				usage()
+				os.Exit(1)
+			}
 			langs := strings.Split(os.Args[i+2], ",")
 			tester.SetLanguages(langs)
 			used = i + 1
 		case "--tmpdir":
+			if len(os.Args) < i+3 {
+				usage()
+				os.Exit(1)
+			}
 			tmpdir, _ := cleanerpath(pwd, os.Args[i+2])
 			if tmpdir != "" {
 				tester.SetTmpDir(tmpdir)
 			}
 			used = i + 1
 		case "--maxjob":
+			if len(os.Args) < i+3 {
+				usage()
+				os.Exit(1)
+			}
 			num, err := strconv.Atoi(os.Args[i+2])
 			if err != nil || num <= 0 {
 				usage()
@@ -122,20 +134,16 @@ func optparse() []string {
 
 	if len(args) == 0 {
 		entries, _ := ioutil.ReadDir(pwd)
-
 		for _, entry := range entries {
 			if entry.IsDir() {
 				dirnames = append(dirnames, entry.Name())
 			}
 		}
-
 	} else {
-
 		for _, directory := range args {
 			dirname, _ := cleanerpath(pwd, directory)
 			dirnames = append(dirnames, dirname)
 		}
-
 	}
 
 	return dirnames
