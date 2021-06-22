@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -132,10 +131,10 @@ func (t *TestUnit) exec(i, j int) *TestCaseResult {
 
 func (t *TestUnit) do(name, language string, source, input io.Reader) *singleresult {
 	// power is power
-	stdoutEnt := ioutil.Discard
-	stderrEnt := ioutil.Discard
-	buildStdoutEnt := ioutil.Discard
-	buildStderrEnt := ioutil.Discard
+	stdoutEnt := io.Discard
+	stderrEnt := io.Discard
+	buildStdoutEnt := io.Discard
+	buildStderrEnt := io.Discard
 
 	stdoutBuf := bytes.NewBuffer([]byte{})
 	stderrBuf := bytes.NewBuffer([]byte{})

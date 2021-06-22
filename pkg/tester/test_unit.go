@@ -13,7 +13,6 @@ type TestUnit struct {
 	TestMethod  *TestMethod
 	TestTargets []*TestTarget
 	TestCases   []*TestCase
-	view        Viewer
 }
 
 // Reads given directory and create an instance of TestUnit.
@@ -43,14 +42,7 @@ func ReadTestUnit(dirname string, config *Config) *TestUnit {
 	// テストメソッド
 	tmethod := ReadTestMethod(basepath, config.TestMethod)
 
-	// Viewer
-	indices := make([]string, 0)
-	for _, target := range targets {
-		indices = append(indices, target.Name)
-	}
-	view := NewView(dirname, len(targets), len(tcases), indices)
-
-	return &TestUnit{dirname, runner, tmethod, targets, tcases, view}
+	return &TestUnit{dirname, runner, tmethod, targets, tcases}
 }
 
 // Execute test (itself) using paiza.io API.
@@ -73,15 +65,22 @@ func (t *TestUnit) Exec() *TestUnitResult {
 	}
 
 	// idiom: sending multiple value with a single channel
-	ch := make(chan func() (int, int, *TestCaseResult), stop)
-	wk := make(chan int, jobs)
+	ch := make(chan int, stop)
+	wk := make(chan struct{}, jobs)
 	fn := func(i, j int) {
-		wk <- 0
-		cresult := t.exec(i, j)
-		ch <- func() (int, int, *TestCaseResult) { return i, j, cresult }
+		wk <- struct{}{}
+		tresults[i].TestCases[j] = t.exec(i, j)
+		ch <- i
 	}
 
-	t.view.Init()
+	// Viewer
+	indices := make([]string, 0)
+	for _, target := range t.TestTargets {
+		indices = append(indices, target.Name)
+	}
+	view := NewView(t.Name, len(t.TestTargets), len(t.TestCases), indices)
+
+	view.Init()
 
 	// Each test is executed asynchronously
 	for i := range t.TestTargets {
@@ -90,20 +89,16 @@ func (t *TestUnit) Exec() *TestUnitResult {
 		}
 	}
 
-	for res := range ch {
+	for i := range ch {
 		<-wk
-		i, j, cresult := res()
-
-		tresults[i].TestCases[j] = cresult
-
-		t.view.Update(i)
+		view.Update(i)
 
 		if curr++; curr == stop {
 			close(ch)
 		}
 	}
 
-	t.view.Done()
+	view.Done()
 
 	uresult := &TestUnitResult{t.Name, "default", tresults}
 	if t.TestMethod != nil {

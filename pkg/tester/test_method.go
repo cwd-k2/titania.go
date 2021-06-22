@@ -1,7 +1,7 @@
 package tester
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/cwd-k2/titania.go/pkg/runner"
@@ -65,7 +65,7 @@ func ReadTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 		InputOrder: inputorder,
 	}
 
-	if tmethod.CodeData, err = ioutil.ReadFile(filename); err != nil {
+	if tmethod.CodeData, err = os.ReadFile(filename); err != nil {
 		logger.Printf("%+v\n", err)
 		return nil
 	}
