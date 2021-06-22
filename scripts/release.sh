@@ -24,10 +24,13 @@ for pair in ${builds[@]}; do
   echo creating: $dir
   if [ $os = windows ]; then
     GOOS=$os GOARCH=$arch go build -o $dir/titania.go.exe cmd/titania.go/*
-    zip -j $dir.zip $dir/titania.go.exe
+    GOOS=$os GOARCH=$arch go build -o $dir/piorun.exe     cmd/piorun/*
   else
-    GOOS=$os GOARCH=$arch go build -o $dir/titania.go     cmd/titania.go/*
-    zip -j $dir.zip $dir/titania.go
+    GOOS=$os GOARCH=$arch go build -o $dir/titania.go cmd/titania.go/*
+    GOOS=$os GOARCH=$arch go build -o $dir/piorun     cmd/piorun/*
   fi
+  zip -j $dir.zip $dir/*
   rm -rf $dir
 done
+
+#gh release create $tag dist/*
