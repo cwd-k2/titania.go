@@ -1,7 +1,7 @@
 package tester
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/cwd-k2/titania.go/pkg/pretty"
@@ -70,12 +70,12 @@ func ReadTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 					Name: name,
 				}
 
-				if tcase.InputData, err = ioutil.ReadFile(inputFileName); err != nil {
+				if tcase.InputData, err = os.ReadFile(inputFileName); err != nil {
 					logger.Printf("%+v\n", err)
 					continue
 				}
 
-				if tcase.AnswerData, err = ioutil.ReadFile(answerFileName); err != nil {
+				if tcase.AnswerData, err = os.ReadFile(answerFileName); err != nil {
 					logger.Printf("%+v\n", err)
 					continue
 				}
