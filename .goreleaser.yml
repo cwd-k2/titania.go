@@ -1,0 +1,45 @@
+project_name: titania.go
+
+env:
+  - GO111MODULE=on
+
+builds:
+  - id:     titania.go
+    binary: titania.go
+    main:   ./cmd/titania.go/
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+  - id:     piorun
+    binary: piorun
+    main:   ./cmd/piorun/
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+
+archives:
+  - format: zip
+    name_template: '{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}-{{ .Tag }}'
+    files:
+     - LICENSE
+     - README.md
+
+release:
+  prerelease: auto
+
+changelog:
+  skip: true
