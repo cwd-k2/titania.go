@@ -83,6 +83,8 @@ func (t *TestUnit) exec(i, j int) *TestCaseResult {
 				inputs.Write(ttsres.BuildStdoutData)
 			case "build_stderr":
 				inputs.Write(ttsres.BuildStderrData)
+			case "language":
+				inputs.WriteString(t.TestTargets[i].Language)
 			case "delimiter":
 				inputs.WriteString(t.TestMethod.Delimiter)
 			case "newline":
