@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.3] - 2021-06-24
+
+### Added
+
+- Added `"language"` for `"input_order"`.
+
 ## [0.9.2] - 2021-06-22
 
 ### Change

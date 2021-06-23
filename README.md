@@ -187,6 +187,8 @@ Available elements for `"input_order"` is...
   - The output on STDOUT, when building/compiling.
 - `"source_code"`
   - Then source code of `"test_target"`
+- `"language"`
+  - The tested code's language.
 - `"delimiter"`
   - You can use this special string in input_order. Default is `"\x00"` (null character).
 - `"newline"`
