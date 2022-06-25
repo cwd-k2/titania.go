@@ -79,8 +79,19 @@ func buildjson(w io.Writer, uresults []*tester.TestUnitResult) {
 									obj.SetString("time", cresult.Time)
 									obj.SetString("expect", cresult.Expect)
 									obj.SetString("result", cresult.Result)
-									obj.SetStringFromReader("output", cresult.Output)
-									obj.SetStringFromReader("others", cresult.Others)
+									// write output from file
+									if fp, err := os.Open(cresult.Output); err == nil {
+										obj.SetStringFromReader("output", bufio.NewReader(fp))
+									}
+									// write other info from files
+									buf := bytes.NewBuffer([]byte{})
+									for _, file := range cresult.Others {
+										if fp, err := os.Open(file); err == nil {
+											bufio.NewReader(fp).WriteTo(buf)
+										}
+									}
+									obj.SetStringFromReader("others", buf)
+									// errors (in this application)
 									obj.SetString("errors", cresult.Errors)
 								})
 							}

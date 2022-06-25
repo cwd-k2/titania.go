@@ -13,6 +13,7 @@ import (
 
 var (
 	prettyprint = false
+	nojson      = false
 )
 
 func version() {
@@ -29,10 +30,11 @@ directories:
 options:
   -h, --help                   show this help message
   -v, --version                show version
+      --no-json                do not print json
       --pretty                 pretty print output json
       --quiet                  quiet log
       --lang=lang1[,lang2,...] language[s] to test
-      --tmpdir=DIRNAME         set a directory where temporary files are put
+      --tmpdir=DIRNAME         set a directory where temporary files are put (default: ./titania-out)
       --maxjob=N               set a maximum number of jobs to run concurrently (N > 0)
 `)
 }
@@ -95,6 +97,8 @@ func optparse() []string {
 			tester.SetQuiet(true)
 		case "--pretty":
 			prettyprint = true
+		case "--no-json":
+			nojson = true
 		case "--lang":
 			if len(os.Args) < i+3 {
 				usage()

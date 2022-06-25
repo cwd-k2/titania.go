@@ -1,6 +1,8 @@
 package tester
 
 import (
+	"bufio"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -10,7 +12,7 @@ import (
 type TestMethod struct {
 	Name       string
 	Language   string
-	CodeData   []byte
+	SourceFile string
 	Delimiter  string
 	OnExit     int
 	InputOrder []string
@@ -61,14 +63,21 @@ func ReadTestMethod(basepath string, config TestMethodConfig) *TestMethod {
 		Name:       name,
 		Language:   language,
 		Delimiter:  delimiter,
+		SourceFile: filename,
 		OnExit:     config.OnExit,
 		InputOrder: inputorder,
 	}
 
-	if tmethod.CodeData, err = os.ReadFile(filename); err != nil {
-		logger.Printf("%+v\n", err)
-		return nil
-	}
-
 	return tmethod
+}
+
+func (t *TestMethod) WriteSouceCodeTo(w io.Writer) error {
+	fp, err := os.Open(t.SourceFile)
+	if err != nil {
+		return err
+	}
+	if _, err := bufio.NewReader(fp).WriteTo(w); err != nil {
+		return err
+	}
+	return fp.Close()
 }

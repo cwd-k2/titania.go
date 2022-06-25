@@ -10,7 +10,7 @@ var (
 	logger            = log.New(os.Stderr, "[tester] ", log.Lshortfile|log.Ltime)
 	quiet             = false
 	languages         = make([]string, 0)
-	tmpdir            = ""
+	tmpdir            = "./titania-out"
 	maxConcurrentJobs = math.MaxInt32
 )
 

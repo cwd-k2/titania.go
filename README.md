@@ -62,7 +62,11 @@ The directories should contain `titania.json`, like below.
     { "pattern": "./source_code/main.*" },
     {
       "pattern": "./source_code/wrong_answer.rb",
-      "expect": { "default": "FAIL", "test_case/01": "PASS", "test_case/03": "EXECUTION TIMEOUT" }
+      "expect": {
+        "default": "FAIL",
+        "test_case/01": "PASS",
+        "test_case/03": "EXECUTION TIMEOUT"
+      }
     },
     { "pattern": "./source_code/time_out.rb" },
     { "pattern": "./source_code/build_error.c", "expect": "BUILD FAILURE" }
@@ -235,7 +239,11 @@ You can narrow down tests by languages.
 
 #### `--quiet`
 
-Suppres runtime information output.
+Suppress runtime information output.
+
+#### `--no-json`
+
+Do not print final output json.
 
 #### `--pretty`
 
@@ -243,7 +251,7 @@ Pretty printing the output json.
 
 #### `--tmpdir=DIRNAME`
 
-You can set where to put the intermediate files when executing tests. If not specified, intermediate files will not be created.
+You can set where to put the intermediate files when executing tests. Default is `./titania-out`.
 
 #### `--maxjob=N`
 
@@ -299,4 +307,6 @@ Or, if you just want to know runtime information, below is the way you go (Like 
 
 ```bash
 $ titania.go [directories] > /dev/null
+# or
+$ titania.go --no-json [directories]
 ```

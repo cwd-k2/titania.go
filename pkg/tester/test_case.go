@@ -1,6 +1,8 @@
 package tester
 
 import (
+	"bufio"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -9,10 +11,11 @@ import (
 
 type TestCase struct {
 	Name       string
-	InputData  []byte
-	AnswerData []byte
+	InputFile  string
+	AnswerFile string
 }
 
+// instruction to create test cases
 type TestCaseConfig struct {
 	Directory          string `json:"directory"`
 	InputPrefix        string `json:"input_prefix"`
@@ -67,17 +70,9 @@ func ReadTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 				}
 
 				tcase := &TestCase{
-					Name: name,
-				}
-
-				if tcase.InputData, err = os.ReadFile(inputFileName); err != nil {
-					logger.Printf("%+v\n", err)
-					continue
-				}
-
-				if tcase.AnswerData, err = os.ReadFile(answerFileName); err != nil {
-					logger.Printf("%+v\n", err)
-					continue
+					Name:       name,
+					InputFile:  inputFileName,
+					AnswerFile: answerFileName,
 				}
 
 				tcases = append(tcases, tcase)
@@ -86,4 +81,26 @@ func ReadTestCases(basepath string, configs []TestCaseConfig) []*TestCase {
 	}
 
 	return tcases
+}
+
+func (t *TestCase) WriteInputDataTo(w io.Writer) error {
+	fp, err := os.Open(t.InputFile)
+	if err != nil {
+		return err
+	}
+	if _, err := bufio.NewReader(fp).WriteTo(w); err != nil {
+		return err
+	}
+	return fp.Close()
+}
+
+func (t *TestCase) WriteAnswerDataTo(w io.Writer) error {
+	fp, err := os.Open(t.AnswerFile)
+	if err != nil {
+		return err
+	}
+	if _, err := bufio.NewReader(fp).WriteTo(w); err != nil {
+		return err
+	}
+	return fp.Close()
 }
