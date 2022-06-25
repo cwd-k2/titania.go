@@ -32,7 +32,7 @@ options:
       --pretty                 pretty print output json
       --quiet                  quiet log
       --lang=lang1[,lang2,...] language[s] to test
-      --tmpdir=DIRNAME         set a directory where temporary files are put
+      --tmpdir=DIRNAME         set a directory where temporary files are put (default: ./titania-out)
       --maxjob=N               set a maximum number of jobs to run concurrently (N > 0)
 `)
 }

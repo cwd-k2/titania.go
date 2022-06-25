@@ -1,6 +1,7 @@
 package tester
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -8,34 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cwd-k2/titania.go/pkg/file"
 	"github.com/cwd-k2/titania.go/pkg/runner"
 )
-
-type apiresult struct {
-	Result          string
-	BuildTime       string
-	BuildExitCode   int
-	Time            string
-	ExitCode        int
-	BuildStdoutData []byte
-	BuildStderrData []byte
-	StdoutData      []byte
-	StderrData      []byte
-	Error           string
-}
-
-// check if the result's exit code is expected by test method
-func isExpectedExitCode(r *apiresult, t *TestMethod) bool {
-	return r.ExitCode == t.OnExit || r.BuildExitCode == t.OnExit-512
-}
-
-// the first token to be the result
-func readTestResult(data []byte) string {
-	if len(data) == 0 {
-		return "<NONE>"
-	}
-	return string(bytes.SplitN(data, []byte{'\n'}, 2)[0])
-}
 
 // Execute the 'test' using paiza.IO api
 func (t *TestUnit) exec(i, j int) *TestCaseResult {
@@ -53,7 +29,7 @@ func (t *TestUnit) exec(i, j int) *TestCaseResult {
 
 	source := bytes.NewBuffer([]byte{})
 	inputs := bytes.NewBuffer([]byte{})
-	others := bytes.NewBuffer([]byte{})
+	others := []string{}
 
 	expect, ok := tt.Expect[tc.Name]
 	if !ok {
@@ -66,9 +42,12 @@ func (t *TestUnit) exec(i, j int) *TestCaseResult {
 	apires := t.do(dirname, tt.Language, source, inputs)
 	// append information other than stdout
 	errstr += apires.Error
-	others.Write(apires.BuildStdoutData)
-	others.Write(apires.BuildStderrData)
-	others.Write(apires.StderrData)
+	others = append(
+		others,
+		apires.BuildStdoutFile,
+		apires.BuildStderrFile,
+		apires.StderrFile,
+	)
 
 	// making result string
 	if tm != nil && isExpectedExitCode(apires, tm) {
@@ -87,13 +66,13 @@ func (t *TestUnit) exec(i, j int) *TestCaseResult {
 			case "source_code":
 				tt.WriteSouceCodeTo(inputs)
 			case "stdout":
-				inputs.Write(apires.StdoutData)
+				apires.WriteStdoutTo(inputs)
 			case "stderr":
-				inputs.Write(apires.StderrData)
+				apires.WriteStderrTo(inputs)
 			case "build_stdout":
-				inputs.Write(apires.BuildStdoutData)
+				apires.WriteBuildStdoutTo(inputs)
 			case "build_stderr":
-				inputs.Write(apires.BuildStderrData)
+				apires.WriteBuildStderrTo(inputs)
 			case "language":
 				inputs.WriteString(tt.Language)
 			case "delimiter":
@@ -109,24 +88,24 @@ func (t *TestUnit) exec(i, j int) *TestCaseResult {
 
 		// TestMethod should gracefully terminate.
 		if res.BuildExitCode == 0 && res.ExitCode == 0 {
-			result = readTestResult(res.StdoutData) // mainly expecting PASS or FAIL
+			result, _ = res.ReadTestResult() // mainly expecting PASS or FAIL
 		} else {
 			result = fmt.Sprintf("METHOD %s", res.Result)
 		}
 
 		// append information to the result
 		errstr += res.Error
-		others.Write(res.BuildStdoutData)
-		others.Write(res.BuildStderrData)
-		others.Write(res.StdoutData)
-		others.Write(res.StderrData)
+		others = append(
+			others,
+			res.BuildStdoutFile,
+			res.BuildStderrFile,
+			res.StdoutFile,
+			res.StderrFile,
+		)
 
 	} else if apires.BuildExitCode == 0 && apires.ExitCode == 0 {
-		// read out the expected answer
-		answerBuf := bytes.NewBuffer([]byte{})
-		tc.WriteAnswerDataTo(answerBuf)
 		// simple comparison of answer and output (byte level)
-		if bytes.Equal(apires.StdoutData, answerBuf.Bytes()) {
+		if b, _ := file.Equal(apires.StdoutFile, tc.AnswerFile); b {
 			result = "PASS"
 		} else {
 			result = "FAIL"
@@ -140,7 +119,7 @@ func (t *TestUnit) exec(i, j int) *TestCaseResult {
 		Time:   apires.Time,
 		Expect: expect,
 		Result: result,
-		Output: bytes.NewReader(apires.StdoutData),
+		Output: apires.StdoutFile,
 		Others: others,
 		Errors: errstr,
 	}
@@ -149,46 +128,43 @@ func (t *TestUnit) exec(i, j int) *TestCaseResult {
 // fire paiza.io api and convert the response to a shape
 func (t *TestUnit) do(name, language string, source, input io.Reader) *apiresult {
 	// the real entities where to write api result outputs
-	// default: discard
-	stdoutEnt := io.Discard
-	stderrEnt := io.Discard
-	buildStdoutEnt := io.Discard
-	buildStderrEnt := io.Discard
-	// if output directory is specified, then create files and set them
-	if tmpdir != "" {
-		dirname := filepath.Join(tmpdir, name)
-		os.MkdirAll(dirname, 0755)
+	dirname := filepath.Join(tmpdir, name)
+	os.MkdirAll(dirname, 0755)
 
-		stdoutFp, _ := os.Create(filepath.Join(dirname, "stdout"))
-		stderrFp, _ := os.Create(filepath.Join(dirname, "stderr"))
-		buildStdoutFp, _ := os.Create(filepath.Join(dirname, "build_stdout"))
-		buildStderrFp, _ := os.Create(filepath.Join(dirname, "build_stderr"))
+	stdoutFile := filepath.Join(dirname, "stdout")
+	stderrFile := filepath.Join(dirname, "stderr")
+	buildStdoutFile := filepath.Join(dirname, "build_stdout")
+	buildStderrFile := filepath.Join(dirname, "build_stderr")
 
-		stdoutEnt = stdoutFp
-		stderrEnt = stderrFp
-		buildStdoutEnt = buildStdoutFp
-		buildStderrEnt = buildStderrFp
+	stdoutFp, _ := os.Create(stdoutFile)
+	stderrFp, _ := os.Create(stderrFile)
+	buildStdoutFp, _ := os.Create(buildStdoutFile)
+	buildStderrFp, _ := os.Create(buildStderrFile)
 
-		defer stdoutFp.Close()
-		defer stderrFp.Close()
-		defer buildStdoutFp.Close()
-		defer buildStderrFp.Close()
-	}
-	// bytes.NewBuffer takes the ownership of the byte slice
-	stdoutBuf := bytes.NewBuffer([]byte{})
-	stderrBuf := bytes.NewBuffer([]byte{})
-	buildStdoutBuf := bytes.NewBuffer([]byte{})
-	buildStderrBuf := bytes.NewBuffer([]byte{})
+	defer stdoutFp.Close()
+	defer stderrFp.Close()
+	defer buildStdoutFp.Close()
+	defer buildStderrFp.Close()
+
+	stdoutEnt := bufio.NewWriter(stdoutFp)
+	stderrEnt := bufio.NewWriter(stderrFp)
+	buildStdoutEnt := bufio.NewWriter(buildStdoutFp)
+	buildStderrEnt := bufio.NewWriter(buildStderrFp)
+
+	defer stdoutEnt.Flush()
+	defer stderrEnt.Flush()
+	defer buildStdoutEnt.Flush()
+	defer buildStderrEnt.Flush()
 
 	// fire paiza.io API
 	res, err := t.Runner.Run(&runner.OrderSpec{
 		Language:    language,
 		SourceCode:  source,
 		Input:       input,
-		Stdout:      io.MultiWriter(stdoutEnt, stdoutBuf),
-		Stderr:      io.MultiWriter(stderrEnt, stderrBuf),
-		BuildStdout: io.MultiWriter(buildStdoutEnt, buildStdoutBuf),
-		BuildStderr: io.MultiWriter(buildStderrEnt, buildStderrBuf),
+		Stdout:      stdoutEnt,
+		Stderr:      stderrEnt,
+		BuildStdout: buildStdoutEnt,
+		BuildStderr: buildStderrEnt,
 	})
 
 	// something went wrong?
@@ -209,10 +185,10 @@ func (t *TestUnit) do(name, language string, source, input io.Reader) *apiresult
 		ExitCode:        res.ExitCode,
 		BuildTime:       res.BuildTime,
 		BuildExitCode:   res.BuildExitCode,
-		StdoutData:      stdoutBuf.Bytes(),
-		StderrData:      stderrBuf.Bytes(),
-		BuildStdoutData: buildStdoutBuf.Bytes(),
-		BuildStderrData: buildStderrBuf.Bytes(),
+		StdoutFile:      stdoutFile,
+		StderrFile:      stderrFile,
+		BuildStdoutFile: buildStdoutFile,
+		BuildStderrFile: buildStderrFile,
 	}
 
 	// TIMEOUT exit code to be 124 (like coreutils timeout)
