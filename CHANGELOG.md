@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2022-06-26
+
+### Added
+
+- Option `--no-json`: do not print output json.
+
+### Change
+
+- Perf: Now titania.go doesn't hold input/output/code/... data.
+- Hence, intermediate files should be always created now, and the default directory is `./titania-out`.
+
 ## [0.9.3] - 2021-06-24
 
 ### Added
