@@ -18,5 +18,7 @@ func main() {
 	}
 
 	final(uresults)
-	printjson(uresults)
+	if !nojson {
+		printjson(uresults)
+	}
 }

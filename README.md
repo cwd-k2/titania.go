@@ -239,7 +239,11 @@ You can narrow down tests by languages.
 
 #### `--quiet`
 
-Suppres runtime information output.
+Suppress runtime information output.
+
+#### `--no-json`
+
+Do not print final output json.
 
 #### `--pretty`
 
@@ -303,4 +307,6 @@ Or, if you just want to know runtime information, below is the way you go (Like 
 
 ```bash
 $ titania.go [directories] > /dev/null
+# or
+$ titania.go --no-json [directories]
 ```
