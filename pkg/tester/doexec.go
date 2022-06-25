@@ -11,7 +11,7 @@ import (
 	"github.com/cwd-k2/titania.go/pkg/runner"
 )
 
-type singleresult struct {
+type apiresult struct {
 	Result          string
 	BuildTime       string
 	BuildExitCode   int
@@ -24,16 +24,20 @@ type singleresult struct {
 	Error           string
 }
 
-// the first token to be the result
-func readResult(data []byte) string {
-	str := string(data)
-	if str == "" {
-		return "<NONE>"
-	} else {
-		return strings.Split(str, "\n")[0]
-	}
+// check if the result's exit code is expected by test method
+func isExpectedExitCode(r *apiresult, t *TestMethod) bool {
+	return r.ExitCode == t.OnExit || r.BuildExitCode == t.OnExit-512
 }
 
+// the first token to be the result
+func readTestResult(data []byte) string {
+	if len(data) == 0 {
+		return "<NONE>"
+	}
+	return string(bytes.SplitN(data, []byte{'\n'}, 2)[0])
+}
+
+// Execute the 'test' using paiza.IO api
 func (t *TestUnit) exec(i, j int) *TestCaseResult {
 	// TODO: refactoring
 	var (
@@ -41,108 +45,116 @@ func (t *TestUnit) exec(i, j int) *TestCaseResult {
 		errstr string
 	)
 
-	dirname := filepath.Join(t.Name, t.TestTargets[i].Name, t.TestCases[j].Name)
+	tt := t.TestTargets[i]
+	tc := t.TestCases[j]
+	tm := t.TestMethod
+
+	dirname := filepath.Join(t.Name, tt.Name, tc.Name)
 
 	source := bytes.NewBuffer([]byte{})
 	inputs := bytes.NewBuffer([]byte{})
 	others := bytes.NewBuffer([]byte{})
 
-	expect, ok := t.TestTargets[i].Expect[t.TestCases[j].Name]
+	expect, ok := tt.Expect[tc.Name]
 	if !ok {
-		expect = t.TestTargets[i].Expect["default"]
+		expect = tt.Expect["default"]
 	}
 
-	source.Write(t.TestTargets[i].CodeData)
-	inputs.Write(t.TestCases[j].InputData)
+	tt.WriteSouceCodeTo(source)
+	tc.WriteInputDataTo(inputs)
 	// fire paiza.io API
-	ttsres := t.do(dirname, t.TestTargets[i].Language, source, inputs)
-	errstr += ttsres.Error
-	// anyting other than stdout
-	others.Write(ttsres.BuildStdoutData)
-	others.Write(ttsres.BuildStderrData)
-	others.Write(ttsres.StderrData)
+	apires := t.do(dirname, tt.Language, source, inputs)
+	// append information other than stdout
+	errstr += apires.Error
+	others.Write(apires.BuildStdoutData)
+	others.Write(apires.BuildStderrData)
+	others.Write(apires.StderrData)
 
 	// making result string
-	if t.TestMethod != nil && (ttsres.ExitCode == t.TestMethod.OnExit || ttsres.BuildExitCode == t.TestMethod.OnExit-512) {
+	if tm != nil && isExpectedExitCode(apires, tm) {
+		// if test method exists, fire paiza.io api again to test the result
 		source := bytes.NewBuffer([]byte{})
-		source.Write(t.TestMethod.CodeData)
 		inputs := bytes.NewBuffer([]byte{})
-		for _, what := range t.TestMethod.InputOrder {
+		// write test method code
+		tm.WriteSouceCodeTo(source)
+		// create input for test method
+		for _, what := range tm.InputOrder {
 			switch what {
 			case "input":
-				inputs.Write(t.TestCases[j].InputData)
+				tc.WriteInputDataTo(inputs)
 			case "answer":
-				inputs.Write(t.TestCases[j].AnswerData)
+				tc.WriteAnswerDataTo(inputs)
 			case "source_code":
-				inputs.Write(t.TestTargets[i].CodeData)
+				tt.WriteSouceCodeTo(inputs)
 			case "stdout":
-				inputs.Write(ttsres.StdoutData)
+				inputs.Write(apires.StdoutData)
 			case "stderr":
-				inputs.Write(ttsres.StderrData)
+				inputs.Write(apires.StderrData)
 			case "build_stdout":
-				inputs.Write(ttsres.BuildStdoutData)
+				inputs.Write(apires.BuildStdoutData)
 			case "build_stderr":
-				inputs.Write(ttsres.BuildStderrData)
+				inputs.Write(apires.BuildStderrData)
 			case "language":
-				inputs.WriteString(t.TestTargets[i].Language)
+				inputs.WriteString(tt.Language)
 			case "delimiter":
-				inputs.WriteString(t.TestMethod.Delimiter)
+				inputs.WriteString(tm.Delimiter)
 			case "newline":
 				inputs.WriteString("\n")
 			case "tab":
 				inputs.WriteString("\t")
 			}
 		}
-		// TestMethod
-		tmsres := t.do(filepath.Join(dirname, t.TestMethod.Name), t.TestMethod.Language, source, inputs)
+		// execute TestMethod
+		res := t.do(filepath.Join(dirname, tm.Name), tm.Language, source, inputs)
 
 		// TestMethod should gracefully terminate.
-		if tmsres.BuildExitCode == 0 && tmsres.ExitCode == 0 {
-			result = readResult(tmsres.StdoutData) // mainly expecting PASS or FAIL
+		if res.BuildExitCode == 0 && res.ExitCode == 0 {
+			result = readTestResult(res.StdoutData) // mainly expecting PASS or FAIL
 		} else {
-			result = fmt.Sprintf("METHOD %s", tmsres.Result)
+			result = fmt.Sprintf("METHOD %s", res.Result)
 		}
 
-		errstr += tmsres.Error
-		others.Write(tmsres.BuildStdoutData)
-		others.Write(tmsres.BuildStderrData)
-		others.Write(tmsres.StdoutData)
-		others.Write(tmsres.StderrData)
+		// append information to the result
+		errstr += res.Error
+		others.Write(res.BuildStdoutData)
+		others.Write(res.BuildStderrData)
+		others.Write(res.StdoutData)
+		others.Write(res.StderrData)
 
-	} else if ttsres.BuildExitCode == 0 && ttsres.ExitCode == 0 {
-		// simple comparison
-		if bytes.Equal(ttsres.StdoutData, t.TestCases[j].AnswerData) {
+	} else if apires.BuildExitCode == 0 && apires.ExitCode == 0 {
+		// read out the expected answer
+		answerBuf := bytes.NewBuffer([]byte{})
+		tc.WriteAnswerDataTo(answerBuf)
+		// simple comparison of answer and output (byte level)
+		if bytes.Equal(apires.StdoutData, answerBuf.Bytes()) {
 			result = "PASS"
 		} else {
 			result = "FAIL"
 		}
 	} else {
-		result = ttsres.Result
+		result = apires.Result
 	}
 
 	return &TestCaseResult{
-		Name:   t.TestCases[j].Name,
-		Time:   ttsres.Time,
+		Name:   tc.Name,
+		Time:   apires.Time,
 		Expect: expect,
 		Result: result,
-		Output: bytes.NewReader(ttsres.StdoutData),
+		Output: bytes.NewReader(apires.StdoutData),
 		Others: others,
 		Errors: errstr,
 	}
 }
 
-func (t *TestUnit) do(name, language string, source, input io.Reader) *singleresult {
-	// power is power
+// fire paiza.io api and convert the response to a shape
+func (t *TestUnit) do(name, language string, source, input io.Reader) *apiresult {
+	// the real entities where to write api result outputs
+	// default: discard
 	stdoutEnt := io.Discard
 	stderrEnt := io.Discard
 	buildStdoutEnt := io.Discard
 	buildStderrEnt := io.Discard
-
-	stdoutBuf := bytes.NewBuffer([]byte{})
-	stderrBuf := bytes.NewBuffer([]byte{})
-	buildStdoutBuf := bytes.NewBuffer([]byte{})
-	buildStderrBuf := bytes.NewBuffer([]byte{})
-
+	// if output directory is specified, then create files and set them
 	if tmpdir != "" {
 		dirname := filepath.Join(tmpdir, name)
 		os.MkdirAll(dirname, 0755)
@@ -162,7 +174,13 @@ func (t *TestUnit) do(name, language string, source, input io.Reader) *singleres
 		defer buildStdoutFp.Close()
 		defer buildStderrFp.Close()
 	}
+	// bytes.NewBuffer takes the ownership of the byte slice
+	stdoutBuf := bytes.NewBuffer([]byte{})
+	stderrBuf := bytes.NewBuffer([]byte{})
+	buildStdoutBuf := bytes.NewBuffer([]byte{})
+	buildStderrBuf := bytes.NewBuffer([]byte{})
 
+	// fire paiza.io API
 	res, err := t.Runner.Run(&runner.OrderSpec{
 		Language:    language,
 		SourceCode:  source,
@@ -173,9 +191,10 @@ func (t *TestUnit) do(name, language string, source, input io.Reader) *singleres
 		BuildStderr: io.MultiWriter(buildStderrEnt, buildStderrBuf),
 	})
 
+	// something went wrong?
 	if err != nil {
 		result, errstr := handle(err)
-		return &singleresult{
+		return &apiresult{
 			Time:          "-1",
 			Result:        result,
 			Error:         errstr,
@@ -184,7 +203,8 @@ func (t *TestUnit) do(name, language string, source, input io.Reader) *singleres
 		}
 	}
 
-	ret := &singleresult{
+	// creating returned object: apiResult
+	ret := &apiresult{
 		Time:            res.Time,
 		ExitCode:        res.ExitCode,
 		BuildTime:       res.BuildTime,
@@ -202,7 +222,7 @@ func (t *TestUnit) do(name, language string, source, input io.Reader) *singleres
 	if res.Result == "timeout" {
 		ret.ExitCode = 124
 	}
-
+	// create result string according to the exit codes
 	if ret.BuildExitCode != 0 {
 		ret.Result = fmt.Sprintf("BUILD %s", strings.ToUpper(res.BuildResult))
 	} else if ret.ExitCode != 0 {
@@ -210,9 +230,11 @@ func (t *TestUnit) do(name, language string, source, input io.Reader) *singleres
 	} else {
 		ret.Result = strings.ToUpper(res.Result)
 	}
+
 	return ret
 }
 
+// create result and excuse strings from an error
 func handle(err error) (string, string) {
 	var result, errstr string
 

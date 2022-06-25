@@ -1,7 +1,9 @@
 package tester
 
 import (
+	"bufio"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -9,10 +11,10 @@ import (
 )
 
 type TestTarget struct {
-	Name     string
-	Language string
-	CodeData []byte
-	Expect   map[string]string
+	Name       string
+	Language   string
+	SourceFile string
+	Expect     map[string]string
 }
 
 type TestTargetConfig struct {
@@ -70,14 +72,10 @@ func ReadTestTargets(basepath string, configs []TestTargetConfig) []*TestTarget 
 			}
 
 			target := &TestTarget{
-				Name:     name,
-				Language: language,
-				Expect:   expect,
-			}
-
-			if target.CodeData, err = os.ReadFile(filename); err != nil {
-				logger.Printf("%+v\n", err)
-				continue
+				Name:       name,
+				Language:   language,
+				SourceFile: filename,
+				Expect:     expect,
 			}
 
 			targets = append(targets, target)
@@ -95,4 +93,15 @@ func acceptable(languages []string, language string) bool {
 	}
 
 	return false
+}
+
+func (t *TestTarget) WriteSouceCodeTo(w io.Writer) error {
+	fp, err := os.Open(t.SourceFile)
+	if err != nil {
+		return err
+	}
+	if _, err := bufio.NewReader(fp).WriteTo(w); err != nil {
+		return err
+	}
+	return fp.Close()
 }
