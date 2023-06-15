@@ -1,4 +1,4 @@
-# [WIP] titania.go
+# titania.go
 
 Just a code-testing/judging tool, using [paiza.io](https://paiza.io) API. Intended to replace other local judgment tools.
 
